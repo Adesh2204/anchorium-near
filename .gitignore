@@ -1,0 +1,31 @@
+# Secrets: never commit keys
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+near-credentials/
+**/credentials/*.json
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Rust / contract
+contracts/**/target/
+
+# Local runtime state (checkpoints, logs)
+var/
+*.log
+*.sqlite
+*.sqlite3
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
