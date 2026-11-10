@@ -11,7 +11,7 @@
 # call only record_decision / record_outcome on guard.$OWNER.
 #
 # Keys are written by near-cli-rs to ~/.near-credentials (the legacy keychain) and never into this repository.
-# Requires: near-cli-rs >= 0.31, cargo-near (to build), python3.
+# Requires: near-cli-rs >= 0.31 and python3. The committed wasm is used, so Rust/cargo-near are not needed.
 set -euo pipefail
 
 : "${OWNER:?set OWNER, e.g. OWNER=yourname-anchorium.testnet}"
@@ -23,7 +23,7 @@ RPC="${NEAR_RPC_URL:-https://rpc.testnet.near.org}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 POLICY_FILE="${POLICY_FILE:-$HERE/policy.testnet.json}"
-WASM="$ROOT/contracts/anchorium-guard/target/near/anchorium_guard.wasm"
+WASM="${WASM:-$ROOT/contracts/anchorium-guard/res/anchorium_guard.wasm}"  # committed build; see res/SHA256SUMS
 GUARD_FUNDING="${GUARD_FUNDING:-6}"
 AGENT_FUNDING="${AGENT_FUNDING:-1}"
 KEY_ALLOWANCE="${KEY_ALLOWANCE:-0.9}"

@@ -24,8 +24,10 @@ test-py: ## Python tests (no network)
 
 test: freeze test-py contract-test ## Freeze check + Python tests + contract tests
 
-contract-build: ## Build the guard contract wasm (cargo-near)
+contract-build: ## Build the guard wasm (cargo-near) and refresh res/ + its SHA256SUMS
 	cd $(CONTRACT_DIR) && cargo near build non-reproducible-wasm
+	cp $(CONTRACT_DIR)/target/near/anchorium_guard.wasm $(CONTRACT_DIR)/res/
+	cd $(CONTRACT_DIR)/res && shasum -a 256 anchorium_guard.wasm
 
 contract-test: ## Contract unit + sandbox tests
 	cd $(CONTRACT_DIR) && cargo test

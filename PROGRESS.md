@@ -19,29 +19,32 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 
 | When (IST) | Decision | Why |
 | --- | --- | --- |
-| 2026-11-10 21:00 | New clean repo `Adesh2204/anchorium-near`. Judged diff is `baseline...hackathon-submission` | The user's GO. The old repo's 103 non-NEAR commits since 2026-10-19 and 2.32 GB of LFS would bury the NEAR work |
-| 2026-11-10 21:15 | Vendor only FrozenStrategy's 12-file import closure, byte-identical | The user's GO: no NSE/Angel One code, no exchange write paths |
-| 2026-11-10 21:15 | Freeze check scoped to the entry-signal path: 1 file hash + 28 of 32 parameters verified; 8 methods + 4 parameters recorded as excluded with their original values | Those 12 entries live in legacy NSE/Angel One modules that FrozenStrategy never imports. The checker proves nothing was dropped silently (see `vendor/anchorium_strategy/SOURCE.md`) |
-| 2026-11-10 21:15 | No original tests vendored | Every source test touching `signal_brain` imports modules outside the closure. A parity test against the source commit replaces them (Phase 4) |
-| 2026-11-10 21:20 | Sandbox tests use `near-sandbox` 0.4 + `near-api` 0.8 instead of `near-workspaces` | The current NEAR docs, the `near-smart-contracts` skill and the `cargo near new` template all use them |
-| 2026-11-10 21:20 | `cargo near build non-reproducible-wasm` | Docker is not installed, so no reproducible build. Toolchain pinned by `rust-toolchain.toml` (Rust 1.95.0, from the template) |
-| 2026-11-10 21:40 | `record_outcome` takes settlement amounts; the contract computes realized PnL (no free-form `pnl_usd` argument) | A self-reported PnL argument would let a compromised agent fake its record |
-| 2026-11-10 21:40 | Final verdict = contract check AND the agent's verdict; a `verdict_override` event when they disagree | The agent can veto, never upgrade |
-| 2026-11-10 21:40 | Pause blocks entries only; exits need a contract-tracked open position | A kill switch must never trap funds in a position |
-| 2026-11-10 22:00 | Testnet: owner `anchorium-team.testnet` (faucet), contract `guard.anchorium-team.testnet`, agent `agent.anchorium-team.testnet` with a function-call key (record_decision, record_outcome; 0.9 NEAR allowance) | The prompt's layout. Keys are in `~/.near-credentials` only |
-| 2026-11-10 22:05 | No deploy tx hash in the README; link the explorer account pages | The nearblocks API v1 was retired 2026-11-05 and the deploy output was truncated |
-| 2026-11-10 22:30 | Slippage gate = worst case: the value of `minAmountOut` vs the input at `/v0/tokens` reference prices (covers price impact + fees + tolerance). Passed to the contract as `slippage_bps` | The quote's own USD fields are not a cost measure (identical in/out USD despite a 20 bps fee) |
-| 2026-11-10 22:35 | Default requested tolerance 10 bps; policy `max_slippage_bps` stays at 100 | Measured $2 entries at 22:35 IST, worst case: wNEAR 98 bps, ETH 76, BTC 65 at tol 10 (138/114/102 at tol 50); exit wNEAR->USDC 23 bps. Borderline NEAR entries are rejected by design |
-| 2026-11-10 22:20 | A LIVE deposit is signed by a separate mainnet trading account with a full-access key | NEP-141 `ft_transfer` needs a 1 yoctoNEAR deposit and function-call keys cannot attach deposits. Documented as a limitation |
+| 2026-11-10 21:18 | New clean repo `Adesh2204/anchorium-near`. Judged diff is `baseline...hackathon-submission` | The user's GO. The old repo's 103 non-NEAR commits since 2026-10-19 and 2.32 GB of LFS would bury the NEAR work |
+| 2026-11-10 21:19 | Vendor only FrozenStrategy's 12-file import closure, byte-identical | The user's GO: no NSE/Angel One code, no exchange write paths |
+| 2026-11-10 21:19 | Freeze check scoped to the entry-signal path: 1 file hash + 28 of 32 parameters verified; 8 methods + 4 parameters recorded as excluded with their original values | Those 12 entries live in legacy NSE/Angel One modules that FrozenStrategy never imports. The checker proves nothing was dropped silently (see `vendor/anchorium_strategy/SOURCE.md`) |
+| 2026-11-10 21:19 | No original tests vendored | Every source test touching `signal_brain` imports modules outside the closure. A parity test against the source commit replaces them (Phase 4) |
+| 2026-11-10 21:38 | Sandbox tests use `near-sandbox` 0.4 + `near-api` 0.8 instead of `near-workspaces` | The current NEAR docs, the `near-smart-contracts` skill and the `cargo near new` template all use them |
+| 2026-11-10 21:38 | `cargo near build non-reproducible-wasm` | Docker is not installed, so no reproducible build. Toolchain pinned by `rust-toolchain.toml` (Rust 1.95.0, from the template) |
+| 2026-11-10 21:38 | `record_outcome` takes settlement amounts; the contract computes realized PnL (no free-form `pnl_usd` argument) | A self-reported PnL argument would let a compromised agent fake its record |
+| 2026-11-10 21:38 | Final verdict = contract check AND the agent's verdict; a `verdict_override` event when they disagree | The agent can veto, never upgrade |
+| 2026-11-10 21:38 | Pause blocks entries only; exits need a contract-tracked open position | A kill switch must never trap funds in a position |
+| 2026-11-10 21:42 | Testnet: owner `anchorium-team.testnet` (faucet), contract `guard.anchorium-team.testnet`, agent `agent.anchorium-team.testnet` with a function-call key (record_decision, record_outcome; 0.9 NEAR allowance) | The prompt's layout. Keys are in `~/.near-credentials` only |
+| 2026-11-10 21:42 | No deploy tx hash in the README; link the explorer account pages | The nearblocks API v1 was retired 2026-11-05 and the deploy output was truncated |
+| 2026-11-10 21:47 | Slippage gate = worst case: the value of `minAmountOut` vs the input at `/v0/tokens` reference prices (covers price impact + fees + tolerance). Passed to the contract as `slippage_bps` | The quote's own USD fields are not a cost measure (identical in/out USD despite a 20 bps fee) |
+| 2026-11-10 21:47 | Default requested tolerance 10 bps; policy `max_slippage_bps` stays at 100 | Measured $2 entries at 21:46 IST, worst case: wNEAR 98 bps, ETH 76, BTC 65 at tol 10 (138/114/102 at tol 50); exit wNEAR->USDC 23 bps. Borderline NEAR entries are rejected by design |
+| 2026-11-10 21:47 | A LIVE deposit is signed by a separate mainnet trading account with a full-access key | NEP-141 `ft_transfer` needs a 1 yoctoNEAR deposit and function-call keys cannot attach deposits. Documented as a limitation |
 | 2026-11-10 | Report the observed 1Click unauthenticated fee: 20 bps (`appFees` in a real dry quote); the docs say 0.25% | The user's GO, point 5 |
 | 2026-11-10 | Python to NEAR: try `near-kit` (Python) first; switch to a `near-api-js` sidecar if blocked for more than 2 h | The user's GO, point 4 |
 
 ## Log
 
+Times are commit times (`git log`) or `date` output.
+
+
 - 2026-11-10 20:10 IST: Phase 0 recon. Old repo: 3,671 tests pass, strategy freeze passes, no real secrets in history.
 - 2026-11-10 21:18 IST: cloned the empty `anchorium-near`. Installed rustc 1.99.1 (rustup), cargo-near 0.23.0, near-cli-rs 0.31.1.
-- 2026-11-10 21:21 IST: `baseline` commit `05d5b8b`. `scripts/check_strategy_freeze.py` passes.
-- 2026-11-10 21:30 IST: Phase 1 files added. Freeze tamper tests: 5 passed.
-- 2026-11-10 21:45 IST: contract: 40 unit tests + 2 near-sandbox tests pass. Clippy clean. Wasm 214 KB.
-- 2026-11-10 22:00 IST: testnet deploy of `guard.anchorium-team.testnet`. Keyless views verified (`check_trade` OK at $2.00, NOTIONAL_ABOVE_MAX at $5.00). `deploy_testnet.sh` rerun is idempotent.
-- 2026-11-10 22:35 IST: Phase 3: `anchorium/near/intents.py` + `live.py`; 46 mocked tests + 1 opt-in network test pass. Real dry quote correlationId `6d6eba41-e5bd-4b19-a5dd-dd97a03f8eec` ($2 USDC -> 0.5564 wNEAR, fee 20 bps).
+- 2026-11-10 21:19 IST: `baseline` commit `05d5b8b`. `scripts/check_strategy_freeze.py` passes.
+- 2026-11-10 21:25 IST: Phase 1 files added. Freeze tamper tests: 5 passed.
+- 2026-11-10 21:38 IST: contract: 40 unit tests + 2 near-sandbox tests pass. Clippy clean. Wasm 214 KB.
+- 2026-11-10 21:42 IST: testnet deploy of `guard.anchorium-team.testnet`. Keyless views verified (`check_trade` OK at $2.00, NOTIONAL_ABOVE_MAX at $5.00). `deploy_testnet.sh` rerun is idempotent.
+- 2026-11-10 21:47 IST: Phase 3: `anchorium/near/intents.py` + `live.py`; 46 mocked tests + 1 opt-in network test pass. Real dry quote correlationId `6d6eba41-e5bd-4b19-a5dd-dd97a03f8eec` ($2 USDC -> 0.5564 wNEAR, fee 20 bps).

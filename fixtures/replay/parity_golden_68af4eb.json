@@ -1,0 +1,68 @@
+{
+  "cases": {
+    "btc-entry": {
+      "ATR_14": "93.57142857142857",
+      "EMA_21": "74434.81739328476",
+      "EMA_9": "74438.41439343271",
+      "VWAP": "74295.53818904086",
+      "VWAP_Slope": "0.13581493588280863",
+      "bars": 1560,
+      "signal_type": "PULLBACK_LONG"
+    },
+    "btc-exit": {
+      "ATR_14": "117.07142857142857",
+      "EMA_21": "74269.28292804192",
+      "EMA_9": "74136.71458992132",
+      "VWAP": "74281.08057334166",
+      "VWAP_Slope": "-1.3924988758735708",
+      "bars": 1560,
+      "signal_type": "BREAKDOWN_SHORT"
+    },
+    "eth-entry": {
+      "ATR_14": "4.578571428571389",
+      "EMA_21": "2080.276184258003",
+      "EMA_9": "2084.6984018737357",
+      "VWAP": "2085.30885177574",
+      "VWAP_Slope": "0.004323100091733067",
+      "bars": 1560,
+      "signal_type": "PULLBACK_LONG"
+    },
+    "eth-exit": {
+      "ATR_14": "3.2214285714285",
+      "EMA_21": "2079.122010917701",
+      "EMA_9": "2076.8525561067845",
+      "VWAP": "2085.171126273954",
+      "VWAP_Slope": "-0.014117635355250967",
+      "bars": 1560,
+      "signal_type": "BREAKDOWN_SHORT"
+    },
+    "near-entry": {
+      "ATR_14": "0.01467857142857151",
+      "EMA_21": "3.723149223735192",
+      "EMA_9": "3.729782306078868",
+      "VWAP": "3.641593716940041",
+      "VWAP_Slope": "0.0004927972898743693",
+      "bars": 1560,
+      "signal_type": "BREAKOUT_LONG"
+    },
+    "near-exit": {
+      "ATR_14": "0.022728571428571463",
+      "EMA_21": "3.609418639228019",
+      "EMA_9": "3.5646257173298177",
+      "VWAP": "3.637692270002444",
+      "VWAP_Slope": "-0.0007264782563294325",
+      "bars": 1560,
+      "signal_type": "BREAKDOWN_SHORT"
+    }
+  },
+  "fixture": "hyperliquid_1m.json",
+  "source_commit": "68af4eb4334043aea16e2650658d7df20fe68aaf",
+  "source_freeze": {
+    "baseline": "nse-working-baseline",
+    "file_count": 1,
+    "method_count": 8,
+    "parameter_count": 32,
+    "passed": true
+  },
+  "source_repository": "https://github.com/Adesh2204/Autonomous-Trading-Bot-Crypto"
+}
