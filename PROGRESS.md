@@ -8,7 +8,7 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 - [x] Baseline commit: vendored frozen strategy, tag `baseline`
 - [x] Phase 1: hygiene (LICENSE, AGENTS.md, .gitignore, Makefile, README skeleton, NEAR skills)
 - [x] Phase 2: guard contract (unit + sandbox tests, testnet deploy, agent sub-account with function-call key)
-- [ ] Phase 3: 1Click executor (dry-run default, every status, mocked tests, one real dry quote)
+- [x] Phase 3: 1Click executor (dry-run default, every status, mocked tests, one real dry quote)
 - [ ] Phase 4: orchestrator + `make demo` (Path A) + `make demo-onchain` (Path B) + REPLAY (Checkpoint 2)
 - [ ] Phase 5: dashboard
 - [ ] Phase 6: README + docs/JUDGES.md
@@ -30,6 +30,9 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 | 2026-11-10 21:40 | Pause blocks entries only; exits need a contract-tracked open position | A kill switch must never trap funds in a position |
 | 2026-11-10 22:00 | Testnet: owner `anchorium-team.testnet` (faucet), contract `guard.anchorium-team.testnet`, agent `agent.anchorium-team.testnet` with a function-call key (record_decision, record_outcome; 0.9 NEAR allowance) | The prompt's layout. Keys are in `~/.near-credentials` only |
 | 2026-11-10 22:05 | No deploy tx hash in the README; link the explorer account pages | The nearblocks API v1 was retired 2026-11-05 and the deploy output was truncated |
+| 2026-11-10 22:30 | Slippage gate = worst case: the value of `minAmountOut` vs the input at `/v0/tokens` reference prices (covers price impact + fees + tolerance). Passed to the contract as `slippage_bps` | The quote's own USD fields are not a cost measure (identical in/out USD despite a 20 bps fee) |
+| 2026-11-10 22:35 | Default requested tolerance 10 bps; policy `max_slippage_bps` stays at 100 | Measured $2 entries at 22:35 IST, worst case: wNEAR 98 bps, ETH 76, BTC 65 at tol 10 (138/114/102 at tol 50); exit wNEAR->USDC 23 bps. Borderline NEAR entries are rejected by design |
+| 2026-11-10 22:20 | A LIVE deposit is signed by a separate mainnet trading account with a full-access key | NEP-141 `ft_transfer` needs a 1 yoctoNEAR deposit and function-call keys cannot attach deposits. Documented as a limitation |
 | 2026-11-10 | Report the observed 1Click unauthenticated fee: 20 bps (`appFees` in a real dry quote); the docs say 0.25% | The user's GO, point 5 |
 | 2026-11-10 | Python to NEAR: try `near-kit` (Python) first; switch to a `near-api-js` sidecar if blocked for more than 2 h | The user's GO, point 4 |
 
@@ -41,3 +44,4 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 - 2026-11-10 21:30 IST: Phase 1 files added. Freeze tamper tests: 5 passed.
 - 2026-11-10 21:45 IST: contract: 40 unit tests + 2 near-sandbox tests pass. Clippy clean. Wasm 214 KB.
 - 2026-11-10 22:00 IST: testnet deploy of `guard.anchorium-team.testnet`. Keyless views verified (`check_trade` OK at $2.00, NOTIONAL_ABOVE_MAX at $5.00). `deploy_testnet.sh` rerun is idempotent.
+- 2026-11-10 22:35 IST: Phase 3: `anchorium/near/intents.py` + `live.py`; 46 mocked tests + 1 opt-in network test pass. Real dry quote correlationId `6d6eba41-e5bd-4b19-a5dd-dd97a03f8eec` ($2 USDC -> 0.5564 wNEAR, fee 20 bps).
