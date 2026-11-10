@@ -1,0 +1,5 @@
+# Runtime pins copied from Autonomous-Trading-Bot-Crypto@68af4eb algo-trading-bot/requirements.txt
+# (only the packages the vendored entry-signal path imports).
+numpy==2.5.2
+pandas==3.0.5
+python-dotenv==1.2.3

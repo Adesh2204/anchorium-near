@@ -1,0 +1,69 @@
+{
+  "baseline": "nse-working-baseline",
+  "baseline_commit": "ed0dba5b0577da38a500d9dc208fe9938d3f3a14",
+  "files": {
+    "algo-trading-bot/signal_brain.py": "bff940ac5ed35f71ed3dfb537ba15d20dcec35a4e62a938d2f0619c6e9309d83"
+  },
+  "input_convention": "Completed one-minute candles with UTC timestamps and per-candle base volume; no formula changes.",
+  "methods": {
+    "algo-trading-bot/execution_engine.py": {
+      "LegacyPaperTrader.check_exit": "221ab6134685303ed9ebaa53b2b203ad5ca309d7e0849c92a4203d5c97609345",
+      "LegacyPaperTrader.notify_candle_close": "d44d8715e7eff3c391ef1adc274b974ce88944e43dace156404c8fb4bb8d086c",
+      "LegacyPaperTrader.update_daily_bias": "0a49d1344953a7823b697d363883d61e31302b29eea51b97f614a3f3071a3e1b"
+    },
+    "algo-trading-bot/live_stream.py": {
+      "AngelOneLiveStream._evaluate_watchlist_orchestrator": "1219f1493e1c24f990467a8a5d3e4bde0e86afc99839f234a497bcba2c6f3b8a"
+    },
+    "algo-trading-bot/runtime_observation.py": {
+      "observe_signal": "91c5b7d4822fb623cb56c6dd63181c036c4c70e06782598fb3b50e2b5fe657c1"
+    },
+    "algo-trading-bot/safe_trader.py": {
+      "SafeTrader.check_exit": "82111d256dd1e6e3f9be8e9cd3accec3bc51a44bb2594bad78e0bbad016c5f8a",
+      "SafeTrader.execute_trade": "a343d6f64f7a4873e63291beb66aa0f0ec2d196e57c0d5fe1bc4a543f8b24884",
+      "SafeTrader.notify_candle_close": "f7d71dc830ad279a18d996a248cd3ffc331cfb0c7c3b1bce4f9f7eb6a7258c19"
+    }
+  },
+  "parameters": {
+    "algo-trading-bot/config.py": {
+      "ATR_BAND_MULT": 1.5,
+      "ATR_PERIOD": 14,
+      "BE_ATR_MULT": 1.0,
+      "BIAS_VOTES_NEEDED": 2,
+      "BIAS_VWAP_GAP_PCT": 0.0005,
+      "BREAKOUT_CLOSE_MULT": 0.5,
+      "EMA_FAST": 9,
+      "EMA_SLOW": 21,
+      "KNIFE_UP_MULT": 1.0,
+      "LOW_VOL_ATR_PCT": 0.001,
+      "MAX_TRANCHES": 3,
+      "MIN_ATR_PCT": 0.0006,
+      "MIN_CANDLES_BEFORE_TRADE": 15,
+      "MIN_NET_RR": 1.2,
+      "MIN_NET_RR_LOW_VOL": 0.8,
+      "MIN_NET_RR_NORMAL": 1.2,
+      "PYRAMID_TRIGGER_ATR_MULT": 2.0,
+      "REENTRY_ATR_MULT": 1.5,
+      "REENTRY_COOLDOWN_CANDLES": 10,
+      "SHORT_BAND_MULT": 1.5,
+      "SHORT_CLOSE_MULT": 0.5,
+      "SL_ATR_MULT": 2.0,
+      "TP_ATR_MULT": 4.0,
+      "TRAIL_ATR_MULT": 2.0,
+      "TRANCHE_FRACTIONS": [
+        0.33,
+        0.33,
+        0.34
+      ],
+      "VOL_MA_PERIOD": 10,
+      "VOL_SURGE_MULT": 1.5,
+      "VWAP_SLOPE_LOOKBACK": 10
+    },
+    "algo-trading-bot/execution_engine.py": {
+      "DEFAULT_PROFIT_TARGET_PCT": 0.01,
+      "DEFAULT_STOP_LOSS_PCT": 0.005,
+      "SCALE_IN_GAIN_TRIGGER_PCT": 0.003,
+      "TRANCHE2_TRIGGER_PCT": 0.003
+    }
+  },
+  "strategy_exceptions": []
+}
