@@ -38,8 +38,8 @@ Trades settle through the NEAR Intents 1Click API. The judged work is `git diff 
   signer), and recorded replay fixtures.
 - **Not allowed:** exchange order or signing paths of any kind (Hyperliquid or otherwise), Angel One / NSE code,
   or any import from the old repository beyond the vendored closure.
-- **Settlement:** only through the 1Click API (`https://1click.chaindefuser.com/v0`), spot, long-only. SHORT
-  signals are journaled as rejected because a spot account cannot short.
+- **Settlement:** only through the 1Click API (`https://1click.chaindefuser.com/v0`), spot, long-only. A SHORT
+  signal exits an open position; without one it is skipped locally (a spot account cannot short).
 
 ## Layout
 

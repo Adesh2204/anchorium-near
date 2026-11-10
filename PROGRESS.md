@@ -9,7 +9,7 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 - [x] Phase 1: hygiene (LICENSE, AGENTS.md, .gitignore, Makefile, README skeleton, NEAR skills)
 - [x] Phase 2: guard contract (unit + sandbox tests, testnet deploy, agent sub-account with function-call key)
 - [x] Phase 3: 1Click executor (dry-run default, every status, mocked tests, one real dry quote)
-- [ ] Phase 4: orchestrator + `make demo` (Path A) + `make demo-onchain` (Path B) + REPLAY (Checkpoint 2)
+- [x] Phase 4: orchestrator + `make demo` (Path A) + `make demo-onchain` (Path B) + REPLAY. Checkpoint 2 is waiting for the user
 - [ ] Phase 5: dashboard
 - [ ] Phase 6: README + docs/JUDGES.md
 - [ ] Phase 7: fresh-clone self-judging + review pass
@@ -33,6 +33,10 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 | 2026-11-10 21:47 | Slippage gate = worst case: the value of `minAmountOut` vs the input at `/v0/tokens` reference prices (covers price impact + fees + tolerance). Passed to the contract as `slippage_bps` | The quote's own USD fields are not a cost measure (identical in/out USD despite a 20 bps fee) |
 | 2026-11-10 21:47 | Default requested tolerance 10 bps; policy `max_slippage_bps` stays at 100 | Measured $2 entries at 21:46 IST, worst case: wNEAR 98 bps, ETH 76, BTC 65 at tol 10 (138/114/102 at tol 50); exit wNEAR->USDC 23 bps. Borderline NEAR entries are rejected by design |
 | 2026-11-10 21:47 | A LIVE deposit is signed by a separate mainnet trading account with a full-access key | NEP-141 `ft_transfer` needs a 1 yoctoNEAR deposit and function-call keys cannot attach deposits. Documented as a limitation |
+| 2026-11-10 21:58 | Python to NEAR: `near-kit` 1.3.0 works for views and function-call-key signing on testnet; no sidecar needed | Decisions #0 to #2 on guard.anchorium-team.testnet were signed by the function-call key `ed25519:6Uv5...` |
+| 2026-11-10 22:03 | Path A checks run against `demo.anchorium-team.testnet` (same wasm and code_hash, no journaling key); the real journal is read from `guard.anchorium-team.testnet` | The agent's open paper position on the main guard made Path A output depend on live state (POSITION_ALREADY_OPEN skips) |
+| 2026-11-10 22:05 | An aborted LIVE trade (cap or confirmation) journals a FAILED outcome | Otherwise the PENDING_ENTRY position would block all later entries |
+| 2026-11-10 22:05 | Exit rule: sell on the next SHORT signal from the unchanged brain; no stop/target from the original trader | That management code is in the legacy modules that are not vendored |
 | 2026-11-10 | Report the observed 1Click unauthenticated fee: 20 bps (`appFees` in a real dry quote); the docs say 0.25% | The user's GO, point 5 |
 | 2026-11-10 | Python to NEAR: try `near-kit` (Python) first; switch to a `near-api-js` sidecar if blocked for more than 2 h | The user's GO, point 4 |
 
@@ -48,3 +52,6 @@ Times are commit times (`git log`) or `date` output.
 - 2026-11-10 21:38 IST: contract: 40 unit tests + 2 near-sandbox tests pass. Clippy clean. Wasm 214 KB.
 - 2026-11-10 21:42 IST: testnet deploy of `guard.anchorium-team.testnet`. Keyless views verified (`check_trade` OK at $2.00, NOTIONAL_ABOVE_MAX at $5.00). `deploy_testnet.sh` rerun is idempotent.
 - 2026-11-10 21:47 IST: Phase 3: `anchorium/near/intents.py` + `live.py`; 46 mocked tests + 1 opt-in network test pass. Real dry quote correlationId `6d6eba41-e5bd-4b19-a5dd-dd97a03f8eec` ($2 USDC -> 0.5564 wNEAR, fee 20 bps).
+- 2026-11-10 21:56 IST: REPLAY fixture: 6 real signal bars (BTC/ETH/NEAR entry + exit). Golden from the source tree at 68af4eb; the vendored copy matches bit for bit.
+- 2026-11-10 21:58 IST: first on-chain journal entries (Path B on the team guard): #0 BUY allowed + DRY_RUN outcome, #1 SELL rejected SLIPPAGE_ABOVE_MAX (162 bps), #2 compromised-agent BUY rejected NOTIONAL_ABOVE_MAX with verdict_override.
+- 2026-11-10 22:03 IST: demo guard deployed. `make demo` (Path A) is deterministic. `make test`: freeze OK, 81 Python, 40 unit + 2 sandbox contract tests pass.

@@ -5,7 +5,7 @@
 #
 # Creates, if missing:
 #   $OWNER                  faucet-sponsored (free) owner account: the human who sets the rules
-#   guard.$OWNER            the contract account (funded by the owner)
+#   guard.$OWNER            the contract account (funded by the owner; prefix via GUARD_PREFIX)
 #   agent.$OWNER            the bot's account (funded by the owner)
 # then deploys the wasm with `new(owner, agent, policy)` and grants agent.$OWNER a function-call key that can
 # call only record_decision / record_outcome on guard.$OWNER.
@@ -16,7 +16,7 @@ set -euo pipefail
 
 : "${OWNER:?set OWNER, e.g. OWNER=yourname-anchorium.testnet}"
 [[ "$OWNER" == *.testnet ]] || { echo "OWNER must be a .testnet account (this script never touches mainnet)"; exit 1; }
-GUARD="guard.$OWNER"
+GUARD="${GUARD_PREFIX:-guard}.$OWNER"
 AGENT="agent.$OWNER"
 NETWORK=testnet
 RPC="${NEAR_RPC_URL:-https://rpc.testnet.near.org}"
@@ -27,6 +27,7 @@ WASM="${WASM:-$ROOT/contracts/anchorium-guard/res/anchorium_guard.wasm}"  # comm
 GUARD_FUNDING="${GUARD_FUNDING:-6}"
 AGENT_FUNDING="${AGENT_FUNDING:-1}"
 KEY_ALLOWANCE="${KEY_ALLOWANCE:-0.9}"
+GRANT_AGENT_KEY="${GRANT_AGENT_KEY:-1}"  # 0 for a read-only demo guard nobody can journal to
 
 exists() {
   curl -s "$RPC" -H 'Content-Type: application/json' \
@@ -76,7 +77,9 @@ has_fc_key() {
     | python3 -c 'import sys,json; keys=json.load(sys.stdin)["result"]["keys"]; sys.exit(0 if any(isinstance(k["access_key"]["permission"],dict) and k["access_key"]["permission"]["FunctionCall"]["receiver_id"]==sys.argv[1] for k in keys) else 1)' "$GUARD"
 }
 
-if has_fc_key; then
+if [[ "$GRANT_AGENT_KEY" != "1" ]]; then
+  echo "key    skipped (GRANT_AGENT_KEY=0): no key can journal to $GUARD"
+elif has_fc_key; then
   echo "key    $AGENT already has a function-call key for $GUARD"
 else
   echo "key    granting $AGENT a function-call key: receiver $GUARD, methods record_decision, record_outcome"

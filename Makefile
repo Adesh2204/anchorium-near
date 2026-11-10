@@ -4,7 +4,7 @@ VENV    := .venv
 VPY     := $(VENV)/bin/python
 CONTRACT_DIR := contracts/anchorium-guard
 
-.PHONY: help setup freeze test test-py contract-build contract-test contract-deploy demo demo-onchain dashboard
+.PHONY: help setup freeze test test-py contract-build contract-test contract-deploy demo demo-onchain status agent dashboard
 
 help:
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -35,11 +35,17 @@ contract-test: ## Contract unit + sandbox tests
 contract-deploy: ## Deploy the guard to NEAR testnet (needs near-cli-rs + a testnet account)
 	scripts/near/deploy_testnet.sh
 
-demo: ## Dry-run cycle against the deployed testnet guard + real 1Click dry quotes (zero keys)
-	@echo "demo: not implemented yet (Phase 4)"; exit 1
+demo: ## Path A: zero keys/funds. REPLAY signals -> live testnet guard -> real 1Click dry quotes
+	$(VPY) -m anchorium demo
 
-demo-onchain: ## Path B: your own free testnet accounts + guard, decisions journaled on-chain
-	@echo "demo-onchain: not implemented yet (Phase 4)"; exit 1
+demo-onchain: ## Path B: OWNER=<new>.testnet -> your own free accounts + guard, journaled on-chain
+	scripts/demo_onchain.sh
+
+status: ## Policy, stats and latest decisions read from the contract (keyless)
+	$(VPY) -m anchorium status
+
+agent: ## Agent loop on live public candles (DRY_RUN; journals with the agent key)
+	$(VPY) -m anchorium run
 
 dashboard: ## Read-only dashboard on http://127.0.0.1:8000
 	@echo "dashboard: not implemented yet (Phase 5)"; exit 1
