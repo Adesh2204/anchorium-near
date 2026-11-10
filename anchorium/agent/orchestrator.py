@@ -15,6 +15,7 @@ import json
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -54,7 +55,7 @@ def emit(event: dict[str, Any], stream=sys.stdout) -> None:
 class Agent:
     def __init__(self, config: AgentConfig, reader: GuardReader, oneclick: OneClickClient, store: CheckpointStore,
                  writer: GuardWriter | None = None, trader_near=None,
-                 confirm: Callable[[str], None] = live_gates.require_typed_confirmation,
+                 confirm: Callable[..., None] = live_gates.require_typed_confirmation,
                  log: Callable[[dict[str, Any]], None] = emit):
         if config.execution.live and (writer is None or trader_near is None or not config.trader_account):
             raise live_gates.LiveGateError('LIVE needs the agent key, TRADER_ACCOUNT_ID and its mainnet key')
@@ -100,6 +101,11 @@ class Agent:
             if position is None:
                 return self._skip(h, 'SHORT_SIGNAL_WITHOUT_SPOT_POSITION')
             side, origin, destination, amount = 'SELL', asset, USDC, int(position['amount'])
+            if self.config.execution.live:  # never try to sell more than the account actually holds
+                token_contract = self.oneclick.token(asset).contract_address
+                amount = min(amount, int(self.trader_near.ft_balance(token_contract, self.config.trader_account)))
+                if amount <= 0:
+                    return self._skip(h, 'NO_TOKEN_BALANCE_TO_SELL')
         origin_t, dest_t = self.oneclick.token(origin), self.oneclick.token(destination)
         notional_cents = int(origin_t.from_units(amount) * origin_t.price_usd * 100)
 
@@ -205,9 +211,25 @@ class Agent:
         amount_human = origin_t.from_units(q['amountIn'])
         notional_usd = Decimal(args['notional_usd_cents']) / 100
         spent = Decimal(self.store.live_spent_cents()) / 100
+        dest_t = self.oneclick.token(quote['quoteRequest'].get('destinationAsset') or args['asset'])
+        details = {
+            'guard decision': f'#{data["decision_id"]} ALLOWED on {self.reader.contract_id} ({data["decision_tx_url"]})',
+            'token in': f'{amount_human} {origin_t.symbol} ({origin_t.contract_address})',
+            'notional': f'${notional_usd:.2f} (cap ${self.config.execution.max_trade_usd}, spent so far ${spent})',
+            'quote': f'{quote["correlationId"]}: {amount_human} {origin_t.symbol} -> '
+                     f'{dest_t.from_units(q["amountOut"])} {dest_t.symbol}',
+            'guaranteed minimum': f'{dest_t.from_units(q["minAmountOut"])} {dest_t.symbol}',
+            'worst-case slippage': f'{args["slippage_bps"]} bps (policy max checked on-chain)',
+            'deposit address': q['depositAddress'],
+            'quote deadline': q.get('deadline') or quote['quoteRequest'].get('deadline'),
+            'recipient / refund': self.config.trader_account,
+        }
         try:
             live_gates.check_live_trade(self.config.execution, notional_usd, spent, guard_allowed=True)
-            self.confirm(live_gates.confirmation_phrase(notional_usd, origin_t.symbol))
+            self.confirm(live_gates.confirmation_phrase(notional_usd, origin_t.symbol), details)
+            deadline = details['quote deadline']
+            if deadline and datetime.fromisoformat(deadline.replace('Z', '+00:00')) <= datetime.now(timezone.utc):
+                raise live_gates.LiveGateError('QUOTE_EXPIRED: the quote deadline passed before confirmation')
         except live_gates.LiveGateError as exc:
             # Nothing was sent. Journal FAILED so the guard frees the PENDING_ENTRY slot instead of blocking entries.
             self.log({'event': 'live_aborted', 'signal_hash': h, 'reason': str(exc)})

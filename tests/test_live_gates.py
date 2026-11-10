@@ -62,6 +62,10 @@ def test_typed_confirmation():
         require_typed_confirmation(phrase, prompt=lambda _: 'yes', is_tty=lambda: True)
     with pytest.raises(LiveGateError, match='interactive terminal'):
         require_typed_confirmation(phrase, prompt=lambda _: phrase, is_tty=lambda: False)
+    shown = []
+    require_typed_confirmation(phrase, {'deposit address': 'dep-1', 'worst-case slippage': '40 bps'},
+                               prompt=lambda _: phrase, is_tty=lambda: True, out=shown.append)
+    assert any('dep-1' in line for line in shown) and any('40 bps' in line for line in shown)
 
 
 def test_deposit_uses_ft_transfer_with_registration():

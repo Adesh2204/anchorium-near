@@ -84,9 +84,11 @@ class FakeOneClick:
         else:
             amount_out, min_out = 1_990_000, 1_985_000
         body = {'correlationId': f'c{len(self.quotes)}', 'timestamp': 't', 'signature': 's',
-                'quoteRequest': {'dry': req.dry, 'originAsset': req.origin_asset, 'appFees': [{'fee': 20}]},
+                'quoteRequest': {'dry': req.dry, 'originAsset': req.origin_asset, 'destinationAsset': req.destination_asset,
+                                 'appFees': [{'fee': 20}]},
                 'quote': {'amountIn': str(req.amount), 'amountOut': str(amount_out), 'minAmountOut': str(min_out),
-                          'timeEstimate': 10, **({} if req.dry else {'depositAddress': 'dep-1'})}}
+                          'timeEstimate': 10, **({} if req.dry else {'depositAddress': 'dep-1',
+                                                                      'deadline': '2099-01-01T00:00:00Z'})}}
         return Quote.from_api(body)
 
     def submit_deposit(self, *a, **k): self.submitted.append(a)
@@ -102,7 +104,8 @@ def update(status, details=None):
     return StatusUpdate(status, 't', 't', FUNDS_LOCATION[status], details or {})
 
 
-def make(tmp_path, chain=None, oneclick=None, writer=True, live=False, confirm=lambda phrase: None, trader=None):
+def make(tmp_path, chain=None, oneclick=None, writer=True, live=False, confirm=lambda phrase, details=None: None,
+         trader=None):
     chain = chain or FakeChain()
     events = []
     config = AgentConfig(execution=ExecutionConfig(live=live, max_trade_usd=Decimal('2')),
@@ -202,8 +205,11 @@ def test_compromised_agent_is_overridden_by_the_contract(tmp_path):
 
 
 class FakeTrader:
-    def __init__(self, fail=False):
-        self.sent, self.fail = [], fail
+    def __init__(self, fail=False, balance=10**30):
+        self.sent, self.fail, self.balance = [], fail, balance
+
+    def ft_balance(self, token, account):
+        return self.balance
 
     def ft_transfer(self, token, receiver, amount, register):
         if self.fail:
@@ -257,7 +263,8 @@ def test_live_success_without_amount_out_needs_review(tmp_path):
 
 
 def test_live_confirmation_mismatch_sends_nothing_and_frees_the_slot(tmp_path):
-    def refuse(phrase):
+    def refuse(phrase, details=None):
+        assert details['deposit address'] == 'dep-1' and 'worst-case slippage' in details
         raise LiveGateError('confirmation did not match')
     agent, chain, events = live_agent(tmp_path, [], confirm=refuse)
     row = agent.process(signal())
@@ -283,3 +290,25 @@ def test_live_requires_agent_key_and_trader_account(tmp_path):
     with pytest.raises(LiveGateError):
         Agent(AgentConfig(execution=ExecutionConfig(live=True, max_trade_usd=Decimal('2'))), FakeChain(),
               FakeOneClick(), CheckpointStore(tmp_path / 'x.sqlite'))
+
+
+def test_live_exit_never_sells_more_than_the_balance(tmp_path):
+    chain = FakeChain(positions=[{'asset': WNEAR, 'state': 'OPEN', 'amount': str(5 * 10**23)}])
+    done = Tracking('dep-1', [update('SUCCESS', {'amountIn': '1', 'amountOut': '1990000'})])
+    agent, chain, _ = make(tmp_path, chain=chain, oneclick=FakeOneClick(tracking=[done]), live=True,
+                           trader=FakeTrader(balance=4 * 10**23))
+    agent.process(signal('SHORT'))
+    assert agent.oneclick.quotes[0].amount == 4 * 10**23
+    assert chain.decisions[0]['quote_id'] == 'c1:dep-1', 'LIVE quote_id carries the deposit address'
+
+
+def test_live_expired_quote_is_aborted_before_deposit(tmp_path):
+    class Expired(FakeOneClick):
+        def quote(self, req):
+            q = super().quote(req)
+            q.raw['quote']['deadline'] = '2000-01-01T00:00:00Z'
+            return q
+    agent, chain, _ = make(tmp_path, oneclick=Expired(tracking=[]), live=True, trader=FakeTrader())
+    agent.process(signal())
+    assert agent.trader_near.sent == []
+    assert 'QUOTE_EXPIRED' in chain.decisions[0]['outcome']['tx_ref']

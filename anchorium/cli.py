@@ -218,6 +218,120 @@ def cmd_run(args) -> int:
         time.sleep(60 - (time.time() % 60) + 2)  # just after the next 1m bar closes
 
 
+def latest_bar_signal(coin: str, signal_type: str) -> sig.Signal:
+    """A human-ordered signal at the latest completed bar (journaled as such; never a strategy signal)."""
+    feed, now = sig.HyperliquidCandles(), int(time.time() * 1000)
+    candles = sig.latest_contiguous(sig.rows_to_candles(sig.window(feed.fetch(coin, now), now), coin, now))
+    last = sig.evaluate_frame(candles).iloc[-1]
+    bar = candles[-1]
+    return sig.Signal(coin=coin, direction='SHORT', signal_type=signal_type, bar_open_ms=bar.timestamp_ms,
+                      bar_close_ms=bar.close_timestamp_ms, close=format(bar.close, 'f'), vwap=str(float(last['VWAP'])),
+                      atr_14=str(float(last['ATR_14'])), ema_9=str(float(last['EMA_9'])),
+                      ema_21=str(float(last['EMA_21'])), source='human-ordered-exit')
+
+
+def cmd_exit(args) -> int:
+    """Human-ordered exit of the open position on --coin (journaled with signal_type MANUAL_EXIT)."""
+    load_dotenv(ROOT / '.env')
+    mode = 'live' if live_gates.ExecutionConfig.from_env(os.environ).live else 'dry'
+    agent, reader, config, oneclick = build(args, onchain=True, store_path=str(ROOT / f'var/agent-{mode}.sqlite'))
+    header(reader, config, oneclick, f'manual exit {args.coin}')
+    if config.execution.live and live_ledger(agent.store)['blocked']:
+        print(live_ledger(agent.store)['blocked']); return 1
+    row = agent.process(latest_bar_signal(args.coin, 'MANUAL_EXIT'))
+    return report_live(row) if config.execution.live else 0
+
+
+def live_ledger(store) -> dict:
+    """The controlled micro-trade budget: one entry, one exit, stop on any refund/failure/review."""
+    rows = store.db.execute("SELECT side, state, data FROM runs WHERE mode = 'LIVE'").fetchall()
+    entries = exits = 0
+    blocked = None
+    for side, state, data in rows:
+        data = json.loads(data)
+        result = data.get('result')
+        sent = state in ('DEPOSIT_PENDING', 'DEPOSITED', 'OUTCOME_PENDING', 'NEEDS_REVIEW') or (
+            state == 'DONE' and result not in ('REJECTED', None))
+        if sent and side == 'BUY':
+            entries += 1
+        if sent and side == 'SELL':
+            exits += 1
+        if state == 'NEEDS_REVIEW' or result in ('REFUNDED', 'FAILED'):
+            blocked = f'STOPPED: a LIVE trade ended {result or state}. Report and get a human decision before any retry.'
+    return {'entries': entries, 'exits': exits, 'blocked': blocked}
+
+
+def report_live(row) -> int:
+    data = row['data']
+    print(f"\nLIVE result: state={row['state']} result={data.get('result')} decision #{data.get('decision_id')}")
+    for key in ('decision_tx_url', 'deposit_tx_url'):
+        if data.get(key):
+            print(f'  {key}: {data[key]}')
+    for step in data.get('timeline') or []:
+        print(f"  {step['status']}: {step['funds_location']}")
+    return 0 if data.get('result') == 'SUCCESS' else 1
+
+
+def cmd_live_trade(args) -> int:
+    """Controlled micro-trade: --leg entry waits for a live LONG signal; --leg exit waits for a SHORT signal on the
+    position (or --manual). Refuses a second entry/exit and stops after any REFUNDED/FAILED."""
+    agent, reader, config, oneclick = build(args, onchain=True, store_path=str(ROOT / 'var/agent-live.sqlite'))
+    if not config.execution.live:
+        print('live-trade needs LIVE=1 DRY_RUN=0 MAX_LIVE_NOTIONAL_USD<=2 TRADER_ACCOUNT_ID=<mainnet account>'); return 2
+    for row in agent.store.recover():
+        print(f"NEEDS_REVIEW {row['signal_hash']}: {row['data']['review_reason']}")
+    ledger = live_ledger(agent.store)
+    if ledger['blocked']:
+        print(ledger['blocked']); return 1
+    if (args.leg == 'entry' and ledger['entries'] >= 1) or (args.leg == 'exit' and ledger['exits'] >= 1):
+        print(f'REFUSED: the {args.leg} of this micro-trade was already used ({ledger}).'); return 1
+    header(reader, config, oneclick, f'LIVE micro-trade: {args.leg}')
+    for row in agent.store.unfinished():
+        if row['state'] in ('DEPOSITED', 'OUTCOME_PENDING'):
+            print('resuming an unfinished LIVE trade'); return report_live(agent.process(sig.Signal(**row['data']['signal'])))
+    coins = args.coins.split(',')
+    if args.leg == 'exit':
+        held = [p for p in reader.positions() if p['mode'] == 'LIVE' and p['state'] == 'OPEN']
+        if not held:
+            print('no open LIVE position to exit'); return 1
+        coins = [c for c, a in sig.SPOT_ASSET.items() if a == held[0]['asset']]
+        if args.manual:
+            return report_live(agent.process(latest_bar_signal(coins[0], 'MANUAL_EXIT')))
+    want = 'LONG' if args.leg == 'entry' else 'SHORT'
+    feed, deadline = sig.HyperliquidCandles(), time.time() + args.wait_minutes * 60
+    print(f'waiting up to {args.wait_minutes} min for a live {want} signal on {",".join(coins)} ...', flush=True)
+    while time.time() < deadline:
+        now = int(time.time() * 1000)
+        for coin in coins:
+            signal, info = sig.evaluate_latest(feed.fetch(coin, now), coin, now)
+            if signal and signal.direction == want:
+                row = agent.process(signal)
+                if row['state'] == 'SKIPPED' or row['data'].get('result') == 'REJECTED':
+                    continue  # the guard said no: keep waiting for the next signal
+                return report_live(row)
+        time.sleep(60 - (time.time() % 60) + 2)
+    print('no qualifying signal before the wait limit; nothing was sent'); return 1
+
+
+def cmd_setup_trader(args) -> int:
+    """Registers the mainnet trader account on the USDC and wNEAR token contracts (NEP-145 storage_deposit)."""
+    from near import Amount, Near  # noqa: PLC0415
+    load_dotenv(ROOT / '.env')
+    account = os.environ.get('TRADER_ACCOUNT_ID')
+    if not account:
+        print('set TRADER_ACCOUNT_ID'); return 2
+    near = Near.from_file(account, 'mainnet')
+    print(f'trader {account}: {near.account(account).amount} on mainnet')
+    for token in ('17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1', 'wrap.near'):
+        if near.view(token, 'storage_balance_of', {'account_id': account}) is not None:
+            print(f'  {token}: already registered'); continue
+        minimum = near.view(token, 'storage_balance_bounds')['min']
+        result = near.call(token, 'storage_deposit', {'account_id': account, 'registration_only': True},
+                           deposit=Amount.yocto(int(minimum)), gas='30 Tgas')
+        print(f'  {token}: registered ({int(minimum) / 1e24} NEAR) https://nearblocks.io/txns/{result.transaction_hash}')
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog='anchorium')
     parser.add_argument('--json', action='store_true', help='print raw JSON events instead of readable lines')
@@ -234,8 +348,17 @@ def main(argv=None) -> int:
     run.add_argument('--once', action='store_true')
     run.add_argument('--verbose', action='store_true')
     run.add_argument('--i-understand-live', dest='live_ok', action='store_true')
+    exit_ = sub.add_parser('exit', help='human-ordered exit of the open position (journaled as MANUAL_EXIT)')
+    exit_.add_argument('--coin', required=True, choices=sorted(sig.SPOT_ASSET))
+    lt = sub.add_parser('live-trade', help='controlled LIVE micro-trade: one entry, one exit')
+    lt.add_argument('--leg', required=True, choices=['entry', 'exit'])
+    lt.add_argument('--coins', default='NEAR,BTC,ETH')
+    lt.add_argument('--manual', action='store_true', help='exit now instead of waiting for a SHORT signal')
+    lt.add_argument('--wait-minutes', type=int, default=120)
+    sub.add_parser('setup-trader', help='register the mainnet trader account on USDC and wNEAR')
     args = parser.parse_args(argv)
-    return {'demo': cmd_demo, 'status': cmd_status, 'run': cmd_run}[args.cmd](args)
+    return {'demo': cmd_demo, 'status': cmd_status, 'run': cmd_run, 'exit': cmd_exit, 'live-trade': cmd_live_trade,
+            'setup-trader': cmd_setup_trader}[args.cmd](args)
 
 
 if __name__ == '__main__':

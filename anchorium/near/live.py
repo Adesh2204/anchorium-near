@@ -77,10 +77,17 @@ def check_live_trade(config: ExecutionConfig, notional_usd: Decimal, spent_live_
         raise LiveGateError(f'session total would reach ${spent_live_usd + notional_usd} > ${config.max_total_usd}')
 
 
-def require_typed_confirmation(phrase: str, *, prompt: Callable[[str], str] = input,
-                               is_tty: Callable[[], bool] = lambda: sys.stdin.isatty()) -> None:
+def require_typed_confirmation(phrase: str, details: Mapping[str, object] | None = None, *,
+                               prompt: Callable[[str], str] = input,
+                               is_tty: Callable[[], bool] = lambda: sys.stdin.isatty(),
+                               out: Callable[[str], None] = print) -> None:
+    """Shows every detail of the deposit, then requires the exact phrase typed by a human."""
     if not is_tty():
         raise LiveGateError('LIVE confirmation needs an interactive terminal')
+    if details:
+        out('\n=== LIVE DEPOSIT: review before confirming ===')
+        for key, value in details.items():
+            out(f'  {key:<22} {value}')
     typed = prompt(f'\nType exactly "{phrase}" to send this deposit (anything else aborts): ')
     if typed.strip() != phrase:
         raise LiveGateError('confirmation did not match: aborted, nothing sent')
