@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anchorium Guard</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --muted: #5d6573; --line: #e2e5ea;
+    --ok: #12805c; --ok-bg: #e5f5ee; --bad: #b42318; --bad-bg: #fdecea; --warn: #9a6700; --warn-bg: #fff4d6;
+    --accent: #2f5bd3; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1216; --panel: #171b21; --ink: #e8ebef; --muted: #98a1ad; --line: #283039;
+      --ok: #4cc38a; --ok-bg: #12291f; --bad: #f97066; --bad-bg: #2d1614; --warn: #f5b546; --warn-bg: #2b2210;
+      --accent: #7c9cff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .banner { padding: 8px 16px; font-weight: 700; letter-spacing: .04em; text-align: center; }
+  .banner.dry { background: var(--warn-bg); color: var(--warn); }
+  .banner.live { background: var(--bad-bg); color: var(--bad); }
+  main { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 8px 0 2px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .sub { color: var(--muted); margin-bottom: 16px; word-break: break-all; }
+  a { color: var(--accent); }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 12px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .big { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; } td, th { padding: 6px 4px; border-bottom: 1px solid var(--line);
+    text-align: left; } th { color: var(--muted); font-weight: 500; }
+  .decision { margin-bottom: 10px; }
+  .dhead { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; margin-bottom: 10px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+  .step { border-left: 3px solid var(--line); padding: 2px 10px; min-width: 0; overflow-wrap: anywhere; }
+  .step.ok { border-color: var(--ok); } .step.bad { border-color: var(--bad); } .step.warn { border-color: var(--warn); }
+  .step b { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .mono { font-family: var(--mono); font-size: 12px; word-break: break-all; }
+  .muted { color: var(--muted); }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div id="banner" class="banner dry">DRY RUN</div>
+<main>
+  <h1>Anchorium Guard</h1>
+  <div class="sub" id="contract">Loading contract state from NEAR testnet...</div>
+
+  <div class="grid">
+    <section class="panel"><h2>Kill switch</h2><div id="killswitch" class="big">...</div>
+      <div class="muted" style="margin-top:6px">Owner-only. Pause blocks new entries; exits of open positions stay possible.
+      The contract also pauses itself at the daily loss cap.</div></section>
+    <section class="panel"><h2>Policy (on-chain)</h2><dl class="kv" id="policy"></dl></section>
+    <section class="panel"><h2>Today (UTC)</h2><dl class="kv" id="today"></dl></section>
+  </div>
+
+  <div class="grid">
+    <section class="panel"><h2>Paper results (dry-run quotes)</h2><dl class="kv" id="paper"></dl></section>
+    <section class="panel"><h2>Live results (NEAR Intents)</h2><dl class="kv" id="live"></dl></section>
+    <section class="panel"><h2>Open positions</h2><div id="positions" class="muted">None</div></section>
+  </div>
+
+  <section class="panel" style="margin-bottom:12px"><h2>Latest signals: unchanged strategy on public 1m candles</h2>
+    <div class="scroll"><table><thead><tr><th>Coin</th><th>Status</th><th>Close</th><th>VWAP</th><th>ATR 14</th><th>Bar (UTC)</th></tr></thead>
+    <tbody id="signals"><tr><td colspan="6" class="muted">Scanning...</td></tr></tbody></table></div></section>
+
+  <h2 style="margin-top:18px">Decision journal (read from the contract, newest first)</h2>
+  <div id="decisions" class="muted">Loading...</div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const usd = (cents) => (cents < 0 ? '-' : '') + '$' + (Math.abs(cents) / 100).toFixed(2);
+const kv = (rows) => rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join('');
+const link = (href, text) => href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>` : '';
+const time = (ms) => new Date(ms).toISOString().replace('T', ' ').slice(0, 16);
+const SYMBOLS = {'nep141:wrap.near': 'wNEAR', 'nep141:eth.bridge.near': 'ETH', 'nep141:nbtc.bridge.near': 'BTC'};
+const short = (a) => SYMBOLS[a] || a.replace('nep141:', '');
+const num = (v) => Number(v).toPrecision(6).replace(/\.?0+$/, '');
+
+function book(b) {
+  const closed = b.closed_trades;
+  return kv([['Decisions', b.decisions], ['Allowed / rejected', `${b.allowed} / ${b.rejected}`],
+    ['Contract overrides', b.verdict_overrides], ['Closed trades', closed],
+    ['Win rate', closed ? Math.round(100 * b.wins / closed) + '%' : 'n/a'],
+    ['Realized PnL', usd(b.realized_pnl_usd_cents)], ['Max drawdown', usd(b.max_drawdown_usd_cents)],
+    ['Refunded / failed', `${b.refunded} / ${b.failed}`]]);
+}
+
+async function overview() {
+  const o = await (await fetch('/api/overview')).json();
+  const banner = $('banner');
+  banner.textContent = o.banner; banner.className = 'banner ' + (o.live ? 'live' : 'dry');
+  $('contract').innerHTML = `${link(o.contract_url, o.contract)} on ${esc(o.network)} &middot; owner ${esc(o.roles.owner)}
+    &middot; agent ${link(o.agent_keys_url, o.roles.agent)} (function-call key only) &middot;
+    code_hash <span class="mono">${esc(o.code_hash)}</span>`;
+  const p = o.policy;
+  $('killswitch').innerHTML = p.paused ? '<span class="pill bad">PAUSED</span>' : '<span class="pill ok">ACTIVE</span>';
+  $('policy').innerHTML = kv([['Max per trade', usd(p.max_notional_per_trade_usd_cents)],
+    ['Entries per day', p.max_trades_per_day], ['Daily loss cap', usd(p.max_daily_loss_usd_cents)],
+    ['Max slippage', p.max_slippage_bps + ' bps'], ['Cooldown', p.cooldown_secs + ' s'],
+    ['Open positions max', p.max_open_positions], ['Assets', p.allowed_assets.map(short).join(', ')]]);
+  const t = o.stats.today;
+  $('today').innerHTML = kv([['Decisions', t.decisions], ['Entries', t.entries],
+    ['Realized PnL', usd(t.realized_pnl_usd_cents)], ['Total journaled', o.stats.total_decisions]]);
+  $('paper').innerHTML = book(o.stats.dry_run);
+  $('live').innerHTML = book(o.stats.live);
+  $('positions').innerHTML = o.positions.length ? o.positions.map((x) =>
+    `<div><span class="pill ${x.state === 'OPEN' ? 'ok' : 'warn'}">${esc(x.state)}</span> ${esc(short(x.asset))}
+     ${esc(x.mode)} &middot; cost ${usd(x.cost_usd_cents)} &middot; entry #${x.entry_decision_id}</div>`).join('') : 'None';
+}
+
+async function signals() {
+  const s = await (await fetch('/api/signals')).json();
+  $('signals').innerHTML = s.coins.map((c) => {
+    const pill = c.signal ? `<span class="pill ${c.signal.direction === 'LONG' ? 'ok' : 'bad'}">${esc(c.signal.signal_type)}</span>`
+      : `<span class="muted">${esc(c.status)}</span>`;
+    return `<tr><td>${esc(c.coin)}</td><td>${pill}</td><td>${esc(c.close ?? '')}</td>
+      <td>${c.vwap ? Number(c.vwap).toFixed(4) : ''}</td><td>${c.atr_14 ? Number(c.atr_14).toFixed(4) : ''}</td>
+      <td>${c.last_bar_open_ms ? time(c.last_bar_open_ms) : ''}</td></tr>`;
+  }).join('');
+}
+
+function decisionCard(d) {
+  const q = d.local.quote, sigl = d.local.signal, o = d.outcome;
+  const verdict = d.allowed ? '<span class="pill ok">ALLOWED</span>' : `<span class="pill bad">REJECTED ${esc(d.reason)}</span>`;
+  const override = d.agent_allowed && !d.allowed ? ' <span class="pill warn">contract overrode the agent</span>' : '';
+  const signalStep = sigl ? `${esc(sigl.coin)} ${esc(sigl.signal_type)} @ ${esc(sigl.close)}<div class="muted">bar ${time(sigl.bar_open_ms)}</div>`
+    : `<span class="muted mono">${esc(d.signal_hash.slice(0, 16))}...</span>`;
+  const quoteStep = q ? `${num(q.amount_in)} ${esc(q.in_symbol)} &rarr; ${num(q.amount_out)} ${esc(q.out_symbol)}
+      <div class="muted">worst case ${q.worst_case_slippage_bps} bps &middot; fee ${q.app_fee_bps} bps${q.dry ? ' &middot; dry' : ''}</div>`
+    : `<span class="muted">${esc(d.quote_id)}</span>`;
+  const funds = d.funds_timeline.map((s) => `<div><b style="display:inline">${esc(s.status)}</b>: ${esc(s.funds_location)}</div>`).join('');
+  const lastStatus = d.funds_timeline.length ? d.funds_timeline[d.funds_timeline.length - 1].status : '';
+  const fundsClass = lastStatus === 'NOT_SENT' ? '' : ['SUCCESS', 'DRY_RUN'].includes(lastStatus) ? 'ok' : ['REFUNDED', 'FAILED', 'INCOMPLETE_DEPOSIT', 'UNKNOWN'].includes(lastStatus) ? 'bad' : 'warn';
+  const outcomeStep = o ? `${esc(o.status)}${o.realized_pnl_usd_cents != null ? ' &middot; PnL ' + usd(o.realized_pnl_usd_cents) + (d.mode === 'DRY_RUN' ? ' (paper)' : '') : ''}
+      <div class="mono muted">${esc(o.tx_ref)}</div>${link(d.local.outcome_tx, 'outcome tx')}`
+    : (d.allowed ? '<span class="muted">pending</span>' : '<span class="muted">none (rejected)</span>');
+  return `<section class="panel decision">
+    <div class="dhead"><strong>#${d.id}</strong> ${esc(d.side)} ${esc(short(d.asset))} ${usd(d.notional_usd_cents)}
+      <span class="pill ${d.mode === 'LIVE' ? 'bad' : 'warn'}">${esc(d.mode)}</span> ${verdict}${override}
+      <span class="muted">${time(d.timestamp_ms)} UTC</span> ${link(d.local.decision_tx, 'decision tx')}
+      ${link(d.local.deposit_tx, 'mainnet deposit tx')} ${link(d.intents_explorer, 'NEAR Intents explorer')}</div>
+    <div class="steps">
+      <div class="step">${'<b>Signal</b>' + signalStep}</div>
+      <div class="step ${d.allowed ? 'ok' : 'bad'}"><b>Guard verdict</b>${esc(d.reason)}<div class="muted">agent said ${d.agent_allowed ? 'allowed' : 'no'}: ${esc(d.agent_reason)}</div></div>
+      <div class="step"><b>Quote (1Click)</b>${quoteStep}</div>
+      <div class="step ${fundsClass}"><b>Where the funds are</b>${funds}</div>
+      <div class="step ${o ? (['SUCCESS', 'DRY_RUN'].includes(o.status) ? 'ok' : 'bad') : ''}"><b>Outcome (on-chain)</b>${outcomeStep}</div>
+    </div></section>`;
+}
+
+async function decisions() {
+  const rows = await (await fetch('/api/decisions?limit=25')).json();
+  $('decisions').innerHTML = rows.length ? rows.map(decisionCard).join('') : 'No decisions journaled yet.';
+}
+
+async function refresh() {
+  try { await overview(); await decisions(); } catch (e) { $('contract').textContent = 'Error: ' + e; }
+}
+refresh(); signals();
+setInterval(refresh, 15000); setInterval(signals, 60000);
+</script>
+</body>
+</html>

@@ -17,13 +17,16 @@ dependencies = [
     # NEAR + 1Click
     "near-kit==1.3.0",   # Python NEAR client listed at docs.near.org/tools/near-api (imported as `near`)
     "httpx==0.28.1",
+    # Dashboard
+    "fastapi==0.121.1",
+    "uvicorn==0.38.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest==8.4.1"]
 
 [tool.setuptools.packages.find]
-include = ["anchorium*"]
+include = ["anchorium*", "dashboard*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

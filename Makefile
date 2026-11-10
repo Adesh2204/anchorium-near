@@ -47,5 +47,5 @@ status: ## Policy, stats and latest decisions read from the contract (keyless)
 agent: ## Agent loop on live public candles (DRY_RUN; journals with the agent key)
 	$(VPY) -m anchorium run
 
-dashboard: ## Read-only dashboard on http://127.0.0.1:8000
-	@echo "dashboard: not implemented yet (Phase 5)"; exit 1
+dashboard: ## Read-only dashboard on http://127.0.0.1:8000 (reads the testnet contract)
+	$(VPY) -m uvicorn dashboard.app:app --host 127.0.0.1 --port 8000

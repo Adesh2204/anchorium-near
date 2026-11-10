@@ -135,9 +135,13 @@ class Agent:
         if compromised:
             agent_ok, agent_reason = True, 'COMPROMISED_AGENT_SIMULATION'
 
+        # LIVE quotes carry the deposit address so anyone can rebuild the intent timeline from the chain alone
+        # (GET /v0/status?depositAddress=...). Format: "<correlationId>:<depositAddress>".
+        quote_id = 'none' if not quote else (
+            f'{quote.quote_id}:{quote.deposit_address}' if quote.deposit_address else quote.quote_id)
         args = {'signal_hash': h, 'asset': asset, 'side': side, 'mode': self.config.mode,
                 'notional_usd_cents': notional_cents, 'slippage_bps': slippage,
-                'quote_id': quote.quote_id if quote else 'none', 'agent_allowed': agent_ok,
+                'quote_id': quote_id, 'agent_allowed': agent_ok,
                 'agent_reason': agent_reason[:128], 'rationale_hash': None}
         quote_data = quote.raw if quote else None
         self.store.advance(h, 'DECISION_PENDING', side=side, decision_args=args, quote=quote_data)
