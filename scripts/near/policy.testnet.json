@@ -1,0 +1,17 @@
+{
+  "allowed_assets": [
+    "nep141:wrap.near",
+    "nep141:eth.bridge.near",
+    "nep141:nbtc.bridge.near"
+  ],
+  "max_notional_per_trade_usd_cents": 200,
+  "max_trades_per_day": 10,
+  "max_daily_loss_usd_cents": 100,
+  "max_slippage_bps": 100,
+  "cooldown_secs": 60,
+  "max_open_positions": 1,
+  "max_decisions_per_day": 100,
+  "quote_asset": "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+  "quote_asset_decimals": 6,
+  "paused": false
+}
