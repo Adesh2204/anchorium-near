@@ -10,7 +10,7 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 - [x] Phase 2: guard contract (unit + sandbox tests, testnet deploy, agent sub-account with function-call key)
 - [x] Phase 3: 1Click executor (dry-run default, every status, mocked tests, one real dry quote)
 - [x] Phase 4: orchestrator + `make demo` (Path A) + `make demo-onchain` (Path B) + REPLAY. Checkpoint 2 is waiting for the user
-- [ ] Phase 5: dashboard
+- [x] Phase 5: dashboard (real screenshots after the live trade)
 - [ ] Phase 6: README + docs/JUDGES.md
 - [ ] Phase 7: fresh-clone self-judging + review pass
 - [ ] Phase 8: submission pack (Checkpoint 3)
@@ -37,6 +37,7 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 | 2026-11-10 22:03 | Path A checks run against `demo.anchorium-team.testnet` (same wasm and code_hash, no journaling key); the real journal is read from `guard.anchorium-team.testnet` | The agent's open paper position on the main guard made Path A output depend on live state (POSITION_ALREADY_OPEN skips) |
 | 2026-11-10 22:05 | An aborted LIVE trade (cap or confirmation) journals a FAILED outcome | Otherwise the PENDING_ENTRY position would block all later entries |
 | 2026-11-10 22:05 | Exit rule: sell on the next SHORT signal from the unchanged brain; no stop/target from the original trader | That management code is in the legacy modules that are not vendored |
+| 2026-11-10 22:27 | Measured gap between 1Click `/v0/tokens` reference prices and executable quotes: 0.5 to 1%, so a 100 bps cap rejects about 1 in 3 $2 trades (exits 102 and 162 bps rejected) | Raising `max_slippage_bps` is the owner's decision: asked the user |
 | 2026-11-10 | Report the observed 1Click unauthenticated fee: 20 bps (`appFees` in a real dry quote); the docs say 0.25% | The user's GO, point 5 |
 | 2026-11-10 | Python to NEAR: try `near-kit` (Python) first; switch to a `near-api-js` sidecar if blocked for more than 2 h | The user's GO, point 4 |
 
@@ -57,3 +58,6 @@ Times are commit times (`git log`) or `date` output.
 - 2026-11-10 22:03 IST: demo guard deployed. `make demo` (Path A) is deterministic. `make test`: freeze OK, 81 Python, 40 unit + 2 sandbox contract tests pass.
 - 2026-11-10 22:19 IST: Checkpoint 2 answered (live micro-trade YES with conditions; delete the agent full-access key YES). Mainnet trading account `b4443ef93760d13acb528210f796a3f0143abbbb93a90047d932865f91b966ca` created (implicit; key only in ~/.near-credentials/mainnet, never printed). Waiting for funding.
 - 2026-11-10 22:19 IST: agent full-access key `ed25519:CMjy...` deleted (tx 86WYN7RoR1PNERjpSzspQXJ6uDX2fqnGP4m3LLrGyPq8) after confirming the owner's full-access key file matches its on-chain key. agent.anchorium-team.testnet now has 1 key: function-call only.
+- 2026-11-10 22:24 IST: dashboard (FastAPI + static page) reads the policy, kill switch, stats and journal from the contract. 4 tests.
+- 2026-11-10 22:26 IST: manual dry exit of the paper NEAR position rejected again on-chain (#3, worst case 102 bps > 100). The paper position stays open and blocks a LIVE entry (max_open_positions = 1).
+- 2026-11-10 22:27 IST: live micro-trade tooling committed (86d99da). 87 Python tests pass. Waiting for the mainnet account to be funded.
