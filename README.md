@@ -174,6 +174,9 @@ contract is idempotent per `signal_hash`. An interrupted LIVE deposit is parked 
   kill switch never traps a position.
 - **Overrides.** A decision the agent marks "allowed" but the contract rejects is stored as rejected and emits
   `verdict_override`.
+- **Paper and live share the risk counters.** The daily entry count, the daily loss cap (and its auto-pause) and
+  the open-position limit count DRY_RUN and LIVE decisions together, so a paper loss can pause live entries for
+  the day. Only the result books in `get_stats` are separate.
 - Every decision and outcome is a NEP-297 event.
 
 **What the agent enforces** (`anchorium/near/live.py`, `orchestrator.py`):
