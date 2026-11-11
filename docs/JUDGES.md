@@ -7,7 +7,7 @@ prices, decision counts) change over time. The shape of the output and the verdi
 
 ```sh
 git clone https://github.com/Adesh2204/anchorium-near && cd anchorium-near
-make setup            # -> setup OK: Python 3.x.y   (needs Python >= 3.11)
+make setup            # -> setup OK: Python 3.x.y   (needs Python >= 3.12; `make setup PY=python3.12` if your default python3 is older)
 ```
 
 ## 1. The strategy is prior work, copied unchanged (10 s)

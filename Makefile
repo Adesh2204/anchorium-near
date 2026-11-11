@@ -1,5 +1,6 @@
 # Anchorium: NEAR HACKATHON entry. Run `make help`.
-PY      ?= python3
+# The pinned numpy 2.5.2 needs Python >= 3.12: prefer an explicit 3.13/3.12 over an older default python3.
+PY      ?= $(shell command -v python3.13 || command -v python3.12 || command -v python3)
 VENV    := .venv
 VPY     := $(VENV)/bin/python
 CONTRACT_DIR := contracts/anchorium-guard
@@ -9,8 +10,8 @@ CONTRACT_DIR := contracts/anchorium-guard
 help:
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
-setup: ## Create .venv and install the Python package (Python >= 3.11)
-	@$(PY) -c 'import sys; assert sys.version_info >= (3, 11), "Python >= 3.11 required, found " + sys.version.split()[0]'
+setup: ## Create .venv and install the Python package (Python >= 3.12)
+	@$(PY) -c 'import sys; assert sys.version_info >= (3, 12), "Python >= 3.12 required (numpy 2.5.2), found " + sys.version.split()[0] + "; run: make setup PY=/path/to/python3.12"'
 	$(PY) -m venv $(VENV)
 	$(VPY) -m pip install -q --upgrade pip
 	$(VPY) -m pip install -q -e '.[dev]'

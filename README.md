@@ -82,7 +82,7 @@ NEAR AI Cloud and Chain Signatures are **not** used yet (see the roadmap).
 
 ## Quickstart for judges
 
-Prerequisites: Python ≥ 3.11 (tested with 3.12.5), `make`, `git`, internet access. Path B also needs
+Prerequisites: Python ≥ 3.12 (tested with 3.12.5; the pinned numpy 2.5.2 needs 3.12), `make`, `git`, internet access. Path B also needs
 [near-cli-rs](https://github.com/near/near-cli-rs) 0.31.1. Rust is needed only to rebuild or test the contract:
 toolchain 1.95.0 is pinned in `rust-toolchain.toml`, plus cargo-near 0.23.0.
 
