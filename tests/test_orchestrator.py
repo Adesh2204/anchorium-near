@@ -76,6 +76,8 @@ class FakeOneClick:
 
     def token(self, asset): return TOKENS[asset]
 
+    def tokens(self, refresh=False): return TOKENS
+
     def quote(self, req):
         self.quotes.append(req)
         if req.origin_asset == USDC:  # $2 -> 0.5 wNEAR at $4

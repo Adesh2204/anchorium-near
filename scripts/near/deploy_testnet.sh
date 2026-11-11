@@ -19,7 +19,7 @@ set -euo pipefail
 GUARD="${GUARD_PREFIX:-guard}.$OWNER"
 AGENT="agent.$OWNER"
 NETWORK=testnet
-RPC="${NEAR_RPC_URL:-https://rpc.testnet.near.org}"
+RPC="${NEAR_RPC_URL:-https://rpc.testnet.fastnear.com}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 POLICY_FILE="${POLICY_FILE:-$HERE/policy.testnet.json}"

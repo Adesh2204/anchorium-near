@@ -16,6 +16,11 @@ from typing import Any
 from near import KeyPairSigner, Near, parse_key
 
 AGENT_METHODS = frozenset({'record_decision', 'record_outcome'})
+#: rpc.{testnet,mainnet}.near.org are deprecated and rate-limit clients; FastNEAR is a listed public provider.
+DEFAULT_RPC = {
+    'testnet': 'https://rpc.testnet.fastnear.com',
+    'mainnet': 'https://rpc.mainnet.fastnear.com',
+}
 EXPLORER = {
     'testnet': 'https://testnet.nearblocks.io',
     'mainnet': 'https://nearblocks.io',
@@ -39,7 +44,7 @@ class GuardReader:
                  near: Near | None = None):
         self.contract_id = contract_id
         self.network = network
-        self.near = near or Near(network, rpc_url=rpc_url)
+        self.near = near or Near(network, rpc_url=rpc_url or DEFAULT_RPC.get(network))
 
     def view(self, method: str, args: dict[str, Any] | None = None) -> Any:
         return self.near.view(self.contract_id, method, args or {})
@@ -73,7 +78,7 @@ class GuardReader:
 
 def load_function_call_signer(agent_id: str, guard_id: str, network: str = 'testnet',
                               credentials_dir: Path | None = None, near: Near | None = None) -> KeyPairSigner:
-    near = near or Near(network)
+    near = near or Near(network, rpc_url=DEFAULT_RPC.get(network))
     base = Path(credentials_dir or Path.home() / '.near-credentials') / network / agent_id
     candidates = []
     for info in near.access_keys(agent_id):

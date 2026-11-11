@@ -90,6 +90,7 @@ class Agent:
 
         self.log({'event': 'signal', 'signal_hash': h, 'mode': self.config.mode, **signal.to_dict()})
         asset = signal.spot_asset
+        self.oneclick.tokens(refresh=True)  # the slippage gate needs current reference prices, not a startup cache
         policy = self.reader.policy()
         if signal.direction == 'LONG':
             side, origin, destination = 'BUY', USDC, asset
@@ -150,7 +151,8 @@ class Agent:
                 'quote_id': quote_id, 'agent_allowed': agent_ok,
                 'agent_reason': agent_reason[:128], 'rationale_hash': None}
         quote_data = quote.raw if quote else None
-        self.store.advance(h, 'DECISION_PENDING', side=side, decision_args=args, quote=quote_data)
+        self.store.advance(h, 'DECISION_PENDING', side=side, decision_args=args, quote=quote_data,
+                           ref_prices_usd={'in': str(origin_t.price_usd), 'out': str(dest_t.price_usd)})
         if self.writer is None:
             self.log({'event': 'would_journal', 'signal_hash': h, 'contract': self.reader.contract_id,
                       'method': 'record_decision', 'args': args,

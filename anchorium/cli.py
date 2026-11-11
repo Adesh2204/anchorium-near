@@ -23,7 +23,8 @@ from anchorium.agent import signals as sig
 from anchorium.agent.checkpoint import CheckpointStore
 from anchorium.agent.orchestrator import Agent, AgentConfig, explorer_summary
 from anchorium.near import live as live_gates
-from anchorium.near.guard_client import GuardReader, GuardWriter, account_url, load_function_call_signer
+from anchorium.near.guard_client import (DEFAULT_RPC, GuardReader, GuardWriter, account_url,
+                                         load_function_call_signer)
 from anchorium.near.intents import OneClickClient
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,7 +114,7 @@ def build(args, *, onchain: bool, store_path: str, guard_id: str | None = None):
     trader_account = os.environ.get('TRADER_ACCOUNT_ID') or None
     if execution.live:
         from near import Near  # noqa: PLC0415
-        trader = Near.from_file(trader_account, 'mainnet')
+        trader = Near.from_file(trader_account, 'mainnet', rpc_url=DEFAULT_RPC['mainnet'])
     config = AgentConfig(network=network, execution=execution, trader_account=trader_account,
                          order_usd=Decimal(os.environ.get('ORDER_USD', '2.00')),
                          quote_tolerance_bps=int(os.environ.get('QUOTE_SLIPPAGE_TOLERANCE_BPS', '10')),
@@ -220,14 +221,7 @@ def cmd_run(args) -> int:
 
 def latest_bar_signal(coin: str, signal_type: str) -> sig.Signal:
     """A human-ordered signal at the latest completed bar (journaled as such; never a strategy signal)."""
-    feed, now = sig.HyperliquidCandles(), int(time.time() * 1000)
-    candles = sig.latest_contiguous(sig.rows_to_candles(sig.window(feed.fetch(coin, now), now), coin, now))
-    last = sig.evaluate_frame(candles).iloc[-1]
-    bar = candles[-1]
-    return sig.Signal(coin=coin, direction='SHORT', signal_type=signal_type, bar_open_ms=bar.timestamp_ms,
-                      bar_close_ms=bar.close_timestamp_ms, close=format(bar.close, 'f'), vwap=str(float(last['VWAP'])),
-                      atr_14=str(float(last['ATR_14'])), ema_9=str(float(last['EMA_9'])),
-                      ema_21=str(float(last['EMA_21'])), source='human-ordered-exit')
+    return sig.latest_bar_signal(sig.HyperliquidCandles(), coin, signal_type, source='human-ordered-exit')
 
 
 def cmd_exit(args) -> int:
@@ -313,6 +307,36 @@ def cmd_live_trade(args) -> int:
     print('no qualifying signal before the wait limit; nothing was sent'); return 1
 
 
+PAPER_DIR = ROOT / 'var/paper_trade'
+PAPER_REPORT = ROOT / 'docs/paper_trade_report.md'
+
+
+def cmd_paper_trade(args) -> int:
+    """One paper round trip (DRY_RUN): live signals, real dry quotes, real testnet journal, paper fills."""
+    from anchorium import paper_trade as pt  # noqa: PLC0415
+    load_dotenv(ROOT / '.env')
+    if live_gates.ExecutionConfig.from_env(os.environ).live:
+        print('paper-trade is DRY_RUN only; unset LIVE'); return 2
+    args.session = args.session or 'paper-trade'
+    agent, reader, config, oneclick = build(args, onchain=True, store_path=str(PAPER_DIR / f'{args.session}.sqlite'))
+    session = pt.Session(PAPER_DIR / f'{args.session}.json')
+    if args.report_only:
+        return write_paper_report(agent, reader, session)
+    header(reader, config, oneclick, f'paper trade (session {args.session})')
+    pt.run(agent, reader, coins=args.coins.split(','), session=session, paper_inr=Decimal(args.inr),
+           max_hold_s=int(args.max_hold_hours * 3600))
+    return write_paper_report(agent, reader, session)
+
+
+def write_paper_report(agent, reader, session) -> int:
+    from anchorium import paper_trade as pt  # noqa: PLC0415
+    state = session.load()
+    data = pt.gather(agent.store, state, agent_id=reader.roles()['agent'])
+    PAPER_REPORT.write_text(pt.render_report(data, state, guard=reader.contract_id, network=reader.network))
+    print(f'report written: {PAPER_REPORT.relative_to(ROOT)}')
+    return 0
+
+
 def cmd_setup_trader(args) -> int:
     """Registers the mainnet trader account on the USDC and wNEAR token contracts (NEP-145 storage_deposit)."""
     from near import Amount, Near  # noqa: PLC0415
@@ -320,7 +344,7 @@ def cmd_setup_trader(args) -> int:
     account = os.environ.get('TRADER_ACCOUNT_ID')
     if not account:
         print('set TRADER_ACCOUNT_ID'); return 2
-    near = Near.from_file(account, 'mainnet')
+    near = Near.from_file(account, 'mainnet', rpc_url=DEFAULT_RPC['mainnet'])
     print(f'trader {account}: {near.account(account).amount} on mainnet')
     for token in ('17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1', 'wrap.near'):
         if near.view(token, 'storage_balance_of', {'account_id': account}) is not None:
@@ -356,9 +380,15 @@ def main(argv=None) -> int:
     lt.add_argument('--manual', action='store_true', help='exit now instead of waiting for a SHORT signal')
     lt.add_argument('--wait-minutes', type=int, default=120)
     sub.add_parser('setup-trader', help='register the mainnet trader account on USDC and wNEAR')
+    pt = sub.add_parser('paper-trade', help='one DRY_RUN round trip with a paper INR balance, then a report')
+    pt.add_argument('--inr', default='500', help='paper balance in INR (converted at the live USD/INR rate)')
+    pt.add_argument('--coins', default='NEAR,BTC,ETH')
+    pt.add_argument('--max-hold-hours', type=float, default=4.0)
+    pt.add_argument('--session', help='session name (separate state + checkpoint store); default paper-trade')
+    pt.add_argument('--report-only', action='store_true', help='regenerate the report from the recorded session')
     args = parser.parse_args(argv)
     return {'demo': cmd_demo, 'status': cmd_status, 'run': cmd_run, 'exit': cmd_exit, 'live-trade': cmd_live_trade,
-            'setup-trader': cmd_setup_trader}[args.cmd](args)
+            'setup-trader': cmd_setup_trader, 'paper-trade': cmd_paper_trade}[args.cmd](args)
 
 
 if __name__ == '__main__':

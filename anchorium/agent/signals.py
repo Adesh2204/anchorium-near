@@ -168,3 +168,17 @@ def load_replay(path: Path) -> list[ReplayCase]:
     return [ReplayCase(name=c['name'], coin=c['coin'], now_ms=c['now_ms'],
                        expected_signal_type=c['expected_signal_type'], rows=data['responses'][c['coin']]['rows'])
             for c in data['cases']]
+
+
+def latest_bar_signal(feed: HyperliquidCandles, coin: str, signal_type: str, source: str,
+                      now_ms: int | None = None) -> Signal:
+    """A non-strategy SHORT (exit) signal at the latest completed bar: a human-ordered or timer exit. It is
+    journaled with its own `signal_type` and `source`, never presented as a strategy signal."""
+    now = now_ms if now_ms is not None else int(time.time() * 1000)
+    candles = latest_contiguous(rows_to_candles(window(feed.fetch(coin, now), now), coin, now))
+    last = evaluate_frame(candles).iloc[-1]
+    bar = candles[-1]
+    return Signal(coin=coin, direction='SHORT', signal_type=signal_type, bar_open_ms=bar.timestamp_ms,
+                  bar_close_ms=bar.close_timestamp_ms, close=format(bar.close, 'f'), vwap=str(float(last['VWAP'])),
+                  atr_14=str(float(last['ATR_14'])), ema_9=str(float(last['EMA_9'])),
+                  ema_21=str(float(last['EMA_21'])), source=source)
