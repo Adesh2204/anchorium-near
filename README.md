@@ -18,7 +18,9 @@ the user's own account.
 
   ![Anchorium dashboard](docs/screenshots/dashboard.png)
 
-- A paper trade on live signals (BTC, 116 min, −₹2.10 on ₹500 after fees), with every fee itemized: [docs/paper_trade_report.md](docs/paper_trade_report.md)
+- Two paper trades on live signals, with every fee itemized:
+  - BTC, exit on the next SHORT signal: 116 min, **−₹2.10** on ₹500 after fees ([docs/paper_trade_report.md](docs/paper_trade_report.md))
+  - NEAR, exit only once the quote's guaranteed output covers every cost + $0.01: 3 min, **+₹1.97** on ₹500 after fees and gas ([docs/paper_trade_profit_report.md](docs/paper_trade_profit_report.md))
 
 ## How NEAR is used
 
@@ -71,12 +73,20 @@ unauthenticated fee (`appFees`); the 1Click docs say 0.25%.
 
 | 5 | Paper trade: BTC `PULLBACK_LONG`, BUY $2.00, worst case 79 bps | ALLOWED, paper fill journaled | [ELDUBjSm…](https://testnet.nearblocks.io/txns/ELDUBjSm73nTw1VfExSh9BJcWS6n4DLG1LHEAizmANTn), outcome [AKBo3xd6…](https://testnet.nearblocks.io/txns/AKBo3xd6CjUvZw6pfsDucKry1JLoN7pUFZBywVTNr6q5) |
 | 6 | Paper trade: BTC `BREAKDOWN_SHORT` 116 min later, SELL, worst case 58 bps | ALLOWED; the contract computed paper P&L −$0.03 | [6Ed83xoJ…](https://testnet.nearblocks.io/txns/6Ed83xoJ3nub8SYyrq7UZd8dKhmWmxAvE4QpGHLwQTVu), outcome [96PCGVAr…](https://testnet.nearblocks.io/txns/96PCGVArDgYZ3KJqBzMGqt8TDRrDbj71jUfKbMse2evH) |
+| 7 | Paper trade 2: NEAR `BREAKOUT_LONG`, BUY $2.00, worst case 94 bps | ALLOWED, paper fill journaled | [CrSDywAW…](https://testnet.nearblocks.io/txns/CrSDywAWzs3vC9jPn1LKRXa2PtK2HrbXHRNrUJL5RGah), outcome [4KvDD7pt…](https://testnet.nearblocks.io/txns/4KvDD7ptaPtNTm7Szx8CqH8dFeVQbuZivtNH6dpoJcKJ) |
+| 8 | Paper trade 2: NEAR `PROFIT_EXIT` 3 min later, SELL, worst case 0 bps | ALLOWED; the contract computed paper P&L +$0.02 | [8sywP2Qr…](https://testnet.nearblocks.io/txns/8sywP2Qr7RsqxfhRze8xXr1GxkKdien6835KqobppBRb), outcome [8wWznqNp…](https://testnet.nearblocks.io/txns/8wWznqNpFuEcqv8NKecRAHfLjJ7fKGDCFbU34chKrU79) |
 
-**Paper trade result (#5 and #6), a loss.** A ₹500 paper balance traded $2.00 and kept the rest as cash. BTC
-moved +$0.0022 on the quantity held, but 1Click fees ($0.0080) and slippage against the reference price
-($0.0149) cost more. The net result was **−$0.0224 (−₹2.10, −0.42% of ₹500)** after estimated gas. Every figure
-and fee is itemized in [docs/paper_trade_report.md](docs/paper_trade_report.md). `make status` lists the latest
-decisions.
+**Paper trade 1 (#5 and #6), a loss.** A ₹500 paper balance traded $2.00 and kept the rest as cash. BTC barely
+moved, and 1Click fees ($0.0080) plus slippage cost more than the move. The net result was **−$0.0224 (−₹2.10,
+−0.42% of ₹500)** after estimated gas ([docs/paper_trade_report.md](docs/paper_trade_report.md)).
+
+**Paper trade 2 (#7 and #8), a profit.** A $2 round trip costs about 1% here, so the second session used an
+execution rule: sell only when a dry exit quote's *guaranteed* output (`minAmountOut`, after 1Click's fee and
+slippage) covers the $2 paid, both deposits' estimated gas and $0.01. NEAR rose about 1.6% in 3 minutes after a
+`BREAKOUT_LONG`: gross +$0.0317 against the market price, fee −$0.0080, spread −$0.0011, gas −$0.0016, net
+**+$0.0210 (+₹1.97, +0.39% of ₹500)** ([docs/paper_trade_profit_report.md](docs/paper_trade_profit_report.md)).
+The rule makes a *closed* trade profitable by construction, but it has no stop: a trade whose price never recovers
+stays open at a loss. Two trades say nothing about the strategy's edge. `make status` lists the latest decisions.
 
 NEAR AI Cloud and Chain Signatures are **not** used yet (see the roadmap).
 
@@ -118,7 +128,9 @@ grants the agent a function-call key, and runs the same replay with **real** `re
 - `make agent` runs the live loop on current candles. It stays DRY_RUN but journals with the agent key, so only
   the owner of a deployment can use it.
 - `python -m anchorium paper-trade --inr 500` runs the paper session behind
-  [docs/paper_trade_report.md](docs/paper_trade_report.md).
+  [docs/paper_trade_report.md](docs/paper_trade_report.md). Add `--coins NEAR --exit-rule PROFIT_TARGET
+  --target-usd 0.01 --cutoff <ISO time> --session paper-profit --report docs/paper_trade_profit_report.md` for the
+  profit-target session.
 
 ## Architecture
 
@@ -206,7 +218,7 @@ deposit.
 | Command | What | Result (2026-11-11) |
 |---|---|---|
 | `make freeze` | the vendored strategy is byte-identical; freeze manifest checks | pass (13 files, 28 parameters) |
-| `make test-py` | Python: 1Click client (mocked), LIVE gates, signal parity against the original source, orchestrator incl. crash/resume, paper session, dashboard | **91 passed**, 1 deselected (network) |
+| `make test-py` | Python: 1Click client (mocked), LIVE gates, signal parity against the original source, orchestrator incl. crash/resume, paper session, dashboard | **94 passed**, 1 deselected (network) |
 | `.venv/bin/python -m pytest -m network` | one real 1Click dry quote | opt-in |
 | `make contract-test` | Rust unit tests + sandbox tests on a local NEAR node | **40 passed** + **2 passed** |
 | `make test` | all of the above except the network test | |

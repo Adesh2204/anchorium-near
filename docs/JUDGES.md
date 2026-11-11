@@ -118,7 +118,7 @@ print(s)"
 ## 6. Tests (1–2 min)
 
 ```sh
-make test-py          # -> 91 passed, 1 deselected
+make test-py          # -> 94 passed, 1 deselected
 make contract-test    # -> 40 passed (unit), 2 passed (sandbox); needs Rust 1.95 + downloads a local NEAR node
 ```
 

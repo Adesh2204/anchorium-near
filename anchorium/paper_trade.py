@@ -425,6 +425,28 @@ def render_report(g: dict[str, Any], state: dict[str, Any], *, guard: str, netwo
           f'journaling it: it guaranteed {x["usdc_min"]} USDC and the paper fill is its `amountOut`, '
           f'{x["usdc"]} USDC.')
         a('')
+    a('## The same result against the market price')
+    a('')
+    m_in, m_out = Decimal(e['signal']['close']), Decimal(x['signal']['close'])
+    m_gross = e['quantity'] * (m_out - m_in)
+    m_costs = m_gross - g['net_usdc_before_gas']
+    fees = e['fee_usd'] + x['fee_usd']
+    a('1Click\'s `/v0/tokens` reference prices are coarse and can lag a fast move, so the split above can shift '
+      'value between "gross" and "slippage". This view uses the strategy\'s own market price instead: the '
+      f'Hyperliquid {e["coin"]} 1-minute close at each signal bar. It is a perp price, not the spot price 1Click '
+      'trades at, and USDC is counted as $1, so treat it as a second estimate.')
+    a('')
+    a('| | USD | INR |')
+    a('|---|---:|---:|')
+    a(f'| Gross: {e["quantity"]} {sym} × (${m_out} − ${m_in}) | {q(m_gross, "0.000001"):+} | {inr(m_gross):+} |')
+    a(f'| 1Click app fee (both legs) | {-q(fees, "0.000001"):+} | {-inr(fees):+} |')
+    a(f'| Spread / slippage vs that market price (both legs) | {-q(m_costs - fees, "0.000001"):+} | '
+      f'{-inr(m_costs - fees):+} |')
+    a(f'| Net before gas (USDC out − USDC in) | {q(g["net_usdc_before_gas"], "0.000001"):+} | '
+      f'{inr(g["net_usdc_before_gas"]):+} |')
+    a(f'| Estimated mainnet deposit gas | {-q(deposit_usd, "0.000001"):+} | {-inr(deposit_usd):+} |')
+    a(f'| **Net after gas** | **{q(net_after_gas, "0.000001"):+}** | **{inr(net_after_gas):+}** |')
+    a('')
     a('## FX rate used')
     a('')
     fx = state['fx']
