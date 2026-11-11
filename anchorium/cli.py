@@ -321,19 +321,24 @@ def cmd_paper_trade(args) -> int:
     agent, reader, config, oneclick = build(args, onchain=True, store_path=str(PAPER_DIR / f'{args.session}.sqlite'))
     session = pt.Session(PAPER_DIR / f'{args.session}.json')
     if args.report_only:
-        return write_paper_report(agent, reader, session)
+        return write_paper_report(agent, reader, session, args.report)
     header(reader, config, oneclick, f'paper trade (session {args.session})')
+    cutoff_ms = None
+    if args.cutoff:
+        cutoff_ms = int(datetime.fromisoformat(args.cutoff).timestamp() * 1000)
     pt.run(agent, reader, coins=args.coins.split(','), session=session, paper_inr=Decimal(args.inr),
-           max_hold_s=int(args.max_hold_hours * 3600))
-    return write_paper_report(agent, reader, session)
+           max_hold_s=int(args.max_hold_hours * 3600), exit_rule=args.exit_rule,
+           target_net_usd=Decimal(args.target_usd), cutoff_ms=cutoff_ms)
+    return write_paper_report(agent, reader, session, args.report)
 
 
-def write_paper_report(agent, reader, session) -> int:
+def write_paper_report(agent, reader, session, report: str | None = None) -> int:
     from anchorium import paper_trade as pt  # noqa: PLC0415
+    path = ROOT / report if report else PAPER_REPORT
     state = session.load()
     data = pt.gather(agent.store, state, agent_id=reader.roles()['agent'])
-    PAPER_REPORT.write_text(pt.render_report(data, state, guard=reader.contract_id, network=reader.network))
-    print(f'report written: {PAPER_REPORT.relative_to(ROOT)}')
+    path.write_text(pt.render_report(data, state, guard=reader.contract_id, network=reader.network))
+    print(f'report written: {path.relative_to(ROOT)}')
     return 0
 
 
@@ -386,6 +391,11 @@ def main(argv=None) -> int:
     pt.add_argument('--max-hold-hours', type=float, default=4.0)
     pt.add_argument('--session', help='session name (separate state + checkpoint store); default paper-trade')
     pt.add_argument('--report-only', action='store_true', help='regenerate the report from the recorded session')
+    pt.add_argument('--exit-rule', choices=('SIGNAL_OR_TIME', 'PROFIT_TARGET'), default='SIGNAL_OR_TIME',
+                    help='PROFIT_TARGET: sell only when the guaranteed quote output covers cost, gas and --target-usd')
+    pt.add_argument('--target-usd', default='0.01', help='PROFIT_TARGET: minimum net profit after every cost')
+    pt.add_argument('--cutoff', help='PROFIT_TARGET: ISO time to stop and report (e.g. 2026-11-14T18:00:00+05:30)')
+    pt.add_argument('--report', help='report path relative to the repo (default docs/paper_trade_report.md)')
     args = parser.parse_args(argv)
     return {'demo': cmd_demo, 'status': cmd_status, 'run': cmd_run, 'exit': cmd_exit, 'live-trade': cmd_live_trade,
             'setup-trader': cmd_setup_trader, 'paper-trade': cmd_paper_trade}[args.cmd](args)

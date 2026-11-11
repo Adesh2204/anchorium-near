@@ -169,3 +169,52 @@ def test_report_reconciles_and_shows_every_journal_entry(tmp_path, monkeypatch):
     assert 'TIME_EXIT (max hold reached)' in text and 'REJECTED (SLIPPAGE_ABOVE_MAX)' in text
     assert '93.7956 INR per USD' in text and '+0.04 USD' in text
     assert text.count('testnet.nearblocks.io/txns/') >= 3 + 4  # 3 decisions + 2 outcomes in the journal + 4 gas rows
+
+
+def run_profit(tmp_path, monkeypatch, feed_signals, check=pt.exit_check, cutoff_ms=None):
+    clock, chain, agent, feed, exit_signal = setup(tmp_path, monkeypatch, feed_signals=feed_signals)
+    session = pt.Session(tmp_path / 's.json')
+    state = pt.run(agent, chain, coins=['NEAR'], session=session, paper_inr=Decimal('500'), print_=lambda *a: None,
+                   sleep=clock.sleep, clock=clock, feed=feed, exit_signal=exit_signal, exit_rule='PROFIT_TARGET',
+                   target_net_usd=Decimal('0.01'), cutoff_ms=cutoff_ms, check=check)
+    return chain, agent, session, state
+
+
+def test_profit_target_sells_only_when_the_guaranteed_output_clears_every_cost(tmp_path, monkeypatch):
+    # a strategy SHORT arrives first: the profit rule ignores it and sells on the first clearing quote
+    chain, agent, session, state = run_profit(tmp_path, monkeypatch,
+                                              [signal('LONG', bar=T0), signal('SHORT', bar=T0 + 60_000)])
+    entry, exit_ = pt.legs(agent.store)
+    assert exit_['data']['signal']['signal_type'] == 'PROFIT_EXIT'
+    c = state['last_check']
+    floor = Decimal(2) + pt.deposit_gas_near() * Decimal('4.10') + Decimal('0.01')
+    assert Decimal(c['floor_usdc']) == floor and c['clears'] and Decimal(c['min_amount_out']) >= floor
+    g = pt.gather(agent.store, state, agent_id='a.testnet',
+                  gas_lookup=lambda tx, sender: {'gas_burnt': 1, 'near_burnt': Decimal('0.0003')})
+    assert g['exit']['usdc_min'] == Decimal('2.035')
+    net_after_gas = g['net_usdc_before_gas'] - g['deposit_near'] * g['near_usd']
+    assert net_after_gas >= Decimal('0.01')
+    text = pt.render_report(g, state, guard='guard.test', network='testnet')
+    assert 'PROFIT_EXIT' in text and 'guaranteed 2.035 USDC' in text and 'No guarantee' in text
+
+
+def test_profit_target_holds_without_a_stop_and_reports_open_at_the_cutoff(tmp_path, monkeypatch):
+    never = {'at': 't', 'quote_id': 'q', 'amount_out': '1.95', 'min_amount_out': '1.948', 'asset_ref_usd': '3.9',
+             'near_usd': '3.9', 'gas_usd': '0.0017', 'floor_usdc': '2.0117', 'floor_units': 2011700,
+             'net_at_amount_out': '-0.0517', 'net_worst_case': '-0.0537', 'clears': False}
+    chain, agent, session, state = run_profit(tmp_path, monkeypatch, [signal('LONG', bar=T0)],
+                                              check=lambda *a: never, cutoff_ms=T0 + 3 * 3600 * 1000)
+    assert pt.legs(agent.store)[1] is None and chain.calls == ['record_decision', 'record_outcome']  # never sold
+    assert state['open_at_cutoff'] == never and state['checks'] >= 170
+    g = pt.gather(agent.store, state, agent_id='a.testnet',
+                  gas_lookup=lambda tx, sender: {'gas_burnt': 1, 'near_burnt': Decimal('0.0003')})
+    text = pt.render_report(g, state, guard='guard.test', network='testnet')
+    assert 'position still open' in text and '**-0.051700**' in text
+
+
+def test_agent_declines_an_exit_below_the_profit_floor_without_journaling(tmp_path, monkeypatch):
+    clock, chain, agent, feed, exit_signal = setup(tmp_path, monkeypatch)
+    agent.process(signal('LONG', bar=T0))
+    row = agent.process(signal('SHORT', bar=T0 + 60_000), min_proceeds_units=2_035_001)  # quote guarantees 2.035
+    assert row['state'] == 'SKIPPED' and row['data']['skip_reason'] == 'BELOW_PROFIT_FLOOR'
+    assert chain.calls == ['record_decision', 'record_outcome']

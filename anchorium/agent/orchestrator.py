@@ -76,9 +76,13 @@ class Agent:
 
     # ----- main entry -----
 
-    def process(self, signal: Signal, *, compromised: bool = False) -> dict[str, Any]:
+    def process(self, signal: Signal, *, compromised: bool = False,
+                min_proceeds_units: int | None = None) -> dict[str, Any]:
         """Runs one signal through the full flow. `compromised=True` simulates a faulty agent for the demo: it
-        skips its own checks, asks for 2.5x the cap and claims the trade is allowed. The contract must reject it."""
+        skips its own checks, asks for 2.5x the cap and claims the trade is allowed. The contract must reject it.
+
+        `min_proceeds_units` (SELL only, USDC base units): the agent declines the exit before journaling unless the
+        quote's guaranteed output (`minAmountOut`) is at least this much. Used by the paper session's profit target."""
         h = self._hash(signal) if not compromised else signal.signal_hash(f'{self.config.mode}:COMPROMISED')
         row = self.store.get(h) or self.store.create(h, self.config.mode, signal.coin, {'signal': signal.to_dict()})
         if row['state'] in TERMINAL or row['state'] == 'NEEDS_REVIEW':
@@ -128,6 +132,11 @@ class Agent:
                 slippage = worst_case_slippage_bps(quote, origin_t, dest_t)
                 if side == 'SELL':
                     notional_cents = int(dest_t.from_units(quote.amount_out) * dest_t.price_usd * 100)
+                    if min_proceeds_units is not None and quote.min_amount_out < min_proceeds_units:
+                        self.log({'event': 'below_profit_floor', 'signal_hash': h,
+                                  'min_amount_out': str(dest_t.from_units(quote.min_amount_out)),
+                                  'required': str(dest_t.from_units(min_proceeds_units))})
+                        return self._skip(h, 'BELOW_PROFIT_FLOOR')
                 if slippage > policy['max_slippage_bps']:
                     agent_ok, agent_reason = False, f'SLIPPAGE_ABOVE_MAX:{slippage}'
                 self.log({'event': 'quote', 'signal_hash': h, 'dry': quote.dry, 'quote_id': quote.quote_id,
