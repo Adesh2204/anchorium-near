@@ -18,7 +18,7 @@ the user's own account.
 
   ![Anchorium dashboard](docs/screenshots/dashboard.png)
 
-- A paper trade on live signals, with every fee itemized: [docs/paper_trade_report.md](docs/paper_trade_report.md)
+- A paper trade on live signals (BTC, 116 min, −₹2.10 on ₹500 after fees), with every fee itemized: [docs/paper_trade_report.md](docs/paper_trade_report.md)
 
 ## How NEAR is used
 
@@ -69,7 +69,14 @@ unauthenticated fee (`appFees`); the 1Click docs say 0.25%.
 | – | Owner raises `max_slippage_bps` from 100 to 150 (`policy_updated` event) | owner tx | [DExrWkb3…](https://testnet.nearblocks.io/txns/DExrWkb3p8zQauc31dsqhCA6M9jfbWvd4YLWh4XX75df) |
 | 4 | Manual exit, worst case 93 bps | ALLOWED; the contract computed paper P&L +$0.03 | [FbJB9NrE…](https://testnet.nearblocks.io/txns/FbJB9NrEdh78WEuhQtrqX36dAyTEacoW4mZvMnXrLRqV), outcome [D54bhC4d…](https://testnet.nearblocks.io/txns/D54bhC4dGUvMYX6XKZySn5dKPtf1Zj6coimfybwqbNrw) |
 
-The paper trade's own decisions are in [its report](docs/paper_trade_report.md). `make status` lists the latest.
+| 5 | Paper trade: BTC `PULLBACK_LONG`, BUY $2.00, worst case 79 bps | ALLOWED, paper fill journaled | [ELDUBjSm…](https://testnet.nearblocks.io/txns/ELDUBjSm73nTw1VfExSh9BJcWS6n4DLG1LHEAizmANTn), outcome [AKBo3xd6…](https://testnet.nearblocks.io/txns/AKBo3xd6CjUvZw6pfsDucKry1JLoN7pUFZBywVTNr6q5) |
+| 6 | Paper trade: BTC `BREAKDOWN_SHORT` 116 min later, SELL, worst case 58 bps | ALLOWED; the contract computed paper P&L −$0.03 | [6Ed83xoJ…](https://testnet.nearblocks.io/txns/6Ed83xoJ3nub8SYyrq7UZd8dKhmWmxAvE4QpGHLwQTVu), outcome [96PCGVAr…](https://testnet.nearblocks.io/txns/96PCGVArDgYZ3KJqBzMGqt8TDRrDbj71jUfKbMse2evH) |
+
+**Paper trade result (#5 and #6), a loss.** A ₹500 paper balance traded $2.00 and kept the rest as cash. BTC
+moved +$0.0022 on the quantity held, but 1Click fees ($0.0080) and slippage against the reference price
+($0.0149) cost more. The net result was **−$0.0224 (−₹2.10, −0.42% of ₹500)** after estimated gas. Every figure
+and fee is itemized in [docs/paper_trade_report.md](docs/paper_trade_report.md). `make status` lists the latest
+decisions.
 
 NEAR AI Cloud and Chain Signatures are **not** used yet (see the roadmap).
 

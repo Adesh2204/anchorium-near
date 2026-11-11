@@ -12,7 +12,7 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 - [x] Phase 4: orchestrator + `make demo` (Path A) + `make demo-onchain` (Path B) + REPLAY. Checkpoint 2 is waiting for the user
 - [x] Phase 5: dashboard (screenshot in docs/screenshots/)
 - [x] Phase 6: README + docs/JUDGES.md (live-trade evidence and the paper-trade report still to add)
-- [ ] Paper trade (INR 500, user request 2026-11-11): running, waiting for a LONG signal
+- [x] Paper trade (INR 500, user request 2026-11-11): done, docs/paper_trade_report.md
 - [ ] Phase 7: fresh-clone self-judging + review pass
 - [ ] Phase 8: submission pack (Checkpoint 3)
 
@@ -70,3 +70,4 @@ Times are commit times (`git log`) or `date` output.
 - 2026-11-11 11:59 IST: user chose (a). Owner tx raised max_slippage_bps to 150. Old paper NEAR position closed: #4 SELL ALLOWED (93 bps), contract paper P&L +$0.03.
 - 2026-11-11 12:11 IST: paper-trade session started (INR 500 = $5.331491 at 93.7824 INR/USD, Coinbase; check_trade BUY $2.00 ALLOWED on BTC, ETH, NEAR). Restarted at 12:17 IST on the fixed report code before any entry.
 - 2026-11-11 12:21 IST: README rewritten (10 sections), docs/JUDGES.md, dashboard screenshot. Tests: 91 Python passed (1 network deselected), contract 40 unit + 2 sandbox passed.
+- 2026-11-11 14:46 IST: paper trade done. Entry #5 BTC PULLBACK_LONG (bar 07:19 UTC, 79 bps), exit #6 BTC BREAKDOWN_SHORT (bar 09:15 UTC, 58 bps), held 116 min. Net -$0.020841 before gas, -$0.022395 after estimated gas (-INR 2.10, -0.42% of INR 500). Contract paper P&L -$0.03. Report: docs/paper_trade_report.md.
