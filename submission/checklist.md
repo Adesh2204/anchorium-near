@@ -6,7 +6,7 @@ Only humans submit the form and post on X.
 ## Before tagging
 
 - [ ] The live micro-trade has run (or we decided to skip it), and README "Evidence" and "Limitations" say which
-- [ ] `TODO_TEAM_CONFIRM` in README (other hackathon projects led by us) is answered
+- [x] `TODO_TEAM_CONFIRM` in README (other hackathon projects led by us) is answered
 - [ ] `make test` passes on the final commit (Python + freeze + contract)
 - [ ] A fresh clone passes Path A (`make setup && make freeze && make demo`)
 

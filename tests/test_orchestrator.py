@@ -314,3 +314,53 @@ def test_live_expired_quote_is_aborted_before_deposit(tmp_path):
     agent.process(signal())
     assert agent.trader_near.sent == []
     assert 'QUOTE_EXPIRED' in chain.decisions[0]['outcome']['tx_ref']
+
+
+class ExitChain(FakeChain):
+    """Like the contract: an exit needs an open position and skips the entry notional cap."""
+
+    def check_trade(self, asset, side, notional, slippage):
+        if side == 'SELL':
+            return {'allowed': bool(self._positions), 'reason': 'OK' if self._positions else 'NO_OPEN_POSITION'}
+        return super().check_trade(asset, side, notional, slippage)
+
+
+class ProfitableExit(FakeOneClick):
+    def quote(self, req):
+        q = super().quote(req)
+        q.raw['quote'].update(amountOut='2020000', minAmountOut='2018000')
+        return Quote.from_api(q.raw)
+
+
+class MeteredTrader(FakeTrader):
+    """Also answers `account()`: the NEAR balance drops by 0.0015 NEAR per deposit."""
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.yocto = 10 ** 24
+
+    def account(self, account_id):
+        from types import SimpleNamespace
+        return SimpleNamespace(amount=self.yocto)
+
+    def ft_transfer(self, *a, **kw):
+        self.yocto -= 1_500_000_000_000_000_000_000
+        return super().ft_transfer(*a, **kw)
+
+
+def test_live_profitable_exit_is_capped_by_the_entry_cost_not_the_proceeds(tmp_path):
+    chain = ExitChain(positions=[{'asset': WNEAR, 'state': 'OPEN', 'amount': str(5 * 10**23), 'cost_usd_cents': 200}])
+    done = Tracking('dep-1', [update('SUCCESS', {'amountIn': str(5 * 10**23), 'amountOut': '2020000'})])
+    agent, chain, _ = make(tmp_path, chain=chain, oneclick=ProfitableExit(tracking=[done]), live=True,
+                           trader=MeteredTrader())
+    row = agent.process(signal('SHORT'))
+    assert row['data']['result'] == 'SUCCESS' and len(agent.trader_near.sent) == 1  # $2.02 exit of a $2.00 entry
+    assert int(row['data']['near_yocto_before']) - int(row['data']['near_yocto_after']) == 1_500_000_000_000_000_000_000
+
+
+def test_live_exit_without_a_known_entry_cost_keeps_the_proceeds_cap(tmp_path):
+    chain = ExitChain(positions=[{'asset': WNEAR, 'state': 'OPEN', 'amount': str(5 * 10**23)}])
+    agent, chain, _ = make(tmp_path, chain=chain, oneclick=ProfitableExit(tracking=[]), live=True,
+                           trader=FakeTrader())
+    agent.process(signal('SHORT'))
+    assert agent.trader_near.sent == [] and 'per-trade cap' in chain.decisions[0]['outcome']['tx_ref']

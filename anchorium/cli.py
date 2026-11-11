@@ -122,7 +122,12 @@ def build(args, *, onchain: bool, store_path: str, guard_id: str | None = None):
     oneclick = OneClickClient(os.environ.get('ONECLICK_BASE_URL') or 'https://1click.chaindefuser.com',
                               jwt=os.environ.get('ONECLICK_JWT') or None)
     log = Logger(args.json)
-    agent = Agent(config, reader, oneclick, CheckpointStore(store_path), writer=writer, trader_near=trader, log=log)
+    confirm = live_gates.require_typed_confirmation
+    if execution.live:  # the human must type each confirmation: get their attention, show the quote deadline
+        from anchorium.notify import notifying_confirm  # noqa: PLC0415
+        confirm = notifying_confirm(confirm, f'{getattr(args, "leg", None) or "deposit"} leg')
+    agent = Agent(config, reader, oneclick, CheckpointStore(store_path), writer=writer, trader_near=trader,
+                  confirm=confirm, log=log)
     return agent, reader, config, oneclick
 
 
@@ -244,6 +249,9 @@ def live_ledger(store) -> dict:
     for side, state, data in rows:
         data = json.loads(data)
         result = data.get('result')
+        if result == 'FAILED' and str((data.get('outcome_args') or {}).get('tx_ref', '')).startswith(
+                'aborted-before-deposit'):
+            continue  # the human did not confirm (or the quote expired): nothing was sent, the leg is not used
         sent = state in ('DEPOSIT_PENDING', 'DEPOSITED', 'OUTCOME_PENDING', 'NEEDS_REVIEW') or (
             state == 'DONE' and result not in ('REJECTED', None))
         if sent and side == 'BUY':
@@ -291,13 +299,19 @@ def cmd_live_trade(args) -> int:
         coins = [c for c, a in sig.SPOT_ASSET.items() if a == held[0]['asset']]
         if args.manual:
             return report_live(agent.process(latest_bar_signal(coins[0], 'MANUAL_EXIT')))
+        if args.exit_rule == 'PROFIT_TARGET':
+            return live_profit_exit(args, agent, reader, held[0], coins[0])
     want = 'LONG' if args.leg == 'entry' else 'SHORT'
     feed, deadline = sig.HyperliquidCandles(), time.time() + args.wait_minutes * 60
     print(f'waiting up to {args.wait_minutes} min for a live {want} signal on {",".join(coins)} ...', flush=True)
     while time.time() < deadline:
         now = int(time.time() * 1000)
         for coin in coins:
-            signal, info = sig.evaluate_latest(feed.fetch(coin, now), coin, now)
+            try:
+                signal, info = sig.evaluate_latest(feed.fetch(coin, now), coin, now)
+            except Exception as exc:  # noqa: BLE001 - one bad candle read must not end a long wait
+                print(f'[feed]    {coin}: {type(exc).__name__}: {exc}', flush=True)
+                continue
             if signal and signal.direction == want:
                 row = agent.process(signal)
                 if row['state'] == 'SKIPPED' or row['data'].get('result') == 'REJECTED':
@@ -305,6 +319,30 @@ def cmd_live_trade(args) -> int:
                 return report_live(row)
         time.sleep(60 - (time.time() % 60) + 2)
     print('no qualifying signal before the wait limit; nothing was sent'); return 1
+
+
+def live_profit_exit(args, agent, reader, position, coin) -> int:
+    """Waits for the profit floor (see anchorium/live_exit.py), then runs the LIVE exit with the typed confirmation."""
+    from anchorium import live_exit  # noqa: PLC0415
+    from anchorium.notify import notify  # noqa: PLC0415
+    until_ms = int(datetime.fromisoformat(args.until).timestamp() * 1000)
+    token = agent.oneclick.token(position['asset'])
+    storage_min = Decimal(int(agent.trader_near.view(token.contract_address, 'storage_balance_bounds')['min'])) / 10 ** 24
+
+    def amount_units() -> int:  # never more than the account holds
+        held = int(agent.trader_near.ft_balance(token.contract_address, agent.config.trader_account))
+        return min(int(position['amount']), held)
+    print(f'exit rule PROFIT_TARGET: sell only when the guaranteed quote output covers the USDC paid, the measured '
+          f'NEAR cost of the entry deposit, an estimate for the exit deposit and +${args.target_usd}. '
+          f'Waiting until {args.until}; nothing is sold after that without --manual.', flush=True)
+    row = live_exit.wait_and_exit(
+        agent, coin=coin, amount_units=amount_units, target_usd=Decimal(args.target_usd), until_ms=until_ms,
+        storage_min_near=storage_min, notifier=notify,
+        exit_signal=lambda c, kind: sig.latest_bar_signal(sig.HyperliquidCandles(), c, kind, source='profit-target'))
+    if row is None:
+        print(f'profit target not reached by {args.until}: nothing was sold. To exit at market: '
+              'live-trade --leg exit --manual'); return 1
+    return report_live(row)
 
 
 PAPER_DIR = ROOT / 'var/paper_trade'
@@ -381,8 +419,12 @@ def main(argv=None) -> int:
     exit_.add_argument('--coin', required=True, choices=sorted(sig.SPOT_ASSET))
     lt = sub.add_parser('live-trade', help='controlled LIVE micro-trade: one entry, one exit')
     lt.add_argument('--leg', required=True, choices=['entry', 'exit'])
-    lt.add_argument('--coins', default='NEAR,BTC,ETH')
-    lt.add_argument('--manual', action='store_true', help='exit now instead of waiting for a SHORT signal')
+    lt.add_argument('--coins', default='NEAR', help='the trader account is registered on USDC and wNEAR only')
+    lt.add_argument('--manual', action='store_true', help='exit now at market (overrides --exit-rule)')
+    lt.add_argument('--exit-rule', choices=('PROFIT_TARGET', 'SIGNAL'), default='PROFIT_TARGET',
+                    help='exit: wait for the profit floor (default) or for a strategy SHORT signal')
+    lt.add_argument('--target-usd', default='0.01', help='PROFIT_TARGET: net profit after every cost')
+    lt.add_argument('--until', default='2026-11-13T20:00:00+05:30', help='PROFIT_TARGET: stop waiting at this time')
     lt.add_argument('--wait-minutes', type=int, default=120)
     sub.add_parser('setup-trader', help='register the mainnet trader account on USDC and wNEAR')
     pt = sub.add_parser('paper-trade', help='one DRY_RUN round trip with a paper INR balance, then a report')

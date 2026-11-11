@@ -71,6 +71,14 @@ class Agent:
     def _open_position(self, asset: str) -> dict[str, Any] | None:
         return next((p for p in self.reader.positions() if p['asset'] == asset and p['state'] == 'OPEN'), None)
 
+    def _near_yocto(self) -> str | None:
+        """The trader's NEAR balance (yocto), read around each LIVE deposit to measure its real NEAR cost (gas plus
+        any storage registration batched into the transfer). A failed read never blocks the trade."""
+        try:
+            return str(int(self.trader_near.account(self.config.trader_account).amount))
+        except Exception:  # noqa: BLE001
+            return None
+
     def _recipient(self) -> str:
         return self.config.trader_account or DRY_RUN_PLACEHOLDER_RECIPIENT
 
@@ -96,6 +104,7 @@ class Agent:
         asset = signal.spot_asset
         self.oneclick.tokens(refresh=True)  # the slippage gate needs current reference prices, not a startup cache
         policy = self.reader.policy()
+        entry_cost_cents = None
         if signal.direction == 'LONG':
             side, origin, destination = 'BUY', USDC, asset
             usdc = self.oneclick.token(USDC)
@@ -106,6 +115,7 @@ class Agent:
             if position is None:
                 return self._skip(h, 'SHORT_SIGNAL_WITHOUT_SPOT_POSITION')
             side, origin, destination, amount = 'SELL', asset, USDC, int(position['amount'])
+            entry_cost_cents = position.get('cost_usd_cents')
             if self.config.execution.live:  # never try to sell more than the account actually holds
                 token_contract = self.oneclick.token(asset).contract_address
                 amount = min(amount, int(self.trader_near.ft_balance(token_contract, self.config.trader_account)))
@@ -161,7 +171,8 @@ class Agent:
                 'agent_reason': agent_reason[:128], 'rationale_hash': None}
         quote_data = quote.raw if quote else None
         self.store.advance(h, 'DECISION_PENDING', side=side, decision_args=args, quote=quote_data,
-                           ref_prices_usd={'in': str(origin_t.price_usd), 'out': str(dest_t.price_usd)})
+                           ref_prices_usd={'in': str(origin_t.price_usd), 'out': str(dest_t.price_usd)},
+                           entry_cost_cents=entry_cost_cents)
         if self.writer is None:
             self.log({'event': 'would_journal', 'signal_hash': h, 'contract': self.reader.contract_id,
                       'method': 'record_decision', 'args': args,
@@ -236,7 +247,10 @@ class Agent:
             'recipient / refund': self.config.trader_account,
         }
         try:
-            live_gates.check_live_trade(self.config.execution, notional_usd, spent, guard_allowed=True)
+            cost = data.get('entry_cost_cents')
+            live_gates.check_live_trade(self.config.execution, notional_usd, spent, guard_allowed=True,
+                                        entry_cost_usd=None if row['side'] == 'BUY' or cost is None
+                                        else Decimal(cost) / 100)
             self.confirm(live_gates.confirmation_phrase(notional_usd, origin_t.symbol), details)
             deadline = details['quote deadline']
             if deadline and datetime.fromisoformat(deadline.replace('Z', '+00:00')) <= datetime.now(timezone.utc):
@@ -245,7 +259,8 @@ class Agent:
             # Nothing was sent. Journal FAILED so the guard frees the PENDING_ENTRY slot instead of blocking entries.
             self.log({'event': 'live_aborted', 'signal_hash': h, 'reason': str(exc)})
             return self._record_outcome(h, 'FAILED', q['amountIn'], '0', f'aborted-before-deposit:{str(exc)[:80]}')
-        self.store.advance(h, 'DEPOSIT_PENDING', live_notional_cents=args['notional_usd_cents'])
+        self.store.advance(h, 'DEPOSIT_PENDING', live_notional_cents=args['notional_usd_cents'],
+                           near_yocto_before=self._near_yocto())
         tx_hash = live_gates.deposit_nep141(self.trader_near, origin_t.contract_address, q['depositAddress'],
                                             amount_human)
         row = self.store.advance(h, 'DEPOSITED', deposit_tx=tx_hash, deposit_address=q['depositAddress'],
@@ -274,6 +289,7 @@ class Agent:
             self.log({'event': 'intent_status', 'signal_hash': h, 'status': 'TIMEOUT',
                       'funds_location': FUNDS_LOCATION['TIMEOUT']})
             return self.store.get(h)  # stays DEPOSITED; the next run resumes tracking
+        self.store.advance(h, 'DEPOSITED', near_yocto_after=self._near_yocto())
         details = tracking.timeline[-1].swap_details
         q = data['quote']['quote']
         amount_in = details.get('amountIn') or q['amountIn']

@@ -218,7 +218,7 @@ deposit.
 | Command | What | Result (2026-11-11) |
 |---|---|---|
 | `make freeze` | the vendored strategy is byte-identical; freeze manifest checks | pass (13 files, 28 parameters) |
-| `make test-py` | Python: 1Click client (mocked), LIVE gates, signal parity against the original source, orchestrator incl. crash/resume, paper session, dashboard | **94 passed**, 1 deselected (network) |
+| `make test-py` | Python: 1Click client (mocked), LIVE gates, signal parity against the original source, orchestrator incl. crash/resume, paper session, dashboard | **102 passed**, 1 deselected (network) |
 | `.venv/bin/python -m pytest -m network` | one real 1Click dry quote | opt-in |
 | `make contract-test` | Rust unit tests + sandbox tests on a local NEAR node | **40 passed** + **2 passed** |
 | `make test` | all of the above except the network test | |
@@ -241,7 +241,8 @@ deposit.
   - Deployment: near-cli-rs. The NEAR agent skills are in `.claude/skills/`.
 - **AI-assisted code:** written with Claude Code.
 - **Team:** Adesh, Parth.
-- **Other hackathon projects led by us:** `TODO_TEAM_CONFIRM`
+- **Other hackathon projects led by us:** none at NEAR HACKATHON. Perpetual Alpha is a separate, non-NEAR
+  competition, disclosed above.
 
 ## Limitations and roadmap
 

@@ -66,13 +66,18 @@ def confirmation_phrase(notional_usd: Decimal, symbol: str) -> str:
 
 
 def check_live_trade(config: ExecutionConfig, notional_usd: Decimal, spent_live_usd: Decimal,
-                     guard_allowed: bool) -> None:
+                     guard_allowed: bool, entry_cost_usd: Decimal | None = None) -> None:
+    """`entry_cost_usd` is set only for an exit that sells an open position: the per-trade cap then applies to what
+    the entry spent (the amount put at risk), since a profitable exit is worth more than the entry. The session
+    total still counts the exit's full value, so an exit can never be worth more than the total cap leaves."""
     if not config.live:
         raise LiveGateError('not in LIVE mode')
     if not guard_allowed:
         raise LiveGateError('the guard contract did not allow this trade')
-    if notional_usd <= 0 or notional_usd > config.max_trade_usd:
-        raise LiveGateError(f'notional ${notional_usd} exceeds the per-trade cap ${config.max_trade_usd}')
+    capped = notional_usd if entry_cost_usd is None else entry_cost_usd
+    if notional_usd <= 0 or capped <= 0 or capped > config.max_trade_usd:
+        what = 'notional' if entry_cost_usd is None else 'entry cost of the position being sold'
+        raise LiveGateError(f'{what} ${capped} exceeds the per-trade cap ${config.max_trade_usd}')
     if spent_live_usd + notional_usd > config.max_total_usd:
         raise LiveGateError(f'session total would reach ${spent_live_usd + notional_usd} > ${config.max_total_usd}')
 

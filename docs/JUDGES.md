@@ -75,8 +75,10 @@ What this shows:
 
 - **Signals:** the frozen strategy's verdicts on recorded Hyperliquid candles (`fixtures/replay/`).
 - **Checks:** `check_trade` is a real view call on the deployed wasm. `demo.anchorium-team.testnet` runs the
-  same code hash but nothing journals to it, so its state stays flat and the demo is repeatable. It keeps the
-  original 100 bps slippage cap; the main guard's owner raised that to 150 bps.
+  same code hash but nothing journals to it, so its state stays flat and the demo is repeatable. The output above
+  was recorded before the owner raised both guards' slippage cap from 100 to 150 bps (demo guard:
+  [7MmqfBAD…](https://testnet.nearblocks.io/txns/7MmqfBADhymYuccmniMxano2EWGURb6qtYoEyeVip7MN)), so a run today
+  prints `max slippage 150 bps`.
 - **Quotes:** real 1Click dry quotes.
 - **Journal:** read from the main guard, `guard.anchorium-team.testnet`. It will have more entries than shown
   here.
@@ -118,7 +120,7 @@ print(s)"
 ## 6. Tests (1–2 min)
 
 ```sh
-make test-py          # -> 94 passed, 1 deselected
+make test-py          # -> 102 passed, 1 deselected
 make contract-test    # -> 40 passed (unit), 2 passed (sandbox); needs Rust 1.95 + downloads a local NEAR node
 ```
 
