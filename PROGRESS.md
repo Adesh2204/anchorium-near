@@ -14,6 +14,7 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 - [x] Phase 6: README + docs/JUDGES.md (live-trade evidence and the paper-trade report still to add)
 - [x] Paper trade (INR 500, user request 2026-11-11): done, docs/paper_trade_report.md
 - [x] Phase 7: fresh-clone self-judging + review pass (Path A and Path B clean from a fresh clone)
+- [x] Regime backtest (user task 2026-11-12, branch `regime`): docs/regime_backtest.md. STOP: waiting for the user's variant choice (A/B/C)
 - [ ] Phase 8: submission pack drafted in submission/; tag `hackathon-submission` waits for the live trade and the human TODOs (Checkpoint 3)
 
 ## Decisions
@@ -48,6 +49,10 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 | 2026-11-11 20:24 | Live exit uses the paper trade 2 profit floor; the per-trade cap on an exit applies to the position's entry cost, the $5 total still counts the exit's value | User instruction 4. The local gate capped exit *proceeds* at $2, so every profitable exit would have been refused (the contract already exempts exits) |
 | 2026-11-11 20:24 | A leg whose confirmation was not typed (or whose quote expired) neither blocks nor uses the micro-trade; a REFUNDED/FAILED swap still stops everything | Nothing is sent before the typed confirmation, and the guard's position stays open after a failed exit; the human reruns the command, nothing retries by itself |
 | 2026-11-11 20:24 | Each LIVE deposit records the trader's NEAR balance before and after; the exit floor uses the measured entry cost | near-kit batches a `storage_deposit` for an unregistered 1Click deposit address (about 0.00125 NEAR) into the transfer, which the paper gas estimate did not include |
+| 2026-11-12 01:35 IST | Regime backtest data: Binance USD-M NEARUSDT 1m archives (SHA256 checked), not Hyperliquid | Hyperliquid's public API keeps only ~3.5 days of 1m candles. Cross-checks: regime agrees 97.4% with Hyperliquid 15m/1h; minute-level signals differ (71 of 102 within 3 bars) |
+| 2026-11-12 01:35 IST | "Round-trip cost" (1.3% filter, CHOP rule) = both legs' worst-case quote cost (fee + slippage vs the Hyperliquid mid); gas is charged separately in the profit rule | Matches the earlier "~104 bps NEAR round trip" figure. Measured now: median 35.4 bps buy + 58.3 bps sell |
+| 2026-11-12 01:35 IST | Backtest gas per leg 0.001467 NEAR (ft_transfer + deposit-address storage registration); 3-round cap per IST day | The live exit floor's assumption; the user's "session" mapped to a day for 60 days |
+| 2026-11-12 01:35 IST | Tax proceeds = INR value of what a swap delivered; the received asset takes that value as cost; FIFO across the whole wallet | The user's FIFO rule. Consequence: a bull close sells the starting wNEAR first and pays tax on its whole rise |
 | 2026-11-10 | Report the observed 1Click unauthenticated fee: 20 bps (`appFees` in a real dry quote); the docs say 0.25% | The user's GO, point 5 |
 | 2026-11-10 | Python to NEAR: try `near-kit` (Python) first; switch to a `near-api-js` sidecar if blocked for more than 2 h | The user's GO, point 4 |
 
@@ -81,3 +86,6 @@ Times are commit times (`git log`) or `date` output.
 - 2026-11-11 16:34 IST: second paper session `paper-profit` running (NEAR, PROFIT_TARGET +$0.01, cut-off 14 Nov 18:00 IST; commit 6e793e1, 94 Python tests). Waiting for a NEAR LONG. Report will be docs/paper_trade_profit_report.md.
 - 2026-11-11 17:24 IST: paper trade 2 done. Entry #7 NEAR BREAKOUT_LONG (bar 11:50 UTC, 2 USDC -> 0.541669 wNEAR, 94 bps), 3 profit checks, exit #8 PROFIT_EXIT (bar 11:53 UTC; guaranteed 2.020587 USDC vs floor 2.011593; fill 2.022610). Net +$0.022610 before gas, +$0.021017 after estimated gas (+INR 1.97, +0.39% of INR 500). Contract paper P&L +$0.02. Reports gained a split against the Hyperliquid market price (1Click's 2-decimal reference lagged the move); it shows paper trade 1's gross was -$0.0036, not +$0.0022. 94 Python tests.
 - 2026-11-11 20:24 IST: user answers: no other NEAR HACKATHON project (README updated); demo guard raised to 150 bps (tx 7MmqfBADhymYuccmniMxano2EWGURb6qtYoEyeVip7MN). Live micro-trade prepared: macOS notification + sound with the quote deadline before each typed confirmation, profit-floor exit (until 13 Nov 20:00 IST, then the user's --manual). 102 Python tests. Waiting for NEAR on b4443ef9....
+- 2026-11-12 01:04 IST: 60 real dry-quote round trips sampled (docs/data/quote_costs_2026-11-12.json): buy leg median 35.4 bps, sell leg 58.3 bps, fee 20 bps each.
+- 2026-11-12 01:09 IST: 60-day signal replay (86,400 minutes, frozen strategy via evaluate_latest): 5,635 signals.
+- 2026-11-12 01:33 IST: regime backtest (docs/regime_backtest.md). Out of sample, A = B = C: one bull round opened 12 Oct 09:31 IST at $5.871 and stayed open through a 39% fall (unrealized -INR 75.04). Days 1-30: A best. Recommended A for LIVE, C as DRY_RUN experimental; waiting for the user's choice. Tests: 143 Python passed, freeze OK, ruff + mypy clean on the new modules.

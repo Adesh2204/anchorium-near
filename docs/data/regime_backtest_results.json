@@ -1,0 +1,1932 @@
+{
+ "generated_at": "2026-11-11T19:53:29+00:00",
+ "params": {
+  "regime": {
+   "ema_fast": "20",
+   "ema_slow": "50",
+   "slope_bars": "1",
+   "atr_period": "14",
+   "atr_cost_multiple": "2",
+   "confirm_bars": "2"
+  },
+  "cost_filter": "0.013",
+  "profit_target_inr": "1.00",
+  "order_usd": "2.00",
+  "max_rounds_per_ist_day": 3,
+  "gas_leg_near": "0.0014670906627479",
+  "median_round_trip_cost": "0.009374",
+  "stress_fixed_leg_cost": "0.006034"
+ },
+ "variants": {
+  "A": "current long-only (every LONG signal; no regime)",
+  "B": "regime long-only (LONG in BULL)",
+  "C": "regime long + bear (LONG in BULL, SHORT in BEAR)"
+ },
+ "signals_total": 5635,
+ "signals_by_type": {
+  "BREAKDOWN_SHORT": 2596,
+  "BREAKOUT_LONG": 2214,
+  "PULLBACK_LONG": 433,
+  "PULLBACK_SHORT": 392
+ },
+ "halves": {
+  "days_1_30_sanity": {
+   "from": "2026-09-12",
+   "to_exclusive": "2026-10-12",
+   "near_open": "2.3640",
+   "near_close": "5.8950",
+   "near_change_pct": "149.37",
+   "regime_share_pct": {
+    "BULL": 37.6,
+    "BEAR": 12.9,
+    "CHOP": 49.5
+   },
+   "raw_reason_counts": {
+    "NO_TREND": 695,
+    "TREND_DOWN": 372,
+    "ATR_BELOW_COST": 726,
+    "TREND_UP": 1087
+   },
+   "signals": 2849,
+   "runs": {
+    "A": {
+     "variant": "A",
+     "rounds_opened": 12,
+     "rounds_closed": 11,
+     "bull_closed": 11,
+     "bear_closed": 0,
+     "open_at_end": 1,
+     "win_pct": "91.67",
+     "realized_net_after_tax_inr": "15.27",
+     "open_round_unrealized_inr": [
+      "-0.23"
+     ],
+     "tax_reserve_inr": "110.05",
+     "gas_inr": "11.05",
+     "end_equity_after_tax_inr": "913.98",
+     "vs_start_inr": "413.98",
+     "vs_hold_inr": "38.56",
+     "vs_hold_liquidation_inr": "96.27",
+     "latent_tax_inr": "59.42",
+     "hold_latent_tax_inr": "117.13",
+     "hold_vs_start_inr": "375.42",
+     "max_drawdown_inr": "166.32",
+     "max_drawdown_pct": "18.05",
+     "max_drawdown_vs_hold_inr": "50.09",
+     "avg_hold_h": 32.91,
+     "max_hold_h": 89.58,
+     "pct_time_in_open_round": "99.49",
+     "skips": {
+      "SKIPPED_SHORT_LONG_ONLY": 5
+     },
+     "end_wallet": {
+      "usdc": "2.035580",
+      "wnear": "1.487925"
+     },
+     "rounds": [
+      {
+       "n": 1,
+       "kind": "BULL",
+       "signal": "PULLBACK_LONG",
+       "open_ist": "2026-09-12 07:21",
+       "open_price": "2.3560",
+       "close_ist": "2026-09-12 21:13",
+       "close_price": "2.4100",
+       "hold_h": 13.87,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "0.8078",
+       "net_after_tax_inr": "1.0331",
+       "checks": 832,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 2,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-12 21:16",
+       "open_price": "2.4140",
+       "close_ist": "2026-09-14 22:41",
+       "close_price": "2.5300",
+       "hold_h": 49.42,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "3.8576",
+       "net_after_tax_inr": "2.7201",
+       "checks": 2965,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 3,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-14 23:10",
+       "open_price": "2.5260",
+       "close_ist": "2026-09-17 05:47",
+       "close_price": "2.6570",
+       "hold_h": 54.62,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "6.0920",
+       "net_after_tax_inr": "1.2272",
+       "checks": 3277,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 4,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-17 05:50",
+       "open_price": "2.6690",
+       "close_ist": "2026-09-17 15:00",
+       "close_price": "2.8290",
+       "hold_h": 9.17,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "7.6782",
+       "net_after_tax_inr": "1.0948",
+       "checks": 550,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 5,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-17 15:01",
+       "open_price": "2.8250",
+       "close_ist": "2026-09-17 22:35",
+       "close_price": "3.0080",
+       "hold_h": 7.57,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "8.4376",
+       "net_after_tax_inr": "1.1049",
+       "checks": 454,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 6,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-17 22:54",
+       "open_price": "3.0100",
+       "close_ist": "2026-09-18 06:51",
+       "close_price": "3.2200",
+       "hold_h": 7.95,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "9.2987",
+       "net_after_tax_inr": "1.2840",
+       "checks": 477,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 7,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-18 07:00",
+       "open_price": "3.2250",
+       "close_ist": "2026-09-18 09:26",
+       "close_price": "3.4730",
+       "hold_h": 2.43,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "10.6127",
+       "net_after_tax_inr": "1.2775",
+       "checks": 146,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 8,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-18 09:38",
+       "open_price": "3.5330",
+       "close_ist": "2026-09-19 07:15",
+       "close_price": "3.8630",
+       "hold_h": 21.62,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "13.5274",
+       "net_after_tax_inr": "1.4506",
+       "checks": 1297,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 9,
+       "kind": "BULL",
+       "signal": "PULLBACK_LONG",
+       "open_ist": "2026-09-19 07:23",
+       "open_price": "3.8130",
+       "close_ist": "2026-09-20 22:00",
+       "close_price": "4.1920",
+       "hold_h": 38.62,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "14.7501",
+       "net_after_tax_inr": "1.2550",
+       "checks": 2317,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 10,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-20 22:13",
+       "open_price": "4.2540",
+       "close_ist": "2026-09-23 17:24",
+       "close_price": "4.7230",
+       "hold_h": 67.18,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "16.3869",
+       "net_after_tax_inr": "1.4661",
+       "checks": 4031,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 11,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-23 17:34",
+       "open_price": "4.6540",
+       "close_ist": "2026-09-27 11:09",
+       "close_price": "5.2230",
+       "hold_h": 89.58,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "18.5993",
+       "net_after_tax_inr": "1.3553",
+       "checks": 5375,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 12,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-27 11:10",
+       "open_price": "5.2290",
+       "close_ist": null,
+       "close_price": null,
+       "hold_h": null,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": null,
+       "net_after_tax_inr": null,
+       "checks": 21260,
+       "rechecks_failed": 0,
+       "unrealized": {
+        "kind": "BULL",
+        "pnl_usd": "0.21711500108620225900",
+        "pnl_inr": "20.7952748040364523670200",
+        "gas_usd": "0.01729699891379774100",
+        "tax_open_inr": "0.000",
+        "tax_close_inr": "21.023353997858154118739919353861760000000000000000",
+        "net_after_tax_inr": "-0.228079193821701751719919353861760000000000000000",
+        "target_inr": "1.00",
+        "clears": false
+       }
+      }
+     ],
+     "stress_p90_cost": {
+      "rounds_closed": 10,
+      "open_at_end": 1,
+      "realized_net_after_tax_inr": "13.91",
+      "vs_start_inr": "406.02",
+      "vs_hold_inr": "30.59",
+      "vs_hold_liquidation_inr": "90.94"
+     },
+     "seeds": {
+      "n": 200,
+      "vs_hold_inr_p10_p50_p90": [
+       "31.12",
+       "38.14",
+       "38.55"
+      ],
+      "realized_inr_p10_p50_p90": [
+       "14.45",
+       "15.03",
+       "15.45"
+      ],
+      "rounds_closed_p10_p50_p90": [
+       11,
+       11,
+       13
+      ],
+      "vs_hold_liquidation_inr_p10_p50_p90": [
+       "95.17",
+       "95.87",
+       "96.30"
+      ]
+     }
+    },
+    "B": {
+     "variant": "B",
+     "rounds_opened": 10,
+     "rounds_closed": 9,
+     "bull_closed": 9,
+     "bear_closed": 0,
+     "open_at_end": 1,
+     "win_pct": "90.00",
+     "realized_net_after_tax_inr": "11.06",
+     "open_round_unrealized_inr": [
+      "-0.25"
+     ],
+     "tax_reserve_inr": "106.96",
+     "gas_inr": "9.69",
+     "end_equity_after_tax_inr": "909.71",
+     "vs_start_inr": "409.71",
+     "vs_hold_inr": "34.28",
+     "vs_hold_liquidation_inr": "91.99",
+     "latent_tax_inr": "59.42",
+     "hold_latent_tax_inr": "117.13",
+     "hold_vs_start_inr": "375.42",
+     "max_drawdown_inr": "166.32",
+     "max_drawdown_pct": "18.14",
+     "max_drawdown_vs_hold_inr": "50.19",
+     "avg_hold_h": 32.7,
+     "max_hold_h": 89.58,
+     "pct_time_in_open_round": "90.09",
+     "skips": {
+      "SKIPPED_REGIME": 174,
+      "SKIPPED_SHORT_LONG_ONLY": 132
+     },
+     "end_wallet": {
+      "usdc": "1.944654",
+      "wnear": "1.487893"
+     },
+     "rounds": [
+      {
+       "n": 1,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-15 03:26",
+       "open_price": "2.5010",
+       "close_ist": "2026-09-17 05:42",
+       "close_price": "2.6330",
+       "hold_h": 50.27,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "6.2862",
+       "net_after_tax_inr": "1.2120",
+       "checks": 3016,
+       "rechecks_failed": 2,
+       "unrealized": null
+      },
+      {
+       "n": 2,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-17 05:50",
+       "open_price": "2.6690",
+       "close_ist": "2026-09-17 15:06",
+       "close_price": "2.8450",
+       "hold_h": 9.27,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "8.7792",
+       "net_after_tax_inr": "1.0625",
+       "checks": 556,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 3,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-17 15:14",
+       "open_price": "2.8260",
+       "close_ist": "2026-09-17 22:37",
+       "close_price": "3.0130",
+       "hold_h": 7.38,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "8.7803",
+       "net_after_tax_inr": "1.0311",
+       "checks": 443,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 4,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-17 22:54",
+       "open_price": "3.0100",
+       "close_ist": "2026-09-18 06:51",
+       "close_price": "3.2200",
+       "hold_h": 7.95,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "9.2865",
+       "net_after_tax_inr": "1.2742",
+       "checks": 477,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 5,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-18 07:00",
+       "open_price": "3.2250",
+       "close_ist": "2026-09-18 09:26",
+       "close_price": "3.4730",
+       "hold_h": 2.43,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "10.5874",
+       "net_after_tax_inr": "1.2021",
+       "checks": 146,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 6,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-18 09:38",
+       "open_price": "3.5330",
+       "close_ist": "2026-09-19 07:15",
+       "close_price": "3.8630",
+       "hold_h": 21.62,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "13.5047",
+       "net_after_tax_inr": "1.3769",
+       "checks": 1297,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 7,
+       "kind": "BULL",
+       "signal": "PULLBACK_LONG",
+       "open_ist": "2026-09-19 07:23",
+       "open_price": "3.8130",
+       "close_ist": "2026-09-20 22:00",
+       "close_price": "4.1920",
+       "hold_h": 38.62,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "14.7408",
+       "net_after_tax_inr": "1.1550",
+       "checks": 2317,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 8,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-20 22:13",
+       "open_price": "4.2540",
+       "close_ist": "2026-09-23 17:24",
+       "close_price": "4.7230",
+       "hold_h": 67.18,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "16.3969",
+       "net_after_tax_inr": "1.4207",
+       "checks": 4031,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 9,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-23 17:34",
+       "open_price": "4.6540",
+       "close_ist": "2026-09-27 11:09",
+       "close_price": "5.2230",
+       "hold_h": 89.58,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "18.6015",
+       "net_after_tax_inr": "1.3210",
+       "checks": 5375,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 10,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-27 11:10",
+       "open_price": "5.2290",
+       "close_ist": null,
+       "close_price": null,
+       "hold_h": null,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": null,
+       "net_after_tax_inr": null,
+       "checks": 21260,
+       "rechecks_failed": 0,
+       "unrealized": {
+        "kind": "BULL",
+        "pnl_usd": "0.21692900108620225900",
+        "pnl_inr": "20.7774597240364523670200",
+        "gas_usd": "0.01729699891379774100",
+        "tax_open_inr": "0.000",
+        "tax_close_inr": "21.025097213654149917820747041715200000000000000000",
+        "net_after_tax_inr": "-0.247637489617697550800747041715200000000000000000",
+        "target_inr": "1.00",
+        "clears": false
+       }
+      }
+     ],
+     "stress_p90_cost": {
+      "rounds_closed": 8,
+      "open_at_end": 1,
+      "realized_net_after_tax_inr": "10.40",
+      "vs_start_inr": "402.47",
+      "vs_hold_inr": "27.04",
+      "vs_hold_liquidation_inr": "87.39"
+     },
+     "seeds": {
+      "n": 200,
+      "vs_hold_inr_p10_p50_p90": [
+       "26.28",
+       "34.13",
+       "34.57"
+      ],
+      "realized_inr_p10_p50_p90": [
+       "10.97",
+       "11.42",
+       "12.92"
+      ],
+      "rounds_closed_p10_p50_p90": [
+       9,
+       9,
+       9
+      ],
+      "vs_hold_liquidation_inr_p10_p50_p90": [
+       "87.51",
+       "91.87",
+       "92.31"
+      ]
+     }
+    },
+    "C": {
+     "variant": "C",
+     "rounds_opened": 10,
+     "rounds_closed": 9,
+     "bull_closed": 8,
+     "bear_closed": 1,
+     "open_at_end": 1,
+     "win_pct": "90.00",
+     "realized_net_after_tax_inr": "12.69",
+     "open_round_unrealized_inr": [
+      "-6.27"
+     ],
+     "tax_reserve_inr": "110.59",
+     "gas_inr": "9.48",
+     "end_equity_after_tax_inr": "908.02",
+     "vs_start_inr": "408.02",
+     "vs_hold_inr": "32.60",
+     "vs_hold_liquidation_inr": "92.48",
+     "latent_tax_inr": "57.25",
+     "hold_latent_tax_inr": "117.13",
+     "hold_vs_start_inr": "375.42",
+     "max_drawdown_inr": "166.01",
+     "max_drawdown_pct": "18.14",
+     "max_drawdown_vs_hold_inr": "51.40",
+     "avg_hold_h": 35.72,
+     "max_hold_h": 89.55,
+     "pct_time_in_open_round": "93.79",
+     "skips": {
+      "SKIPPED_REGIME": 183
+     },
+     "end_wallet": {
+      "usdc": "1.978900",
+      "wnear": "1.485141"
+     },
+     "rounds": [
+      {
+       "n": 1,
+       "kind": "BEAR",
+       "signal": "BREAKDOWN_SHORT",
+       "open_ist": "2026-09-12 10:31",
+       "open_price": "2.3390",
+       "close_ist": "2026-09-13 13:03",
+       "close_price": "2.2960",
+       "hold_h": 26.53,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "0.0000",
+       "net_after_tax_inr": "1.1055",
+       "checks": 1592,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 2,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-15 03:26",
+       "open_price": "2.5010",
+       "close_ist": "2026-09-17 05:47",
+       "close_price": "2.6570",
+       "hold_h": 50.35,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "7.9443",
+       "net_after_tax_inr": "1.3571",
+       "checks": 3021,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 3,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-17 05:50",
+       "open_price": "2.6690",
+       "close_ist": "2026-09-17 17:22",
+       "close_price": "2.8670",
+       "hold_h": 11.53,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "9.9465",
+       "net_after_tax_inr": "1.5198",
+       "checks": 692,
+       "rechecks_failed": 1,
+       "unrealized": null
+      },
+      {
+       "n": 4,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-17 17:43",
+       "open_price": "2.8720",
+       "close_ist": "2026-09-18 04:17",
+       "close_price": "3.0840",
+       "hold_h": 10.57,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "10.2370",
+       "net_after_tax_inr": "1.1884",
+       "checks": 634,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 5,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-18 04:20",
+       "open_price": "3.0890",
+       "close_ist": "2026-09-18 08:27",
+       "close_price": "3.3430",
+       "hold_h": 4.12,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "11.2314",
+       "net_after_tax_inr": "1.6189",
+       "checks": 247,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 6,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-18 08:32",
+       "open_price": "3.4000",
+       "close_ist": "2026-09-18 19:02",
+       "close_price": "3.7150",
+       "hold_h": 10.5,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "13.6238",
+       "net_after_tax_inr": "1.2184",
+       "checks": 630,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 7,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-18 19:05",
+       "open_price": "3.7700",
+       "close_ist": "2026-09-20 22:00",
+       "close_price": "4.1920",
+       "hold_h": 50.92,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "17.0156",
+       "net_after_tax_inr": "1.2410",
+       "checks": 3055,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 8,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-20 22:13",
+       "open_price": "4.2540",
+       "close_ist": "2026-09-23 17:40",
+       "close_price": "4.7720",
+       "hold_h": 67.45,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "18.7401",
+       "net_after_tax_inr": "1.1851",
+       "checks": 4047,
+       "rechecks_failed": 0,
+       "unrealized": null
+      },
+      {
+       "n": 9,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-23 17:53",
+       "open_price": "4.7590",
+       "close_ist": "2026-09-27 11:26",
+       "close_price": "5.4440",
+       "hold_h": 89.55,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": "21.8474",
+       "net_after_tax_inr": "2.2602",
+       "checks": 5373,
+       "rechecks_failed": 1,
+       "unrealized": null
+      },
+      {
+       "n": 10,
+       "kind": "BULL",
+       "signal": "BREAKOUT_LONG",
+       "open_ist": "2026-09-27 11:44",
+       "open_price": "5.3790",
+       "close_ist": null,
+       "close_price": null,
+       "hold_h": null,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": null,
+       "net_after_tax_inr": null,
+       "checks": 21226,
+       "rechecks_failed": 0,
+       "unrealized": {
+        "kind": "BULL",
+        "pnl_usd": "0.15407400108620225900",
+        "pnl_inr": "14.7572078240364523670200",
+        "gas_usd": "0.01729699891379774100",
+        "tax_open_inr": "0.000",
+        "tax_close_inr": "21.030731623684543512844958764379520000000000000000",
+        "net_after_tax_inr": "-6.273523799648091145824958764379520000000000000000",
+        "target_inr": "1.00",
+        "clears": false
+       }
+      }
+     ],
+     "stress_p90_cost": {
+      "rounds_closed": 9,
+      "open_at_end": 1,
+      "realized_net_after_tax_inr": "12.30",
+      "vs_start_inr": "392.69",
+      "vs_hold_inr": "17.26",
+      "vs_hold_liquidation_inr": "86.60"
+     },
+     "seeds": {
+      "n": 200,
+      "vs_hold_inr_p10_p50_p90": [
+       "31.90",
+       "32.22",
+       "32.63"
+      ],
+      "realized_inr_p10_p50_p90": [
+       "12.07",
+       "12.36",
+       "12.60"
+      ],
+      "rounds_closed_p10_p50_p90": [
+       9,
+       9,
+       9
+      ],
+      "vs_hold_liquidation_inr_p10_p50_p90": [
+       "91.79",
+       "92.10",
+       "92.47"
+      ]
+     }
+    }
+   },
+   "start_offset_sensitivity": {
+    "+0d": {
+     "A": {
+      "rounds_opened": 12,
+      "rounds_closed": 11,
+      "realized_net_after_tax_inr": "15.27",
+      "open_round_unrealized_inr": [
+       "-0.23"
+      ],
+      "vs_hold_inr": "38.56",
+      "vs_hold_liquidation_inr": "96.27",
+      "pct_time_in_open_round": "99.49"
+     },
+     "B": {
+      "rounds_opened": 10,
+      "rounds_closed": 9,
+      "realized_net_after_tax_inr": "11.06",
+      "open_round_unrealized_inr": [
+       "-0.25"
+      ],
+      "vs_hold_inr": "34.28",
+      "vs_hold_liquidation_inr": "91.99",
+      "pct_time_in_open_round": "90.09"
+     },
+     "C": {
+      "rounds_opened": 10,
+      "rounds_closed": 9,
+      "realized_net_after_tax_inr": "12.69",
+      "open_round_unrealized_inr": [
+       "-6.27"
+      ],
+      "vs_hold_inr": "32.60",
+      "vs_hold_liquidation_inr": "92.48",
+      "pct_time_in_open_round": "93.79"
+     }
+    },
+    "+1d": {
+     "A": {
+      "rounds_opened": 12,
+      "rounds_closed": 11,
+      "realized_net_after_tax_inr": "13.98",
+      "open_round_unrealized_inr": [
+       "-0.29"
+      ],
+      "vs_hold_inr": "37.17",
+      "vs_hold_liquidation_inr": "94.62",
+      "pct_time_in_open_round": "99.30"
+     },
+     "B": {
+      "rounds_opened": 11,
+      "rounds_closed": 10,
+      "realized_net_after_tax_inr": "14.00",
+      "open_round_unrealized_inr": [
+       "-16.30"
+      ],
+      "vs_hold_inr": "16.49",
+      "vs_hold_liquidation_inr": "90.67",
+      "pct_time_in_open_round": "93.08"
+     },
+     "C": {
+      "rounds_opened": 11,
+      "rounds_closed": 10,
+      "realized_net_after_tax_inr": "14.00",
+      "open_round_unrealized_inr": [
+       "-16.30"
+      ],
+      "vs_hold_inr": "16.49",
+      "vs_hold_liquidation_inr": "90.67",
+      "pct_time_in_open_round": "93.08"
+     }
+    },
+    "+2d": {
+     "A": {
+      "rounds_opened": 13,
+      "rounds_closed": 12,
+      "realized_net_after_tax_inr": "14.66",
+      "open_round_unrealized_inr": [
+       "-5.31"
+      ],
+      "vs_hold_inr": "32.86",
+      "vs_hold_liquidation_inr": "95.88",
+      "pct_time_in_open_round": "99.49"
+     },
+     "B": {
+      "rounds_opened": 9,
+      "rounds_closed": 8,
+      "realized_net_after_tax_inr": "9.27",
+      "open_round_unrealized_inr": [
+       "-0.64"
+      ],
+      "vs_hold_inr": "32.44",
+      "vs_hold_liquidation_inr": "93.98",
+      "pct_time_in_open_round": "96.60"
+     },
+     "C": {
+      "rounds_opened": 9,
+      "rounds_closed": 8,
+      "realized_net_after_tax_inr": "9.27",
+      "open_round_unrealized_inr": [
+       "-0.64"
+      ],
+      "vs_hold_inr": "32.44",
+      "vs_hold_liquidation_inr": "93.98",
+      "pct_time_in_open_round": "96.60"
+     }
+    },
+    "+3d": {
+     "A": {
+      "rounds_opened": 11,
+      "rounds_closed": 10,
+      "realized_net_after_tax_inr": "14.66",
+      "open_round_unrealized_inr": [
+       "-7.43"
+      ],
+      "vs_hold_inr": "29.31",
+      "vs_hold_liquidation_inr": "84.39",
+      "pct_time_in_open_round": "99.75"
+     },
+     "B": {
+      "rounds_opened": 11,
+      "rounds_closed": 10,
+      "realized_net_after_tax_inr": "14.66",
+      "open_round_unrealized_inr": [
+       "-7.43"
+      ],
+      "vs_hold_inr": "29.31",
+      "vs_hold_liquidation_inr": "84.39",
+      "pct_time_in_open_round": "99.75"
+     },
+     "C": {
+      "rounds_opened": 11,
+      "rounds_closed": 10,
+      "realized_net_after_tax_inr": "14.66",
+      "open_round_unrealized_inr": [
+       "-7.43"
+      ],
+      "vs_hold_inr": "29.31",
+      "vs_hold_liquidation_inr": "84.39",
+      "pct_time_in_open_round": "99.75"
+     }
+    },
+    "+4d": {
+     "A": {
+      "rounds_opened": 12,
+      "rounds_closed": 11,
+      "realized_net_after_tax_inr": "13.79",
+      "open_round_unrealized_inr": [
+       "-0.37"
+      ],
+      "vs_hold_inr": "37.00",
+      "vs_hold_liquidation_inr": "95.46",
+      "pct_time_in_open_round": "99.67"
+     },
+     "B": {
+      "rounds_opened": 11,
+      "rounds_closed": 10,
+      "realized_net_after_tax_inr": "12.56",
+      "open_round_unrealized_inr": [
+       "-0.12"
+      ],
+      "vs_hold_inr": "35.69",
+      "vs_hold_liquidation_inr": "94.48",
+      "pct_time_in_open_round": "97.14"
+     },
+     "C": {
+      "rounds_opened": 11,
+      "rounds_closed": 10,
+      "realized_net_after_tax_inr": "12.56",
+      "open_round_unrealized_inr": [
+       "-0.12"
+      ],
+      "vs_hold_inr": "35.69",
+      "vs_hold_liquidation_inr": "94.48",
+      "pct_time_in_open_round": "97.14"
+     }
+    },
+    "+5d": {
+     "A": {
+      "rounds_opened": 10,
+      "rounds_closed": 9,
+      "realized_net_after_tax_inr": "13.65",
+      "open_round_unrealized_inr": [
+       "-6.72"
+      ],
+      "vs_hold_inr": "28.24",
+      "vs_hold_liquidation_inr": "76.35",
+      "pct_time_in_open_round": "99.48"
+     },
+     "B": {
+      "rounds_opened": 10,
+      "rounds_closed": 9,
+      "realized_net_after_tax_inr": "13.65",
+      "open_round_unrealized_inr": [
+       "-6.72"
+      ],
+      "vs_hold_inr": "28.24",
+      "vs_hold_liquidation_inr": "76.35",
+      "pct_time_in_open_round": "99.48"
+     },
+     "C": {
+      "rounds_opened": 10,
+      "rounds_closed": 9,
+      "realized_net_after_tax_inr": "13.65",
+      "open_round_unrealized_inr": [
+       "-6.72"
+      ],
+      "vs_hold_inr": "28.24",
+      "vs_hold_liquidation_inr": "76.35",
+      "pct_time_in_open_round": "99.48"
+     }
+    },
+    "+6d": {
+     "A": {
+      "rounds_opened": 7,
+      "rounds_closed": 6,
+      "realized_net_after_tax_inr": "11.57",
+      "open_round_unrealized_inr": [
+       "-5.27"
+      ],
+      "vs_hold_inr": "26.15",
+      "vs_hold_liquidation_inr": "54.54",
+      "pct_time_in_open_round": "98.18"
+     },
+     "B": {
+      "rounds_opened": 7,
+      "rounds_closed": 6,
+      "realized_net_after_tax_inr": "11.57",
+      "open_round_unrealized_inr": [
+       "-5.27"
+      ],
+      "vs_hold_inr": "26.15",
+      "vs_hold_liquidation_inr": "54.54",
+      "pct_time_in_open_round": "98.18"
+     },
+     "C": {
+      "rounds_opened": 7,
+      "rounds_closed": 6,
+      "realized_net_after_tax_inr": "11.57",
+      "open_round_unrealized_inr": [
+       "-5.27"
+      ],
+      "vs_hold_inr": "26.15",
+      "vs_hold_liquidation_inr": "54.54",
+      "pct_time_in_open_round": "98.18"
+     }
+    },
+    "+7d": {
+     "A": {
+      "rounds_opened": 7,
+      "rounds_closed": 6,
+      "realized_net_after_tax_inr": "8.43",
+      "open_round_unrealized_inr": [
+       "-1.02"
+      ],
+      "vs_hold_inr": "23.01",
+      "vs_hold_liquidation_inr": "39.33",
+      "pct_time_in_open_round": "99.63"
+     },
+     "B": {
+      "rounds_opened": 7,
+      "rounds_closed": 6,
+      "realized_net_after_tax_inr": "8.43",
+      "open_round_unrealized_inr": [
+       "-1.02"
+      ],
+      "vs_hold_inr": "23.01",
+      "vs_hold_liquidation_inr": "39.33",
+      "pct_time_in_open_round": "99.63"
+     },
+     "C": {
+      "rounds_opened": 7,
+      "rounds_closed": 6,
+      "realized_net_after_tax_inr": "8.43",
+      "open_round_unrealized_inr": [
+       "-1.02"
+      ],
+      "vs_hold_inr": "23.01",
+      "vs_hold_liquidation_inr": "39.33",
+      "pct_time_in_open_round": "99.63"
+     }
+    },
+    "+8d": {
+     "A": {
+      "rounds_opened": 8,
+      "rounds_closed": 7,
+      "realized_net_after_tax_inr": "9.32",
+      "open_round_unrealized_inr": [
+       "-1.77"
+      ],
+      "vs_hold_inr": "23.93",
+      "vs_hold_liquidation_inr": "44.50",
+      "pct_time_in_open_round": "99.01"
+     },
+     "B": {
+      "rounds_opened": 8,
+      "rounds_closed": 7,
+      "realized_net_after_tax_inr": "10.00",
+      "open_round_unrealized_inr": [
+       "-1.40"
+      ],
+      "vs_hold_inr": "24.64",
+      "vs_hold_liquidation_inr": "45.56",
+      "pct_time_in_open_round": "97.30"
+     },
+     "C": {
+      "rounds_opened": 8,
+      "rounds_closed": 7,
+      "realized_net_after_tax_inr": "10.00",
+      "open_round_unrealized_inr": [
+       "-1.40"
+      ],
+      "vs_hold_inr": "24.64",
+      "vs_hold_liquidation_inr": "45.56",
+      "pct_time_in_open_round": "97.30"
+     }
+    },
+    "+9d": {
+     "A": {
+      "rounds_opened": 7,
+      "rounds_closed": 6,
+      "realized_net_after_tax_inr": "8.53",
+      "open_round_unrealized_inr": [
+       "-10.37"
+      ],
+      "vs_hold_inr": "7.86",
+      "vs_hold_liquidation_inr": "28.35",
+      "pct_time_in_open_round": "99.71"
+     },
+     "B": {
+      "rounds_opened": 7,
+      "rounds_closed": 6,
+      "realized_net_after_tax_inr": "8.53",
+      "open_round_unrealized_inr": [
+       "-10.37"
+      ],
+      "vs_hold_inr": "7.86",
+      "vs_hold_liquidation_inr": "28.35",
+      "pct_time_in_open_round": "99.71"
+     },
+     "C": {
+      "rounds_opened": 7,
+      "rounds_closed": 6,
+      "realized_net_after_tax_inr": "8.53",
+      "open_round_unrealized_inr": [
+       "-10.37"
+      ],
+      "vs_hold_inr": "7.86",
+      "vs_hold_liquidation_inr": "28.35",
+      "pct_time_in_open_round": "99.71"
+     }
+    }
+   }
+  },
+  "days_31_60_oos": {
+   "from": "2026-10-12",
+   "to_exclusive": "2026-11-11",
+   "near_open": "5.8940",
+   "near_close": "3.5850",
+   "near_change_pct": "-39.18",
+   "regime_share_pct": {
+    "BULL": 8.8,
+    "BEAR": 18.3,
+    "CHOP": 73.0
+   },
+   "raw_reason_counts": {
+    "TREND_UP": 251,
+    "NO_TREND": 392,
+    "TREND_DOWN": 523,
+    "ATR_BELOW_COST": 1714
+   },
+   "signals": 2786,
+   "runs": {
+    "A": {
+     "variant": "A",
+     "rounds_opened": 1,
+     "rounds_closed": 0,
+     "bull_closed": 0,
+     "bear_closed": 0,
+     "open_at_end": 1,
+     "win_pct": "0.00",
+     "realized_net_after_tax_inr": "0.00",
+     "open_round_unrealized_inr": [
+      "-75.04"
+     ],
+     "tax_reserve_inr": "0.00",
+     "gas_inr": "0.82",
+     "end_equity_after_tax_inr": "319.05",
+     "vs_start_inr": "-180.95",
+     "vs_hold_inr": "-74.22",
+     "vs_hold_liquidation_inr": "-74.22",
+     "latent_tax_inr": "0.00",
+     "hold_latent_tax_inr": "0.00",
+     "hold_vs_start_inr": "-106.74",
+     "max_drawdown_inr": "190.59",
+     "max_drawdown_pct": "37.95",
+     "max_drawdown_vs_hold_inr": "78.51",
+     "avg_hold_h": null,
+     "max_hold_h": null,
+     "pct_time_in_open_round": "99.44",
+     "skips": {
+      "SKIPPED_SHORT_LONG_ONLY": 11
+     },
+     "end_wallet": {
+      "usdc": "0.610148",
+      "wnear": "0.782149"
+     },
+     "rounds": [
+      {
+       "n": 1,
+       "kind": "BULL",
+       "signal": "PULLBACK_LONG",
+       "open_ist": "2026-10-12 09:31",
+       "open_price": "5.8710",
+       "close_ist": null,
+       "close_price": null,
+       "hold_h": null,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": null,
+       "net_after_tax_inr": null,
+       "checks": 42959,
+       "rechecks_failed": 0,
+       "unrealized": {
+        "kind": "BULL",
+        "pnl_usd": "-0.80095404005190244300",
+        "pnl_inr": "-75.0413840124627398846700",
+        "gas_usd": "0.01051904005190244300",
+        "tax_open_inr": "0.000",
+        "tax_close_inr": "0.000",
+        "net_after_tax_inr": "-75.0413840124627398846700",
+        "target_inr": "1.00",
+        "clears": false
+       }
+      }
+     ],
+     "stress_p90_cost": {
+      "rounds_closed": 0,
+      "open_at_end": 1,
+      "realized_net_after_tax_inr": "0.00",
+      "vs_start_inr": "-181.21",
+      "vs_hold_inr": "-74.48",
+      "vs_hold_liquidation_inr": "-74.48"
+     },
+     "seeds": {
+      "n": 200,
+      "vs_hold_inr_p10_p50_p90": [
+       "-74.22",
+       "-74.19",
+       "-74.15"
+      ],
+      "realized_inr_p10_p50_p90": [
+       "0.00",
+       "0.00",
+       "0.00"
+      ],
+      "rounds_closed_p10_p50_p90": [
+       0,
+       0,
+       0
+      ],
+      "vs_hold_liquidation_inr_p10_p50_p90": [
+       "-74.22",
+       "-74.19",
+       "-74.15"
+      ]
+     }
+    },
+    "B": {
+     "variant": "B",
+     "rounds_opened": 1,
+     "rounds_closed": 0,
+     "bull_closed": 0,
+     "bear_closed": 0,
+     "open_at_end": 1,
+     "win_pct": "0.00",
+     "realized_net_after_tax_inr": "0.00",
+     "open_round_unrealized_inr": [
+      "-75.04"
+     ],
+     "tax_reserve_inr": "0.00",
+     "gas_inr": "0.82",
+     "end_equity_after_tax_inr": "319.05",
+     "vs_start_inr": "-180.95",
+     "vs_hold_inr": "-74.22",
+     "vs_hold_liquidation_inr": "-74.22",
+     "latent_tax_inr": "0.00",
+     "hold_latent_tax_inr": "0.00",
+     "hold_vs_start_inr": "-106.74",
+     "max_drawdown_inr": "190.59",
+     "max_drawdown_pct": "37.95",
+     "max_drawdown_vs_hold_inr": "78.51",
+     "avg_hold_h": null,
+     "max_hold_h": null,
+     "pct_time_in_open_round": "99.44",
+     "skips": {
+      "SKIPPED_SHORT_LONG_ONLY": 11
+     },
+     "end_wallet": {
+      "usdc": "0.610148",
+      "wnear": "0.782149"
+     },
+     "rounds": [
+      {
+       "n": 1,
+       "kind": "BULL",
+       "signal": "PULLBACK_LONG",
+       "open_ist": "2026-10-12 09:31",
+       "open_price": "5.8710",
+       "close_ist": null,
+       "close_price": null,
+       "hold_h": null,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": null,
+       "net_after_tax_inr": null,
+       "checks": 42959,
+       "rechecks_failed": 0,
+       "unrealized": {
+        "kind": "BULL",
+        "pnl_usd": "-0.80095404005190244300",
+        "pnl_inr": "-75.0413840124627398846700",
+        "gas_usd": "0.01051904005190244300",
+        "tax_open_inr": "0.000",
+        "tax_close_inr": "0.000",
+        "net_after_tax_inr": "-75.0413840124627398846700",
+        "target_inr": "1.00",
+        "clears": false
+       }
+      }
+     ],
+     "stress_p90_cost": {
+      "rounds_closed": 0,
+      "open_at_end": 1,
+      "realized_net_after_tax_inr": "0.00",
+      "vs_start_inr": "-181.21",
+      "vs_hold_inr": "-74.48",
+      "vs_hold_liquidation_inr": "-74.48"
+     },
+     "seeds": {
+      "n": 200,
+      "vs_hold_inr_p10_p50_p90": [
+       "-74.22",
+       "-74.19",
+       "-74.15"
+      ],
+      "realized_inr_p10_p50_p90": [
+       "0.00",
+       "0.00",
+       "0.00"
+      ],
+      "rounds_closed_p10_p50_p90": [
+       0,
+       0,
+       0
+      ],
+      "vs_hold_liquidation_inr_p10_p50_p90": [
+       "-74.22",
+       "-74.19",
+       "-74.15"
+      ]
+     }
+    },
+    "C": {
+     "variant": "C",
+     "rounds_opened": 1,
+     "rounds_closed": 0,
+     "bull_closed": 0,
+     "bear_closed": 0,
+     "open_at_end": 1,
+     "win_pct": "0.00",
+     "realized_net_after_tax_inr": "0.00",
+     "open_round_unrealized_inr": [
+      "-75.04"
+     ],
+     "tax_reserve_inr": "0.00",
+     "gas_inr": "0.82",
+     "end_equity_after_tax_inr": "319.05",
+     "vs_start_inr": "-180.95",
+     "vs_hold_inr": "-74.22",
+     "vs_hold_liquidation_inr": "-74.22",
+     "latent_tax_inr": "0.00",
+     "hold_latent_tax_inr": "0.00",
+     "hold_vs_start_inr": "-106.74",
+     "max_drawdown_inr": "190.59",
+     "max_drawdown_pct": "37.95",
+     "max_drawdown_vs_hold_inr": "78.51",
+     "avg_hold_h": null,
+     "max_hold_h": null,
+     "pct_time_in_open_round": "99.44",
+     "skips": {
+      "SKIPPED_REGIME": 11
+     },
+     "end_wallet": {
+      "usdc": "0.610148",
+      "wnear": "0.782149"
+     },
+     "rounds": [
+      {
+       "n": 1,
+       "kind": "BULL",
+       "signal": "PULLBACK_LONG",
+       "open_ist": "2026-10-12 09:31",
+       "open_price": "5.8710",
+       "close_ist": null,
+       "close_price": null,
+       "hold_h": null,
+       "tax_open_inr": "0.0000",
+       "tax_close_inr": null,
+       "net_after_tax_inr": null,
+       "checks": 42959,
+       "rechecks_failed": 0,
+       "unrealized": {
+        "kind": "BULL",
+        "pnl_usd": "-0.80095404005190244300",
+        "pnl_inr": "-75.0413840124627398846700",
+        "gas_usd": "0.01051904005190244300",
+        "tax_open_inr": "0.000",
+        "tax_close_inr": "0.000",
+        "net_after_tax_inr": "-75.0413840124627398846700",
+        "target_inr": "1.00",
+        "clears": false
+       }
+      }
+     ],
+     "stress_p90_cost": {
+      "rounds_closed": 0,
+      "open_at_end": 1,
+      "realized_net_after_tax_inr": "0.00",
+      "vs_start_inr": "-181.21",
+      "vs_hold_inr": "-74.48",
+      "vs_hold_liquidation_inr": "-74.48"
+     },
+     "seeds": {
+      "n": 200,
+      "vs_hold_inr_p10_p50_p90": [
+       "-74.22",
+       "-74.19",
+       "-74.15"
+      ],
+      "realized_inr_p10_p50_p90": [
+       "0.00",
+       "0.00",
+       "0.00"
+      ],
+      "rounds_closed_p10_p50_p90": [
+       0,
+       0,
+       0
+      ],
+      "vs_hold_liquidation_inr_p10_p50_p90": [
+       "-74.22",
+       "-74.19",
+       "-74.15"
+      ]
+     }
+    }
+   },
+   "start_offset_sensitivity": {
+    "+0d": {
+     "A": {
+      "rounds_opened": 1,
+      "rounds_closed": 0,
+      "realized_net_after_tax_inr": "0.00",
+      "open_round_unrealized_inr": [
+       "-75.04"
+      ],
+      "vs_hold_inr": "-74.22",
+      "vs_hold_liquidation_inr": "-74.22",
+      "pct_time_in_open_round": "99.44"
+     },
+     "B": {
+      "rounds_opened": 1,
+      "rounds_closed": 0,
+      "realized_net_after_tax_inr": "0.00",
+      "open_round_unrealized_inr": [
+       "-75.04"
+      ],
+      "vs_hold_inr": "-74.22",
+      "vs_hold_liquidation_inr": "-74.22",
+      "pct_time_in_open_round": "99.44"
+     },
+     "C": {
+      "rounds_opened": 1,
+      "rounds_closed": 0,
+      "realized_net_after_tax_inr": "0.00",
+      "open_round_unrealized_inr": [
+       "-75.04"
+      ],
+      "vs_hold_inr": "-74.22",
+      "vs_hold_liquidation_inr": "-74.22",
+      "pct_time_in_open_round": "99.44"
+     }
+    },
+    "+1d": {
+     "A": {
+      "rounds_opened": 2,
+      "rounds_closed": 1,
+      "realized_net_after_tax_inr": "1.10",
+      "open_round_unrealized_inr": [
+       "-62.15"
+      ],
+      "vs_hold_inr": "-60.12",
+      "vs_hold_liquidation_inr": "-60.12",
+      "pct_time_in_open_round": "99.94"
+     },
+     "B": {
+      "rounds_opened": 1,
+      "rounds_closed": 0,
+      "realized_net_after_tax_inr": "0.00",
+      "open_round_unrealized_inr": [
+       "-63.68"
+      ],
+      "vs_hold_inr": "-62.71",
+      "vs_hold_liquidation_inr": "-62.71",
+      "pct_time_in_open_round": "89.95"
+     },
+     "C": {
+      "rounds_opened": 11,
+      "rounds_closed": 10,
+      "realized_net_after_tax_inr": "16.20",
+      "open_round_unrealized_inr": [
+       "-30.12"
+      ],
+      "vs_hold_inr": "-18.79",
+      "vs_hold_liquidation_inr": "-18.79",
+      "pct_time_in_open_round": "87.43"
+     }
+    },
+    "+2d": {
+     "A": {
+      "rounds_opened": 2,
+      "rounds_closed": 1,
+      "realized_net_after_tax_inr": "1.53",
+      "open_round_unrealized_inr": [
+       "-61.88"
+      ],
+      "vs_hold_inr": "-59.40",
+      "vs_hold_liquidation_inr": "-59.40",
+      "pct_time_in_open_round": "99.95"
+     },
+     "B": {
+      "rounds_opened": 1,
+      "rounds_closed": 0,
+      "realized_net_after_tax_inr": "0.00",
+      "open_round_unrealized_inr": [
+       "-63.68"
+      ],
+      "vs_hold_inr": "-62.71",
+      "vs_hold_liquidation_inr": "-62.71",
+      "pct_time_in_open_round": "93.16"
+     },
+     "C": {
+      "rounds_opened": 12,
+      "rounds_closed": 11,
+      "realized_net_after_tax_inr": "16.74",
+      "open_round_unrealized_inr": [
+       "-30.17"
+      ],
+      "vs_hold_inr": "-18.96",
+      "vs_hold_liquidation_inr": "-18.96",
+      "pct_time_in_open_round": "86.28"
+     }
+    },
+    "+3d": {
+     "A": {
+      "rounds_opened": 4,
+      "rounds_closed": 3,
+      "realized_net_after_tax_inr": "3.74",
+      "open_round_unrealized_inr": [
+       "-64.37"
+      ],
+      "vs_hold_inr": "-59.82",
+      "vs_hold_liquidation_inr": "-59.82",
+      "pct_time_in_open_round": "99.52"
+     },
+     "B": {
+      "rounds_opened": 1,
+      "rounds_closed": 0,
+      "realized_net_after_tax_inr": "0.00",
+      "open_round_unrealized_inr": [
+       "-63.68"
+      ],
+      "vs_hold_inr": "-62.71",
+      "vs_hold_liquidation_inr": "-62.71",
+      "pct_time_in_open_round": "96.61"
+     },
+     "C": {
+      "rounds_opened": 4,
+      "rounds_closed": 3,
+      "realized_net_after_tax_inr": "4.10",
+      "open_round_unrealized_inr": [
+       "-63.71"
+      ],
+      "vs_hold_inr": "-60.66",
+      "vs_hold_liquidation_inr": "-60.66",
+      "pct_time_in_open_round": "97.54"
+     }
+    },
+    "+4d": {
+     "A": {
+      "rounds_opened": 1,
+      "rounds_closed": 0,
+      "realized_net_after_tax_inr": "0.00",
+      "open_round_unrealized_inr": [
+       "-62.67"
+      ],
+      "vs_hold_inr": "-61.68",
+      "vs_hold_liquidation_inr": "-61.68",
+      "pct_time_in_open_round": "99.95"
+     },
+     "B": {
+      "rounds_opened": 1,
+      "rounds_closed": 0,
+      "realized_net_after_tax_inr": "0.00",
+      "open_round_unrealized_inr": [
+       "-62.67"
+      ],
+      "vs_hold_inr": "-61.68",
+      "vs_hold_liquidation_inr": "-61.68",
+      "pct_time_in_open_round": "99.95"
+     },
+     "C": {
+      "rounds_opened": 1,
+      "rounds_closed": 0,
+      "realized_net_after_tax_inr": "0.00",
+      "open_round_unrealized_inr": [
+       "-62.67"
+      ],
+      "vs_hold_inr": "-61.68",
+      "vs_hold_liquidation_inr": "-61.68",
+      "pct_time_in_open_round": "99.95"
+     }
+    },
+    "+5d": {
+     "A": {
+      "rounds_opened": 3,
+      "rounds_closed": 2,
+      "realized_net_after_tax_inr": "2.31",
+      "open_round_unrealized_inr": [
+       "-63.20"
+      ],
+      "vs_hold_inr": "-59.96",
+      "vs_hold_liquidation_inr": "-59.96",
+      "pct_time_in_open_round": "99.62"
+     },
+     "B": {
+      "rounds_opened": 3,
+      "rounds_closed": 2,
+      "realized_net_after_tax_inr": "2.89",
+      "open_round_unrealized_inr": [
+       "-63.43"
+      ],
+      "vs_hold_inr": "-59.60",
+      "vs_hold_liquidation_inr": "-59.60",
+      "pct_time_in_open_round": "83.38"
+     },
+     "C": {
+      "rounds_opened": 9,
+      "rounds_closed": 8,
+      "realized_net_after_tax_inr": "13.32",
+      "open_round_unrealized_inr": [
+       "-30.14"
+      ],
+      "vs_hold_inr": "-20.22",
+      "vs_hold_liquidation_inr": "-20.22",
+      "pct_time_in_open_round": "81.59"
+     }
+    },
+    "+6d": {
+     "A": {
+      "rounds_opened": 3,
+      "rounds_closed": 2,
+      "realized_net_after_tax_inr": "2.75",
+      "open_round_unrealized_inr": [
+       "-61.19"
+      ],
+      "vs_hold_inr": "-57.50",
+      "vs_hold_liquidation_inr": "-57.50",
+      "pct_time_in_open_round": "99.92"
+     },
+     "B": {
+      "rounds_opened": 2,
+      "rounds_closed": 1,
+      "realized_net_after_tax_inr": "1.44",
+      "open_round_unrealized_inr": [
+       "-61.22"
+      ],
+      "vs_hold_inr": "-58.80",
+      "vs_hold_liquidation_inr": "-58.80",
+      "pct_time_in_open_round": "87.08"
+     },
+     "C": {
+      "rounds_opened": 8,
+      "rounds_closed": 7,
+      "realized_net_after_tax_inr": "10.19",
+      "open_round_unrealized_inr": [
+       "-30.12"
+      ],
+      "vs_hold_inr": "-22.31",
+      "vs_hold_liquidation_inr": "-22.31",
+      "pct_time_in_open_round": "82.23"
+     }
+    },
+    "+7d": {
+     "A": {
+      "rounds_opened": 3,
+      "rounds_closed": 2,
+      "realized_net_after_tax_inr": "2.24",
+      "open_round_unrealized_inr": [
+       "-63.40"
+      ],
+      "vs_hold_inr": "-60.22",
+      "vs_hold_liquidation_inr": "-60.22",
+      "pct_time_in_open_round": "99.57"
+     },
+     "B": {
+      "rounds_opened": 2,
+      "rounds_closed": 1,
+      "realized_net_after_tax_inr": "1.20",
+      "open_round_unrealized_inr": [
+       "-60.44"
+      ],
+      "vs_hold_inr": "-58.24",
+      "vs_hold_liquidation_inr": "-58.24",
+      "pct_time_in_open_round": "90.84"
+     },
+     "C": {
+      "rounds_opened": 2,
+      "rounds_closed": 1,
+      "realized_net_after_tax_inr": "1.20",
+      "open_round_unrealized_inr": [
+       "-60.44"
+      ],
+      "vs_hold_inr": "-58.24",
+      "vs_hold_liquidation_inr": "-58.24",
+      "pct_time_in_open_round": "90.84"
+     }
+    },
+    "+8d": {
+     "A": {
+      "rounds_opened": 3,
+      "rounds_closed": 2,
+      "realized_net_after_tax_inr": "2.81",
+      "open_round_unrealized_inr": [
+       "-64.79"
+      ],
+      "vs_hold_inr": "-61.07",
+      "vs_hold_liquidation_inr": "-61.07",
+      "pct_time_in_open_round": "99.60"
+     },
+     "B": {
+      "rounds_opened": 2,
+      "rounds_closed": 1,
+      "realized_net_after_tax_inr": "1.28",
+      "open_round_unrealized_inr": [
+       "-61.54"
+      ],
+      "vs_hold_inr": "-59.28",
+      "vs_hold_liquidation_inr": "-59.28",
+      "pct_time_in_open_round": "94.94"
+     },
+     "C": {
+      "rounds_opened": 2,
+      "rounds_closed": 1,
+      "realized_net_after_tax_inr": "1.28",
+      "open_round_unrealized_inr": [
+       "-61.54"
+      ],
+      "vs_hold_inr": "-59.28",
+      "vs_hold_liquidation_inr": "-59.28",
+      "pct_time_in_open_round": "94.94"
+     }
+    },
+    "+9d": {
+     "A": {
+      "rounds_opened": 3,
+      "rounds_closed": 2,
+      "realized_net_after_tax_inr": "2.42",
+      "open_round_unrealized_inr": [
+       "-63.41"
+      ],
+      "vs_hold_inr": "-60.05",
+      "vs_hold_liquidation_inr": "-60.05",
+      "pct_time_in_open_round": "99.72"
+     },
+     "B": {
+      "rounds_opened": 2,
+      "rounds_closed": 1,
+      "realized_net_after_tax_inr": "1.35",
+      "open_round_unrealized_inr": [
+       "-61.54"
+      ],
+      "vs_hold_inr": "-59.21",
+      "vs_hold_liquidation_inr": "-59.21",
+      "pct_time_in_open_round": "99.46"
+     },
+     "C": {
+      "rounds_opened": 2,
+      "rounds_closed": 1,
+      "realized_net_after_tax_inr": "1.35",
+      "open_round_unrealized_inr": [
+       "-61.54"
+      ],
+      "vs_hold_inr": "-59.21",
+      "vs_hold_liquidation_inr": "-59.21",
+      "pct_time_in_open_round": "99.46"
+     }
+    }
+   }
+  }
+ },
+ "full_60_days_one_wallet": {
+  "A": {
+   "variant": "A",
+   "rounds_opened": 13,
+   "rounds_closed": 12,
+   "bull_closed": 12,
+   "bear_closed": 0,
+   "open_at_end": 1,
+   "win_pct": "92.31",
+   "realized_net_after_tax_inr": "16.29",
+   "open_round_unrealized_inr": [
+    "-75.82"
+   ],
+   "tax_reserve_inr": "131.64",
+   "gas_inr": "12.72",
+   "end_equity_after_tax_inr": "555.01",
+   "vs_start_inr": "55.01",
+   "vs_hold_inr": "-61.80",
+   "vs_hold_liquidation_inr": "-23.83",
+   "latent_tax_inr": "0.00",
+   "hold_latent_tax_inr": "37.97",
+   "hold_vs_start_inr": "116.81",
+   "max_drawdown_inr": "379.75",
+   "max_drawdown_pct": "41.22",
+   "max_drawdown_vs_hold_inr": "104.54",
+   "avg_hold_h": 60.11,
+   "max_hold_h": 359.28,
+   "pct_time_in_open_round": "99.74",
+   "skips": {
+    "SKIPPED_SHORT_LONG_ONLY": 5
+   },
+   "end_wallet": {
+    "usdc": "2.289121",
+    "wnear": "1.443701"
+   }
+  },
+  "B": {
+   "variant": "B",
+   "rounds_opened": 11,
+   "rounds_closed": 10,
+   "bull_closed": 10,
+   "bear_closed": 0,
+   "open_at_end": 1,
+   "win_pct": "90.91",
+   "realized_net_after_tax_inr": "12.06",
+   "open_round_unrealized_inr": [
+    "-75.79"
+   ],
+   "tax_reserve_inr": "128.56",
+   "gas_inr": "11.36",
+   "end_equity_after_tax_inr": "550.96",
+   "vs_start_inr": "50.96",
+   "vs_hold_inr": "-65.85",
+   "vs_hold_liquidation_inr": "-27.88",
+   "latent_tax_inr": "0.00",
+   "hold_latent_tax_inr": "37.97",
+   "hold_vs_start_inr": "116.81",
+   "max_drawdown_inr": "379.47",
+   "max_drawdown_pct": "41.38",
+   "max_drawdown_vs_hold_inr": "104.25",
+   "avg_hold_h": 65.36,
+   "max_hold_h": 359.28,
+   "pct_time_in_open_round": "95.03",
+   "skips": {
+    "SKIPPED_REGIME": 174,
+    "SKIPPED_SHORT_LONG_ONLY": 132
+   },
+   "end_wallet": {
+    "usdc": "2.198087",
+    "wnear": "1.443788"
+   }
+  },
+  "C": {
+   "variant": "C",
+   "rounds_opened": 10,
+   "rounds_closed": 9,
+   "bull_closed": 8,
+   "bear_closed": 1,
+   "open_at_end": 1,
+   "win_pct": "90.00",
+   "realized_net_after_tax_inr": "12.69",
+   "open_round_unrealized_inr": [
+    "-64.65"
+   ],
+   "tax_reserve_inr": "110.59",
+   "gas_inr": "9.48",
+   "end_equity_after_tax_inr": "564.17",
+   "vs_start_inr": "64.17",
+   "vs_hold_inr": "-52.65",
+   "vs_hold_liquidation_inr": "-14.67",
+   "latent_tax_inr": "0.00",
+   "hold_latent_tax_inr": "37.97",
+   "hold_vs_start_inr": "116.81",
+   "max_drawdown_inr": "365.05",
+   "max_drawdown_pct": "39.88",
+   "max_drawdown_vs_hold_inr": "90.50",
+   "avg_hold_h": 35.72,
+   "max_hold_h": 89.55,
+   "pct_time_in_open_round": "96.89",
+   "skips": {
+    "SKIPPED_REGIME": 183
+   },
+   "end_wallet": {
+    "usdc": "1.978900",
+    "wnear": "1.485141"
+   }
+  }
+ },
+ "hyperliquid_crosscheck": {
+  "bars_compared": 4637,
+  "agreement_pct": 97.39,
+  "from": "2026-09-23T17:00:00+00:00",
+  "to": "2026-11-11T00:00:00+00:00",
+  "median_abs_close_basis_bps": 4.75
+ },
+ "hyperliquid_signal_crosscheck": {
+  "day_utc": "2026-11-10",
+  "hyperliquid_signals": 102,
+  "binance_signals": 92,
+  "same_bar_same_direction": 31,
+  "within_3_bars_same_direction": 71,
+  "hl_first_bar": 1794171600000
+ }
+}

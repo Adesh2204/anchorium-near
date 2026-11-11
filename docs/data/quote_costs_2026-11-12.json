@@ -1,0 +1,1267 @@
+{
+ "measured": "worst-case leg cost = 1 - value(minAmountOut)/value(amountIn) at the Hyperliquid NEAR mid (avg of before/after)",
+ "usd": "2.00",
+ "tolerance_bps": 10,
+ "samples": [
+  {
+   "i": 0,
+   "at": "2026-11-11T19:27:21+00:00",
+   "hl_mid": "3.70985",
+   "buy": {
+    "correlation_id": "45f37c5b-fea6-4e1c-8e1d-823e39d7c0bb",
+    "amount_in": "2000000",
+    "amount_out": "537874285749771844660193",
+    "min_amount_out": "537336411464022072815532",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "32.81"
+   },
+   "sell": {
+    "correlation_id": "9bd8ea1c-2d4f-4094-8044-9d63e5eae275",
+    "amount_in": "538901987201077803974402",
+    "amount_out": "1989361",
+    "min_amount_out": "1987371",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.40"
+   }
+  },
+  {
+   "i": 1,
+   "at": "2026-11-11T19:27:28+00:00",
+   "hl_mid": "3.70845",
+   "buy": {
+    "correlation_id": "e6e2e063-e807-445a-a8ba-b515cbbe8cf8",
+    "amount_in": "2000000",
+    "amount_out": "537729536279092882178484",
+    "min_amount_out": "537191806742813789296305",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "39.26"
+   },
+   "sell": {
+    "correlation_id": "dcdbb6dd-9868-40d1-84e5-ed2110e623c8",
+    "amount_in": "539308875675821434831263",
+    "amount_out": "1991400",
+    "min_amount_out": "1989408",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "52.96"
+   }
+  },
+  {
+   "i": 2,
+   "at": "2026-11-11T19:27:35+00:00",
+   "hl_mid": "3.71325",
+   "buy": {
+    "correlation_id": "babd2038-90f6-4bb3-a1ad-ce4e86522d55",
+    "amount_in": "2000000",
+    "amount_out": "537005613909304119547656",
+    "min_amount_out": "536468608295394815428108",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "39.79"
+   },
+   "sell": {
+    "correlation_id": "609c440f-926c-4291-8aa8-ec04c33ec05f",
+    "amount_in": "538611728270383087591732",
+    "amount_out": "1991056",
+    "min_amount_out": "1989064",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "54.68"
+   }
+  },
+  {
+   "i": 3,
+   "at": "2026-11-11T19:27:42+00:00",
+   "hl_mid": "3.71405",
+   "buy": {
+    "correlation_id": "8fb48e04-e84e-475b-bf70-9cc032674751",
+    "amount_in": "2000000",
+    "amount_out": "537005613909304119547656",
+    "min_amount_out": "536468608295394815428108",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.64"
+   },
+   "sell": {
+    "correlation_id": "96fd8540-1304-417e-93d7-ef97ba22e0a6",
+    "amount_in": "538495712227891385414843",
+    "amount_out": "1990627",
+    "min_amount_out": "1988636",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "56.82"
+   }
+  },
+  {
+   "i": 4,
+   "at": "2026-11-11T19:27:49+00:00",
+   "hl_mid": "3.71515",
+   "buy": {
+    "correlation_id": "e5a686ac-8abf-4110-8073-f14c7f3dedbb",
+    "amount_in": "2000000",
+    "amount_out": "536861063272989367429339",
+    "min_amount_out": "536324202209716378061909",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.38"
+   },
+   "sell": {
+    "correlation_id": "7497529e-b7c8-4fdf-b457-d2bfc98fda5b",
+    "amount_in": "538336271752149980485310",
+    "amount_out": "1991111",
+    "min_amount_out": "1989119",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "54.40"
+   }
+  },
+  {
+   "i": 5,
+   "at": "2026-11-11T19:27:56+00:00",
+   "hl_mid": "3.71375",
+   "buy": {
+    "correlation_id": "bfbc67cc-a296-4eb3-a380-e150d0194d6c",
+    "amount_in": "2000000",
+    "amount_out": "537150242407529086991650",
+    "min_amount_out": "536613092165121557904658",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.77"
+   },
+   "sell": {
+    "correlation_id": "56a6447d-9715-4016-94a6-251312252f41",
+    "amount_in": "538539212386401884887243",
+    "amount_out": "1990251",
+    "min_amount_out": "1988260",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "58.70"
+   }
+  },
+  {
+   "i": 6,
+   "at": "2026-11-11T19:28:04+00:00",
+   "hl_mid": "3.71005",
+   "buy": {
+    "correlation_id": "62c3cce7-1021-4b72-94be-7872efd274bf",
+    "amount_in": "2000000",
+    "amount_out": "537730343908374224858451",
+    "min_amount_out": "537192613564465850633592",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "34.94"
+   },
+   "sell": {
+    "correlation_id": "1c60b60b-8d7f-4ba3-b669-55e7576503c9",
+    "amount_in": "539076292772334604654923",
+    "amount_out": "1990005",
+    "min_amount_out": "1988014",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.93"
+   }
+  },
+  {
+   "i": 7,
+   "at": "2026-11-11T19:28:10+00:00",
+   "hl_mid": "3.70860",
+   "buy": {
+    "correlation_id": "e9fa1e71-cc2a-4ba9-9c47-8d8a562f6692",
+    "amount_in": "2000000",
+    "amount_out": "538020998800691394658753",
+    "min_amount_out": "537482977801890703264094",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "33.45"
+   },
+   "sell": {
+    "correlation_id": "6e30e401-6b86-4bf3-a06a-b82cffa53e0d",
+    "amount_in": "539076292772334604654923",
+    "amount_out": "1989013",
+    "min_amount_out": "1987023",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "61.00"
+   }
+  },
+  {
+   "i": 8,
+   "at": "2026-11-11T19:28:17+00:00",
+   "hl_mid": "3.70715",
+   "buy": {
+    "correlation_id": "3b5438cf-2fab-44a3-8bc7-9eec570591ee",
+    "amount_in": "2000000",
+    "amount_out": "537731151537655567538419",
+    "min_amount_out": "537193420386117911970880",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "42.72"
+   },
+   "sell": {
+    "correlation_id": "14f516d4-fb20-43f4-886e-3ad78f26e5ae",
+    "amount_in": "539497997113685715441781",
+    "amount_out": "1991645",
+    "min_amount_out": "1989653",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "51.73"
+   }
+  },
+  {
+   "i": 9,
+   "at": "2026-11-11T19:28:25+00:00",
+   "hl_mid": "3.70955",
+   "buy": {
+    "correlation_id": "74f918e5-2575-41d0-a901-71e4613ba108",
+    "amount_in": "2000000",
+    "amount_out": "538166443889143146249324",
+    "min_amount_out": "537628277445254003103074",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "28.21"
+   },
+   "sell": {
+    "correlation_id": "86074582-cea3-4af3-94a3-4c807da366ea",
+    "amount_in": "539148953377094256715774",
+    "amount_out": "1988744",
+    "min_amount_out": "1986755",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "66.22"
+   }
+  },
+  {
+   "i": 10,
+   "at": "2026-11-11T19:28:32+00:00",
+   "hl_mid": "3.70705",
+   "buy": {
+    "correlation_id": "73213d1c-a0e9-40db-ace8-fd7913eada57",
+    "amount_in": "2000000",
+    "amount_out": "538166443889143146249324",
+    "min_amount_out": "537628277445254003103074",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "34.93"
+   },
+   "sell": {
+    "correlation_id": "3d7600a3-7083-45ff-8648-8e25dbcf522c",
+    "amount_in": "539512550410703929000148",
+    "amount_out": "1990085",
+    "min_amount_out": "1988094",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.53"
+   }
+  },
+  {
+   "i": 11,
+   "at": "2026-11-11T19:28:38+00:00",
+   "hl_mid": "3.70635",
+   "buy": {
+    "correlation_id": "4e16ab28-dcd6-48d3-941e-da38ad91d7ea",
+    "amount_in": "2000000",
+    "amount_out": "538166443889143146249324",
+    "min_amount_out": "537628277445254003103074",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "36.81"
+   },
+   "sell": {
+    "correlation_id": "0967235e-8b1f-4687-b77e-56752db26f6c",
+    "amount_in": "539614445478705464945296",
+    "amount_out": "1990461",
+    "min_amount_out": "1988470",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.65"
+   }
+  },
+  {
+   "i": 12,
+   "at": "2026-11-11T19:28:45+00:00",
+   "hl_mid": "3.70605",
+   "buy": {
+    "correlation_id": "4fc089a1-c466-4df8-b3a1-420917fcf613",
+    "amount_in": "2000000",
+    "amount_out": "538158334646960302457466",
+    "min_amount_out": "537620176312313342155008",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.76"
+   },
+   "sell": {
+    "correlation_id": "f8b3f37b-8fb1-43ab-a4de-e611918d3f9f",
+    "amount_in": "539658126576813588591627",
+    "amount_out": "1990623",
+    "min_amount_out": "1988632",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "56.84"
+   }
+  },
+  {
+   "i": 13,
+   "at": "2026-11-11T19:28:52+00:00",
+   "hl_mid": "3.70745",
+   "buy": {
+    "correlation_id": "00ef8ab3-919e-49b1-acb5-3e92e193de13",
+    "amount_in": "2000000",
+    "amount_out": "538166713316828386400431",
+    "min_amount_out": "537628546603511558014030",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "33.85"
+   },
+   "sell": {
+    "correlation_id": "a1170bde-84e0-4645-b828-21d3ed2f0ab0",
+    "amount_in": "539454341933134634317387",
+    "amount_out": "1989871",
+    "min_amount_out": "1987881",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "60.59"
+   }
+  },
+  {
+   "i": 14,
+   "at": "2026-11-11T19:28:59+00:00",
+   "hl_mid": "3.70675",
+   "buy": {
+    "correlation_id": "e3ea8cef-a5eb-4b49-b48c-f020312c6074",
+    "amount_in": "2000000",
+    "amount_out": "538158334646960302457466",
+    "min_amount_out": "537620176312313342155008",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.88"
+   },
+   "sell": {
+    "correlation_id": "fa6ee25f-0d11-4a58-8c1c-aae53fa085ea",
+    "amount_in": "539454341933134634317387",
+    "amount_out": "1990408",
+    "min_amount_out": "1988417",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "56.04"
+   }
+  },
+  {
+   "i": 15,
+   "at": "2026-11-11T19:29:07+00:00",
+   "hl_mid": "3.706125",
+   "buy": {
+    "correlation_id": "bd029ee7-6061-45b8-bd9f-7bdc031c3ca9",
+    "amount_in": "2000000",
+    "amount_out": "538166982744513626551537",
+    "min_amount_out": "537628815761769112924985",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.40"
+   },
+   "sell": {
+    "correlation_id": "5d8e1e55-8e08-475b-a98c-f654764920f8",
+    "amount_in": "539658126576813588591627",
+    "amount_out": "1990623",
+    "min_amount_out": "1988632",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.04"
+   }
+  },
+  {
+   "i": 16,
+   "at": "2026-11-11T19:29:14+00:00",
+   "hl_mid": "3.7062",
+   "buy": {
+    "correlation_id": "4585d5ff-f6e3-42ea-b7d3-6c8dd3f8a006",
+    "amount_in": "2000000",
+    "amount_out": "537731689957176462658397",
+    "min_amount_out": "537193958267219286195738",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "45.26"
+   },
+   "sell": {
+    "correlation_id": "27a1b159-9815-4e62-ab0f-f3427f463afd",
+    "amount_in": "539636285143813069990826",
+    "amount_out": "1992155",
+    "min_amount_out": "1990162",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "49.19"
+   }
+  },
+  {
+   "i": 17,
+   "at": "2026-11-11T19:29:21+00:00",
+   "hl_mid": "3.70995",
+   "buy": {
+    "correlation_id": "8e9c5218-4b5a-44d4-87bb-31deaab88a54",
+    "amount_in": "2000000",
+    "amount_out": "537731689957176462658397",
+    "min_amount_out": "537193958267219286195738",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.19"
+   },
+   "sell": {
+    "correlation_id": "75f128fe-3729-4a16-9d99-99ac03688d06",
+    "amount_in": "539090823326459925335920",
+    "amount_out": "1990575",
+    "min_amount_out": "1988584",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.08"
+   }
+  },
+  {
+   "i": 18,
+   "at": "2026-11-11T19:29:27+00:00",
+   "hl_mid": "3.70995",
+   "buy": {
+    "correlation_id": "89bff1e9-e48b-41b6-b622-b6b43c4fe9f9",
+    "amount_in": "2000000",
+    "amount_out": "537586748800853773584905",
+    "min_amount_out": "537049162052052919811320",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.87"
+   },
+   "sell": {
+    "correlation_id": "1396f0ab-4064-4403-b92e-46f40d66a300",
+    "amount_in": "539090823326459925335920",
+    "amount_out": "1990575",
+    "min_amount_out": "1988584",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.08"
+   }
+  },
+  {
+   "i": 19,
+   "at": "2026-11-11T19:29:34+00:00",
+   "hl_mid": "3.70895",
+   "buy": {
+    "correlation_id": "9f68601f-928e-4177-84de-f090369fe853",
+    "amount_in": "2000000",
+    "amount_out": "538139729075503780718335",
+    "min_amount_out": "537601589346428276937616",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "30.31"
+   },
+   "sell": {
+    "correlation_id": "397c2de2-d780-4fa6-9900-f45297aa65db",
+    "amount_in": "539236171962415238814219",
+    "amount_out": "1989501",
+    "min_amount_out": "1987511",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "62.44"
+   }
+  },
+  {
+   "i": 20,
+   "at": "2026-11-11T19:29:42+00:00",
+   "hl_mid": "3.70735",
+   "buy": {
+    "correlation_id": "b6560ab9-f6b8-4bce-b8f1-34dc248995bc",
+    "amount_in": "2000000",
+    "amount_out": "538022076220709198813055",
+    "min_amount_out": "537484054144488489614241",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "36.79"
+   },
+   "sell": {
+    "correlation_id": "32ee7f66-47e5-40d1-a3b8-b0b9ed916ae0",
+    "amount_in": "539468892874964597353905",
+    "amount_out": "1990462",
+    "min_amount_out": "1988471",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.64"
+   }
+  },
+  {
+   "i": 21,
+   "at": "2026-11-11T19:29:48+00:00",
+   "hl_mid": "3.70805",
+   "buy": {
+    "correlation_id": "4addeb8d-35b2-42f3-bf55-1c865a7a7e08",
+    "amount_in": "2000000",
+    "amount_out": "538022345575713649851631",
+    "min_amount_out": "537484323230137936201779",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "34.91"
+   },
+   "sell": {
+    "correlation_id": "ebf18f4c-6abc-44d9-a93f-e17c9105a9e8",
+    "amount_in": "539367052763581936597402",
+    "amount_out": "1990086",
+    "min_amount_out": "1988095",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.52"
+   }
+  },
+  {
+   "i": 22,
+   "at": "2026-11-11T19:29:56+00:00",
+   "hl_mid": "3.708025",
+   "buy": {
+    "correlation_id": "46d60b84-ccf5-45fe-a420-69384d2c48be",
+    "amount_in": "2000000",
+    "amount_out": "537994982117870815334772",
+    "min_amount_out": "537456987135752944519437",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.48"
+   },
+   "sell": {
+    "correlation_id": "682f7057-9018-4319-9a76-3b20c9c261b0",
+    "amount_in": "539367052763581936597402",
+    "amount_out": "1990521",
+    "min_amount_out": "1988530",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.28"
+   }
+  },
+  {
+   "i": 23,
+   "at": "2026-11-11T19:30:03+00:00",
+   "hl_mid": "3.708025",
+   "buy": {
+    "correlation_id": "bfd29c24-da35-4140-929f-ef8b02461f79",
+    "amount_in": "2000000",
+    "amount_out": "538013043519895788336932",
+    "min_amount_out": "537475030476375892548595",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.15"
+   },
+   "sell": {
+    "correlation_id": "bcf5197c-cc1a-4daf-b209-c89082aa4146",
+    "amount_in": "539374325782092772384034",
+    "amount_out": "1990651",
+    "min_amount_out": "1988660",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "56.77"
+   }
+  },
+  {
+   "i": 24,
+   "at": "2026-11-11T19:30:10+00:00",
+   "hl_mid": "3.70805",
+   "buy": {
+    "correlation_id": "9ede8421-c75b-4618-9616-64cbe9c730c6",
+    "amount_in": "2000000",
+    "amount_out": "538013043519895788336932",
+    "min_amount_out": "537475030476375892548595",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.08"
+   },
+   "sell": {
+    "correlation_id": "91fe05e6-221d-4ad9-9edc-e85da1bf3bbb",
+    "amount_in": "539367052763581936597402",
+    "amount_out": "1990521",
+    "min_amount_out": "1988530",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.35"
+   }
+  },
+  {
+   "i": 25,
+   "at": "2026-11-11T19:30:17+00:00",
+   "hl_mid": "3.70805",
+   "buy": {
+    "correlation_id": "c1b14935-27a2-474f-a999-fc1e76b5d446",
+    "amount_in": "2000000",
+    "amount_out": "538168060455254587155962",
+    "min_amount_out": "537629892394799332568806",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "32.21"
+   },
+   "sell": {
+    "correlation_id": "0cab2471-6d9e-4db8-9b07-70652b517067",
+    "amount_in": "539367052763581936597402",
+    "amount_out": "1990187",
+    "min_amount_out": "1988196",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.02"
+   }
+  },
+  {
+   "i": 26,
+   "at": "2026-11-11T19:30:24+00:00",
+   "hl_mid": "3.706",
+   "buy": {
+    "correlation_id": "68556299-bdca-4d82-99a2-a46505d67274",
+    "amount_in": "2000000",
+    "amount_out": "538168060455254587155962",
+    "min_amount_out": "537629892394799332568806",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.72"
+   },
+   "sell": {
+    "correlation_id": "faa5e32a-37f5-40e6-913b-0e53f0d386ac",
+    "amount_in": "539665407447382622773880",
+    "amount_out": "1990649",
+    "min_amount_out": "1988658",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "56.71"
+   }
+  },
+  {
+   "i": 27,
+   "at": "2026-11-11T19:30:31+00:00",
+   "hl_mid": "3.70665",
+   "buy": {
+    "correlation_id": "3eb6fb0e-1837-45c7-b84d-2620f5d431ae",
+    "amount_in": "2000000",
+    "amount_out": "538158334646960302457466",
+    "min_amount_out": "537620176312313342155008",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "36.15"
+   },
+   "sell": {
+    "correlation_id": "a11bfdfa-5bbe-4ea1-ae3b-f63f67787db3",
+    "amount_in": "539570771451310482511162",
+    "amount_out": "1990300",
+    "min_amount_out": "1988309",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "58.45"
+   }
+  },
+  {
+   "i": 28,
+   "at": "2026-11-11T19:30:38+00:00",
+   "hl_mid": "3.70595",
+   "buy": {
+    "correlation_id": "9b6fb532-a336-4105-89d8-7833aed90d92",
+    "amount_in": "2000000",
+    "amount_out": "538303704267340356564018",
+    "min_amount_out": "537765400563073016207453",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.34"
+   },
+   "sell": {
+    "correlation_id": "ff2c9434-0a07-4325-a741-c84fa5020a0c",
+    "amount_in": "539672688514416006691941",
+    "amount_out": "1990575",
+    "min_amount_out": "1988584",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.08"
+   }
+  },
+  {
+   "i": 29,
+   "at": "2026-11-11T19:30:45+00:00",
+   "hl_mid": "3.70695",
+   "buy": {
+    "correlation_id": "588f1f42-31e8-45b1-96b2-f4b37449ba63",
+    "amount_in": "2000000",
+    "amount_out": "538013043519895788336932",
+    "min_amount_out": "537475030476375892548595",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "38.03"
+   },
+   "sell": {
+    "correlation_id": "6875cf61-be3f-49f0-a433-ca5231ac7223",
+    "amount_in": "539527104492911962664724",
+    "amount_out": "1991112",
+    "min_amount_out": "1989120",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "54.40"
+   }
+  },
+  {
+   "i": 30,
+   "at": "2026-11-11T19:30:52+00:00",
+   "hl_mid": "3.70820",
+   "buy": {
+    "correlation_id": "f7094eee-428d-4112-99ee-8cef96d24cfd",
+    "amount_in": "2000000",
+    "amount_out": "537867830822589473684210",
+    "min_amount_out": "537329962991766884210525",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.37"
+   },
+   "sell": {
+    "correlation_id": "43158206-11c7-4833-a469-06502b3697cb",
+    "amount_in": "539527104492911962664724",
+    "amount_out": "1991649",
+    "min_amount_out": "1989657",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "55.07"
+   }
+  },
+  {
+   "i": 31,
+   "at": "2026-11-11T19:30:59+00:00",
+   "hl_mid": "3.70875",
+   "buy": {
+    "correlation_id": "144fb774-6c91-467f-92e1-62e925166480",
+    "amount_in": "2000000",
+    "amount_out": "538024231060744807121661",
+    "min_amount_out": "537486206829684062314539",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "32.99"
+   },
+   "sell": {
+    "correlation_id": "4ea8027d-11a8-4037-833e-538775275c64",
+    "amount_in": "539163487848602892612112",
+    "amount_out": "1989770",
+    "min_amount_out": "1987780",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.22"
+   }
+  },
+  {
+   "i": 32,
+   "at": "2026-11-11T19:31:06+00:00",
+   "hl_mid": "3.70805",
+   "buy": {
+    "correlation_id": "af6508af-b6a3-4bac-9cbb-36ecf0f92b27",
+    "amount_in": "2000000",
+    "amount_out": "538013043519895788336932",
+    "min_amount_out": "537475030476375892548595",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.08"
+   },
+   "sell": {
+    "correlation_id": "44e27aeb-c4c0-497f-a658-ad1dd5584b54",
+    "amount_in": "539367052763581936597402",
+    "amount_out": "1990521",
+    "min_amount_out": "1988530",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.35"
+   }
+  },
+  {
+   "i": 33,
+   "at": "2026-11-11T19:31:13+00:00",
+   "hl_mid": "3.70785",
+   "buy": {
+    "correlation_id": "b32b77aa-c48c-441e-b607-e7d12fc1e6ac",
+    "amount_in": "2000000",
+    "amount_out": "538158334646960302457466",
+    "min_amount_out": "537620176312313342155008",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "32.93"
+   },
+   "sell": {
+    "correlation_id": "937487bb-cfee-43c7-b4ae-53c9e1761547",
+    "amount_in": "539396146014536726135091",
+    "amount_out": "1990092",
+    "min_amount_out": "1988101",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.49"
+   }
+  },
+  {
+   "i": 34,
+   "at": "2026-11-11T19:31:20+00:00",
+   "hl_mid": "3.70665",
+   "buy": {
+    "correlation_id": "2c7a2136-fa0d-4229-926b-cd3b2b6abe23",
+    "amount_in": "2000000",
+    "amount_out": "538303704267340356564018",
+    "min_amount_out": "537765400563073016207453",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "33.46"
+   },
+   "sell": {
+    "correlation_id": "3b3dba22-ba27-462f-9f69-3103a2342616",
+    "amount_in": "539570771451310482511162",
+    "amount_out": "1990179",
+    "min_amount_out": "1988188",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.06"
+   }
+  },
+  {
+   "i": 35,
+   "at": "2026-11-11T19:31:27+00:00",
+   "hl_mid": "3.70585",
+   "buy": {
+    "correlation_id": "515a38a6-10df-4065-9123-262193ab0cc4",
+    "amount_in": "2000000",
+    "amount_out": "538460534973051835853131",
+    "min_amount_out": "537922074438078784017277",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "32.71"
+   },
+   "sell": {
+    "correlation_id": "80bfb52d-6431-4778-a191-197d95bde77a",
+    "amount_in": "539687251237907632526950",
+    "amount_out": "1989654",
+    "min_amount_out": "1987664",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "61.68"
+   }
+  },
+  {
+   "i": 36,
+   "at": "2026-11-11T19:31:34+00:00",
+   "hl_mid": "3.70405",
+   "buy": {
+    "correlation_id": "66611e40-528f-4374-a9cc-6ce99f5ff213",
+    "amount_in": "2000000",
+    "amount_out": "538751707195890194489464",
+    "min_amount_out": "538212955488694304294974",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "32.16"
+   },
+   "sell": {
+    "correlation_id": "d7384cca-1d09-4fb0-98d2-ef0cf3eec6f2",
+    "amount_in": "539949514720373645064186",
+    "amount_out": "1989545",
+    "min_amount_out": "1987555",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "62.22"
+   }
+  },
+  {
+   "i": 37,
+   "at": "2026-11-11T19:31:41+00:00",
+   "hl_mid": "3.70315",
+   "buy": {
+    "correlation_id": "029e4785-f06c-4b15-88b0-37808e1bd670",
+    "amount_in": "2000000",
+    "amount_out": "538606216591732514177693",
+    "min_amount_out": "538067610375140781663515",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.27"
+   },
+   "sell": {
+    "correlation_id": "59e04410-5fe4-4a67-ac8b-072a1f3c0a3f",
+    "amount_in": "540080742070939605471017",
+    "amount_out": "1990447",
+    "min_amount_out": "1988456",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.72"
+   }
+  },
+  {
+   "i": 38,
+   "at": "2026-11-11T19:31:47+00:00",
+   "hl_mid": "3.70280",
+   "buy": {
+    "correlation_id": "9766d598-8e64-43b8-8f08-5506289b9d97",
+    "amount_in": "2000000",
+    "amount_out": "538751976914691247974067",
+    "min_amount_out": "538213224937776556726092",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.52"
+   },
+   "sell": {
+    "correlation_id": "04e98c92-259e-4e8e-b6e9-6e6309c8942b",
+    "amount_in": "540080742070939605471017",
+    "amount_out": "1990029",
+    "min_amount_out": "1988038",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "58.87"
+   }
+  },
+  {
+   "i": 39,
+   "at": "2026-11-11T19:31:54+00:00",
+   "hl_mid": "3.70245",
+   "buy": {
+    "correlation_id": "44818d12-3941-43c4-8e37-2f005c5c0bb2",
+    "amount_in": "2000000",
+    "amount_out": "538752246633492301458670",
+    "min_amount_out": "538213494386858809157211",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "36.46"
+   },
+   "sell": {
+    "correlation_id": "26ca3ad2-8718-4dba-8564-7a8ea1b36170",
+    "amount_in": "540182851895366581587867",
+    "amount_out": "1990405",
+    "min_amount_out": "1988414",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.93"
+   }
+  },
+  {
+   "i": 40,
+   "at": "2026-11-11T19:32:02+00:00",
+   "hl_mid": "3.70205",
+   "buy": {
+    "correlation_id": "2cd02eef-b573-4c35-bf88-8328639e1924",
+    "amount_in": "2000000",
+    "amount_out": "538898085797403404485273",
+    "min_amount_out": "538359187711606001080787",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "34.84"
+   },
+   "sell": {
+    "correlation_id": "b77e3d5a-d514-4971-91b4-6f8c19d965f3",
+    "amount_in": "540241217703704704150403",
+    "amount_out": "1990082",
+    "min_amount_out": "1988091",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.54"
+   }
+  },
+  {
+   "i": 41,
+   "at": "2026-11-11T19:32:09+00:00",
+   "hl_mid": "3.70205",
+   "buy": {
+    "correlation_id": "330c065f-441a-4ea7-bdd3-f29edf46db3c",
+    "amount_in": "2000000",
+    "amount_out": "538898355589081734666306",
+    "min_amount_out": "538359457233492652931639",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "34.83"
+   },
+   "sell": {
+    "correlation_id": "a9beb24d-b780-410e-a4ed-6d38ea1e0ee8",
+    "amount_in": "540241217703704704150403",
+    "amount_out": "1990082",
+    "min_amount_out": "1988091",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.54"
+   }
+  },
+  {
+   "i": 42,
+   "at": "2026-11-11T19:32:16+00:00",
+   "hl_mid": "3.70205",
+   "buy": {
+    "correlation_id": "833a4548-c384-469e-83f7-32b2cd56de14",
+    "amount_in": "2000000",
+    "amount_out": "538898895172438395028370",
+    "min_amount_out": "538359996277265956633341",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "34.82"
+   },
+   "sell": {
+    "correlation_id": "09a9a8b5-c0a7-47a6-9872-083156a8f880",
+    "amount_in": "540241217703704704150403",
+    "amount_out": "1989963",
+    "min_amount_out": "1987973",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "60.13"
+   }
+  },
+  {
+   "i": 43,
+   "at": "2026-11-11T19:32:23+00:00",
+   "hl_mid": "3.70125",
+   "buy": {
+    "correlation_id": "0389481c-75de-4d3b-b051-3e338edc7ba1",
+    "amount_in": "2000000",
+    "amount_out": "538898895172438395028370",
+    "min_amount_out": "538359996277265956633341",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "36.98"
+   },
+   "sell": {
+    "correlation_id": "b21b990d-4f22-4b10-b6a2-7eff08f1ca82",
+    "amount_in": "540357987166497804795677",
+    "amount_out": "1990512",
+    "min_amount_out": "1988521",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.39"
+   }
+  },
+  {
+   "i": 44,
+   "at": "2026-11-11T19:32:30+00:00",
+   "hl_mid": "3.70235",
+   "buy": {
+    "correlation_id": "487c363c-728b-441b-9bf5-4b7dd370d62f",
+    "amount_in": "2000000",
+    "amount_out": "538753595227497568881685",
+    "min_amount_out": "538214841632270071312803",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "36.70"
+   },
+   "sell": {
+    "correlation_id": "79da5189-7a89-4583-9687-4be6b5f91e0c",
+    "amount_in": "540197442165111348197766",
+    "amount_out": "1990459",
+    "min_amount_out": "1988468",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.66"
+   }
+  },
+  {
+   "i": 45,
+   "at": "2026-11-11T19:32:37+00:00",
+   "hl_mid": "3.70235",
+   "buy": {
+    "correlation_id": "62d83f5e-b02f-4f39-ac76-82abfe32a5c9",
+    "amount_in": "2000000",
+    "amount_out": "539031731998294292669731",
+    "min_amount_out": "538492700266295998377061",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "31.56"
+   },
+   "sell": {
+    "correlation_id": "8f1bf77a-69c8-4efc-b20b-5aecf7356c5e",
+    "amount_in": "540197442165111348197766",
+    "amount_out": "1989801",
+    "min_amount_out": "1987811",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "60.94"
+   }
+  },
+  {
+   "i": 46,
+   "at": "2026-11-11T19:32:45+00:00",
+   "hl_mid": "3.70210",
+   "buy": {
+    "correlation_id": "659e0ab1-bbb7-4bd2-a51e-36614cc50c0f",
+    "amount_in": "2000000",
+    "amount_out": "539045083251674999999999",
+    "min_amount_out": "538506038168423324999999",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "31.98"
+   },
+   "sell": {
+    "correlation_id": "2f401be2-ae8a-4470-9de9-82fed02ef0c6",
+    "amount_in": "540197442165111348197766",
+    "amount_out": "1989382",
+    "min_amount_out": "1987392",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "62.37"
+   }
+  },
+  {
+   "i": 47,
+   "at": "2026-11-11T19:32:52+00:00",
+   "hl_mid": "3.70115",
+   "buy": {
+    "correlation_id": "34eb66a6-b745-4257-b057-1fbabf6d9a24",
+    "amount_in": "2000000",
+    "amount_out": "539045892845459999999999",
+    "min_amount_out": "538506846952614539999999",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "34.53"
+   },
+   "sell": {
+    "correlation_id": "fe64fa73-8e25-43ef-89cb-e6e5db37e64e",
+    "amount_in": "540270405337871604738171",
+    "amount_out": "1989552",
+    "min_amount_out": "1987562",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "60.31"
+   }
+  },
+  {
+   "i": 48,
+   "at": "2026-11-11T19:32:59+00:00",
+   "hl_mid": "3.70045",
+   "buy": {
+    "correlation_id": "dfc4e85b-1119-47f3-a97f-5e9ef67029af",
+    "amount_in": "2000000",
+    "amount_out": "539323494776101217861975",
+    "min_amount_out": "538784171281325116644113",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "31.28"
+   },
+   "sell": {
+    "correlation_id": "9fe033b6-605e-4d12-8e81-d482b59041cd",
+    "amount_in": "540474807118053209744760",
+    "amount_out": "1989747",
+    "min_amount_out": "1987757",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "61.21"
+   }
+  },
+  {
+   "i": 49,
+   "at": "2026-11-11T19:33:05+00:00",
+   "hl_mid": "3.69925",
+   "buy": {
+    "correlation_id": "233d425d-b02b-4fde-be15-fbf53d50a337",
+    "amount_in": "2000000",
+    "amount_out": "539177573917124999999999",
+    "min_amount_out": "538638396343207874999999",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.21"
+   },
+   "sell": {
+    "correlation_id": "1556ab26-f857-41c1-81a8-8283bd83a433",
+    "amount_in": "540650131783469622220720",
+    "amount_out": "1990511",
+    "min_amount_out": "1988520",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "57.40"
+   }
+  },
+  {
+   "i": 50,
+   "at": "2026-11-11T19:33:12+00:00",
+   "hl_mid": "3.69965",
+   "buy": {
+    "correlation_id": "d9e7815a-97d0-4e29-bafd-371c153890e4",
+    "amount_in": "2000000",
+    "amount_out": "539192160185510948905108",
+    "min_amount_out": "538652968025325437956202",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "35.86"
+   },
+   "sell": {
+    "correlation_id": "40db39ed-550a-4a9c-bdc9-5e1446ec74ac",
+    "amount_in": "540591677591123484653953",
+    "amount_out": "1990296",
+    "min_amount_out": "1988305",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "58.47"
+   }
+  },
+  {
+   "i": 51,
+   "at": "2026-11-11T19:33:19+00:00",
+   "hl_mid": "3.69965",
+   "buy": {
+    "correlation_id": "9431cc22-d645-434b-8b5d-4a2e061d6a02",
+    "amount_in": "2000000",
+    "amount_out": "539177573917124999999999",
+    "min_amount_out": "538638396343207874999999",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "36.13"
+   },
+   "sell": {
+    "correlation_id": "4000b205-526e-4cfd-8927-94b9cf285c61",
+    "amount_in": "540591677591123484653953",
+    "amount_out": "1990296",
+    "min_amount_out": "1988305",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "58.47"
+   }
+  },
+  {
+   "i": 52,
+   "at": "2026-11-11T19:33:26+00:00",
+   "hl_mid": "3.69855",
+   "buy": {
+    "correlation_id": "d36b2940-ae4c-4e7c-a7f4-9ed787659a87",
+    "amount_in": "2000000",
+    "amount_out": "539338236621202406706327",
+    "min_amount_out": "538798898384581204299620",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "36.13"
+   },
+   "sell": {
+    "correlation_id": "3209e9bc-1ec3-4fdb-9236-d0a0ab479d76",
+    "amount_in": "540752457043976693569101",
+    "amount_out": "1990349",
+    "min_amount_out": "1988358",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "58.21"
+   }
+  },
+  {
+   "i": 53,
+   "at": "2026-11-11T19:33:34+00:00",
+   "hl_mid": "3.69945",
+   "buy": {
+    "correlation_id": "ad724c10-debb-45e3-84f3-fac7347e50f8",
+    "amount_in": "2000000",
+    "amount_out": "539046702439244999999999",
+    "min_amount_out": "538507655736805754999999",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "39.09"
+   },
+   "sell": {
+    "correlation_id": "67c6a397-e471-4aa5-987d-bd0679c9da85",
+    "amount_in": "540620903107218640608739",
+    "amount_out": "1990942",
+    "min_amount_out": "1988951",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "55.24"
+   }
+  },
+  {
+   "i": 54,
+   "at": "2026-11-11T19:33:41+00:00",
+   "hl_mid": "3.7011",
+   "buy": {
+    "correlation_id": "cc674168-4edc-479e-b755-767f1a45d0e0",
+    "amount_in": "2000000",
+    "amount_out": "538885968955568956192535",
+    "min_amount_out": "538347082986613387236342",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "37.62"
+   },
+   "sell": {
+    "correlation_id": "0b576c4e-1632-4b45-906f-9e3e424f2661",
+    "amount_in": "540379887060603604333846",
+    "amount_out": "1990593",
+    "min_amount_out": "1988602",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "56.99"
+   }
+  },
+  {
+   "i": 55,
+   "at": "2026-11-11T19:33:48+00:00",
+   "hl_mid": "3.701125",
+   "buy": {
+    "correlation_id": "761ea94a-72ce-46ad-bf43-14e07bc3666e",
+    "amount_in": "2000000",
+    "amount_out": "539046702439244999999999",
+    "min_amount_out": "538507655736805754999999",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "34.58"
+   },
+   "sell": {
+    "correlation_id": "f7ee0b48-f219-429c-bd8d-8f1b56b346f4",
+    "amount_in": "540379887060603604333846",
+    "amount_out": "1990054",
+    "min_amount_out": "1988063",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "59.75"
+   }
+  },
+  {
+   "i": 56,
+   "at": "2026-11-11T19:33:55+00:00",
+   "hl_mid": "3.70185",
+   "buy": {
+    "correlation_id": "fd75f1af-ffa6-4e90-8d5b-44a72f5cbd4d",
+    "amount_in": "2000000",
+    "amount_out": "538755483259104943273905",
+    "min_amount_out": "538216727775845838330631",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "38.01"
+   },
+   "sell": {
+    "correlation_id": "8dca527f-01ac-4d05-ba12-e45cd32afdf4",
+    "amount_in": "540372586898666630641827",
+    "amount_out": "1991104",
+    "min_amount_out": "1989112",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "56.32"
+   }
+  },
+  {
+   "i": 57,
+   "at": "2026-11-11T19:34:03+00:00",
+   "hl_mid": "3.70255",
+   "buy": {
+    "correlation_id": "e5beecb8-f7a4-4f9b-af64-4d5c6f77faef",
+    "amount_in": "2000000",
+    "amount_out": "538885968955568956192535",
+    "min_amount_out": "538347082986613387236342",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "33.72"
+   },
+   "sell": {
+    "correlation_id": "b45beaf5-f31a-42b1-bf60-1d01902e41d1",
+    "amount_in": "540168262413741880595805",
+    "amount_out": "1989813",
+    "min_amount_out": "1987823",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "60.88"
+   }
+  },
+  {
+   "i": 58,
+   "at": "2026-11-11T19:34:10+00:00",
+   "hl_mid": "3.70235",
+   "buy": {
+    "correlation_id": "0123d4c4-c7cc-4461-8f1f-d9555b1862f1",
+    "amount_in": "2000000",
+    "amount_out": "538901053505865036476627",
+    "min_amount_out": "538362152452359171440150",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "33.97"
+   },
+   "sell": {
+    "correlation_id": "b21e0b0a-d224-4a83-b46d-76f48e241f8d",
+    "amount_in": "540197442165111348197766",
+    "amount_out": "1989921",
+    "min_amount_out": "1987931",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "60.34"
+   }
+  },
+  {
+   "i": 59,
+   "at": "2026-11-11T19:34:17+00:00",
+   "hl_mid": "3.70205",
+   "buy": {
+    "correlation_id": "9706f45b-a84e-4f6c-b701-56868f8f21c7",
+    "amount_in": "2000000",
+    "amount_out": "539046972303839999999999",
+    "min_amount_out": "538507925331536159999999",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "32.08"
+   },
+   "sell": {
+    "correlation_id": "9f57494c-04bd-4d39-b536-f29be97b3de3",
+    "amount_in": "540241217703704704150403",
+    "amount_out": "1989543",
+    "min_amount_out": "1987553",
+    "app_fee_bps": 20,
+    "leg_cost_bps": "62.23"
+   }
+  }
+ ]
+}
