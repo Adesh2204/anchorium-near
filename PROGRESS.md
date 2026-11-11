@@ -10,8 +10,9 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 - [x] Phase 2: guard contract (unit + sandbox tests, testnet deploy, agent sub-account with function-call key)
 - [x] Phase 3: 1Click executor (dry-run default, every status, mocked tests, one real dry quote)
 - [x] Phase 4: orchestrator + `make demo` (Path A) + `make demo-onchain` (Path B) + REPLAY. Checkpoint 2 is waiting for the user
-- [x] Phase 5: dashboard (real screenshots after the live trade)
-- [ ] Phase 6: README + docs/JUDGES.md
+- [x] Phase 5: dashboard (screenshot in docs/screenshots/)
+- [x] Phase 6: README + docs/JUDGES.md (live-trade evidence and the paper-trade report still to add)
+- [ ] Paper trade (INR 500, user request 2026-11-11): running, waiting for a LONG signal
 - [ ] Phase 7: fresh-clone self-judging + review pass
 - [ ] Phase 8: submission pack (Checkpoint 3)
 
@@ -38,6 +39,11 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 | 2026-11-10 22:05 | An aborted LIVE trade (cap or confirmation) journals a FAILED outcome | Otherwise the PENDING_ENTRY position would block all later entries |
 | 2026-11-10 22:05 | Exit rule: sell on the next SHORT signal from the unchanged brain; no stop/target from the original trader | That management code is in the legacy modules that are not vendored |
 | 2026-11-10 22:27 | Measured gap between 1Click `/v0/tokens` reference prices and executable quotes: 0.5 to 1%, so a 100 bps cap rejects about 1 in 3 $2 trades (exits 102 and 162 bps rejected) | Raising `max_slippage_bps` is the owner's decision: asked the user |
+| 2026-11-11 11:59 | Owner raised `max_slippage_bps` 100 -> 150 on guard.anchorium-team.testnet (tx DExrWkb3p8zQauc31dsqhCA6M9jfbWvd4YLWh4XX75df); the demo guard keeps 100 | The user's decision (a). The demo guard was not part of it |
+| 2026-11-11 12:05 | Paper-trade costs are measured against `/v0/tokens` reference prices recorded with each decision, not the quote's `amountInUsd`/`amountOutUsd` | For USDC -> wNEAR, 1Click returns `amountOutUsd == amountInUsd`, so those fields cannot measure cost |
+| 2026-11-11 12:05 | The orchestrator refreshes `/v0/tokens` for every signal | The client cached reference prices for the life of the process, so a long-running loop would gate slippage on stale prices |
+| 2026-11-11 12:10 | Default RPC is FastNEAR (`rpc.testnet.fastnear.com`, `rpc.mainnet.fastnear.com`) | `rpc.testnet.near.org` now answers with a deprecation error and rate limit |
+| 2026-11-11 12:00 | Mainnet deposit gas estimate: 0.000217 NEAR per `ft_transfer`, measured from 2 real mainnet `wrap.near` transfers | A paper trade sends no deposit; an estimate from real transactions beats a guess |
 | 2026-11-10 | Report the observed 1Click unauthenticated fee: 20 bps (`appFees` in a real dry quote); the docs say 0.25% | The user's GO, point 5 |
 | 2026-11-10 | Python to NEAR: try `near-kit` (Python) first; switch to a `near-api-js` sidecar if blocked for more than 2 h | The user's GO, point 4 |
 
@@ -61,3 +67,6 @@ Times are commit times (`git log`) or `date` output.
 - 2026-11-10 22:24 IST: dashboard (FastAPI + static page) reads the policy, kill switch, stats and journal from the contract. 4 tests.
 - 2026-11-10 22:26 IST: manual dry exit of the paper NEAR position rejected again on-chain (#3, worst case 102 bps > 100). The paper position stays open and blocks a LIVE entry (max_open_positions = 1).
 - 2026-11-10 22:27 IST: live micro-trade tooling committed (86d99da). 87 Python tests pass. Waiting for the mainnet account to be funded.
+- 2026-11-11 11:59 IST: user chose (a). Owner tx raised max_slippage_bps to 150. Old paper NEAR position closed: #4 SELL ALLOWED (93 bps), contract paper P&L +$0.03.
+- 2026-11-11 12:11 IST: paper-trade session started (INR 500 = $5.331491 at 93.7824 INR/USD, Coinbase; check_trade BUY $2.00 ALLOWED on BTC, ETH, NEAR). Restarted at 12:17 IST on the fixed report code before any entry.
+- 2026-11-11 12:21 IST: README rewritten (10 sections), docs/JUDGES.md, dashboard screenshot. Tests: 91 Python passed (1 network deselected), contract 40 unit + 2 sandbox passed.
