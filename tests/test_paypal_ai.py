@@ -292,3 +292,20 @@ def test_dashboard_explains_decisions(api):
     x = http.get('/api/ai/explain/2').json()
     assert x['decision_id'] == 2 and 'overruled' in x['text']
     assert http.get('/paypal').status_code == 200
+
+
+def test_openai_compatible_provider(tmp_path):
+    seen = []
+
+    def handler(request):
+        seen.append((str(request.url), request.headers['Authorization'], json.loads(request.content)))
+        return httpx.Response(200, json={'choices': [{'message': {'content':
+            '{"verdict": "VETO", "risk_score": 61, "reason_code": "WIDE_SPREAD", "explanation": "Spread too wide."}'}}]})
+    c = Copilot.from_env({'AI_BASE_URL': 'https://generativelanguage.googleapis.com/v1beta/openai/',
+                          'AI_API_KEY': 'g', 'AI_MODEL': 'gemini-test'})
+    c._http = httpx.Client(transport=httpx.MockTransport(handler))
+    r = c.review_trade(CTX)
+    assert r.vetoed and r.provider == 'generativelanguage.googleapis.com:gemini-test'
+    url, auth, body = seen[0]
+    assert url.endswith('/v1beta/openai/chat/completions') and auth == 'Bearer g'
+    assert body['messages'][0]['role'] == 'system' and body['model'] == 'gemini-test'

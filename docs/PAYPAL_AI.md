@@ -63,7 +63,9 @@ bot. This edition adds two things:
 ## AI used
 
 - **Model:** Anthropic Claude through the Messages API (`ANTHROPIC_API_KEY`; the model is set by `AI_MODEL`,
-  default `claude-haiku-5-5`), temperature 0, JSON-only replies.
+  default `claude-haiku-5-5`), temperature 0, JSON-only replies. Any OpenAI-compatible chat API also works
+  (`AI_BASE_URL` + `AI_API_KEY` + `AI_MODEL`, for example Google Gemini or Groq); the provider used is printed
+  on every review.
 - **What it does:**
   - `review_trade`: sees the signal (price, VWAP, ATR, EMAs), the 1Click quote (expected vs guaranteed output,
     worst-case slippage, fee), the on-chain policy and the PayPal budget. It answers ALLOW or VETO with a risk

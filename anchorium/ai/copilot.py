@@ -10,7 +10,8 @@ Every review is hashed (sha256 of its canonical JSON) and the hash goes into the
 field, so the AI's reasoning is committed on-chain next to the decision. The full text is kept locally in
 `var/ai_rationales.jsonl`, and anyone can re-hash it and compare.
 
-Model: Anthropic Messages API (`ANTHROPIC_API_KEY`, model from `AI_MODEL`). Without a key, or when the call or
+Model: Anthropic Messages API (`ANTHROPIC_API_KEY`, model from `AI_MODEL`), or any OpenAI-compatible chat API
+(`AI_BASE_URL` + `AI_API_KEY`, e.g. Google Gemini or Groq free tiers). Without a key, or when the call or
 the JSON fails, a deterministic rules reviewer answers instead, labelled `provider="rules"`. It is never shown as
 AI output.
 """
@@ -164,21 +165,40 @@ def rules_explain(decision: dict[str, Any]) -> str:
 class Copilot:
     def __init__(self, api_key: str | None = None, model: str = DEFAULT_MODEL,
                  transport: httpx.BaseTransport | None = None, log_path: str | Path | None = None,
-                 timeout: float = 25.0):
+                 timeout: float = 25.0, base_url: str | None = None):
         self.api_key, self.model = api_key or None, model
+        #: OpenAI-compatible chat API (e.g. Gemini, Groq) instead of Anthropic when set.
+        self.base_url = base_url.rstrip('/') if base_url else None
         self._http = httpx.Client(timeout=timeout, transport=transport)
         self.log_path = Path(log_path) if log_path else None
         self.last_error: str | None = None
 
     @classmethod
     def from_env(cls, env: Any, log_path: str | Path | None = None) -> Copilot:
+        if env.get('AI_BASE_URL'):
+            return cls(env.get('AI_API_KEY') or None, env.get('AI_MODEL') or DEFAULT_MODEL, log_path=log_path,
+                       base_url=env.get('AI_BASE_URL'))
         return cls(env.get('ANTHROPIC_API_KEY') or None, env.get('AI_MODEL') or DEFAULT_MODEL, log_path=log_path)
 
     @property
     def provider(self) -> str:
-        return f'anthropic:{self.model}' if self.api_key else 'rules'
+        if not self.api_key:
+            return 'rules'
+        if self.base_url:
+            host = self.base_url.split('//', 1)[-1].split('/', 1)[0]
+            return f'{host}:{self.model}'
+        return f'anthropic:{self.model}'
 
     def _ask(self, system: str, payload: dict[str, Any], max_tokens: int = 300) -> str:
+        if self.base_url:
+            r = self._http.post(f'{self.base_url}/chat/completions', headers={
+                'Authorization': f'Bearer {self.api_key}', 'content-type': 'application/json'},
+                json={'model': self.model, 'max_tokens': max_tokens, 'temperature': 0, 'messages': [
+                    {'role': 'system', 'content': system},
+                    {'role': 'user', 'content': json.dumps(payload, default=str)}]})
+            if r.status_code != 200:
+                raise RuntimeError(f'AI HTTP {r.status_code}: {r.text[:160]}')
+            return r.json()['choices'][0]['message']['content'] or ''
         r = self._http.post(ANTHROPIC_URL, headers={
             'x-api-key': self.api_key or '', 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
             json={'model': self.model, 'max_tokens': max_tokens, 'temperature': 0, 'system': system,
@@ -192,7 +212,7 @@ class Copilot:
         review = rules
         if self.api_key:
             try:
-                review = _clean(_json_object(self._ask(system, ctx)), kind, f'anthropic:{self.model}')
+                review = _clean(_json_object(self._ask(system, ctx)), kind, self.provider)
                 self.last_error = None
             except Exception as exc:  # noqa: BLE001 - any model failure falls back to the rules reviewer
                 self.last_error = f'{type(exc).__name__}: {exc}'[:200]
@@ -217,7 +237,7 @@ class Copilot:
             if verdict_override is None else verdict_override
         if self.api_key:
             try:
-                return {'provider': f'anthropic:{self.model}', 'text': ' '.join(self._ask(EXPLAIN_SYSTEM, facts).split())}
+                return {'provider': self.provider, 'text': ' '.join(self._ask(EXPLAIN_SYSTEM, facts).split())}
             except Exception as exc:  # noqa: BLE001
                 self.last_error = f'{type(exc).__name__}: {exc}'[:200]
         return {'provider': 'rules', 'text': rules_explain(facts)}
