@@ -66,7 +66,13 @@ class CheckpointStore:
         now = _now()
         self.db.execute('INSERT OR IGNORE INTO runs (signal_hash, mode, coin, state, data, created_at, updated_at) '
                         'VALUES (?, ?, ?, ?, ?, ?, ?)', (signal_hash, mode, coin, 'NEW', json.dumps(data), now, now))
-        return self.get(signal_hash)
+        return self.require(signal_hash)
+
+    def require(self, signal_hash: str) -> dict[str, Any]:
+        row = self.get(signal_hash)
+        if row is None:
+            raise KeyError(signal_hash)
+        return row
 
     def advance(self, signal_hash: str, state: str, *, side: str | None = None,
                 live_notional_cents: int | None = None, **data: Any) -> dict[str, Any]:
@@ -87,19 +93,20 @@ class CheckpointStore:
         except BaseException:
             self.db.execute('ROLLBACK')
             raise
-        return self.get(signal_hash)
+        return self.require(signal_hash)
 
-    def live_spent_cents(self) -> int:
-        """Session LIVE total: every deposit that may have been sent counts (pending, sent, settled or in review)."""
-        row = self.db.execute("SELECT COALESCE(SUM(live_notional_cents), 0) FROM runs WHERE mode = 'LIVE' AND "
-                              "state IN ('DEPOSIT_PENDING', 'DEPOSITED', 'OUTCOME_PENDING', 'DONE', 'NEEDS_REVIEW')"
-                              ).fetchone()
+    def live_spent_cents(self, side: str | None = None) -> int:
+        """Session LIVE total: every deposit that may have been sent counts (pending, sent, settled or in review).
+        `side='BUY'` counts entries only."""
+        sql = ("SELECT COALESCE(SUM(live_notional_cents), 0) FROM runs WHERE mode = 'LIVE' AND "
+               "state IN ('DEPOSIT_PENDING', 'DEPOSITED', 'OUTCOME_PENDING', 'DONE', 'NEEDS_REVIEW')")
+        row = self.db.execute(sql + ' AND side = ?', (side,)).fetchone() if side else self.db.execute(sql).fetchone()
         return int(row[0])
 
     def unfinished(self) -> list[dict[str, Any]]:
         rows = self.db.execute("SELECT signal_hash FROM runs WHERE state NOT IN ('DONE', 'SKIPPED', 'NEW') "
                                'ORDER BY created_at').fetchall()
-        return [self.get(r[0]) for r in rows]
+        return [self.require(r[0]) for r in rows]
 
     def recover(self) -> list[dict[str, Any]]:
         """Call once at startup. Interrupted deposits are parked for a human; returns them."""

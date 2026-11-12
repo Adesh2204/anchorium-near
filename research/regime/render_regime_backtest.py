@@ -6,7 +6,7 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 d = json.loads((ROOT / 'docs' / 'data' / 'regime_backtest_results.json').read_text())
 NAMES = {'A': 'A long-only (current)', 'B': 'B regime long-only', 'C': 'C regime long + bear'}
 

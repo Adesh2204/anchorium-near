@@ -1,7 +1,7 @@
 """Regime backtest: variants A/B/C over 60 recorded days (days 1-30 sanity, days 31-60 out-of-sample).
 
-    python scripts/backtest_regime.py            # downloads/verifies data, computes signals (cached), runs
-    python scripts/backtest_regime.py --seeds 200
+    python research/regime/backtest_regime.py            # downloads/verifies data, computes signals (cached), runs
+    python research/regime/backtest_regime.py --seeds 200
 
 Writes docs/data/regime_backtest_results.json (every number in docs/regime_backtest.md comes from it).
 """
@@ -20,11 +20,11 @@ from pathlib import Path
 
 import httpx
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from anchorium.agent import regime as R  # noqa: E402
-from anchorium.regime_backtest import (  # noqa: E402
+from research.regime import regime as R  # noqa: E402
+from research.regime.engine import (  # noqa: E402
     VARIANTS, CostModel, FX, bars_1m, compute_signals, load_binance, metrics, round_rows, simulate)
 
 DATA = ROOT / 'var' / 'backtest' / 'binance'

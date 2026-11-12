@@ -21,6 +21,9 @@ from decimal import Decimal, InvalidOperation
 
 HARD_MAX_TRADE_USD = Decimal('2')
 HARD_MAX_TOTAL_USD = Decimal('5')
+#: Autonomous version A (owner authorization, FINAL TASK section 1-2): at most 3 buys of $2 per session.
+AUTONOMOUS_MAX_ROUNDS = 3
+AUTONOMOUS_MAX_ENTRIES_USD = HARD_MAX_TRADE_USD * AUTONOMOUS_MAX_ROUNDS
 
 
 class LiveGateError(RuntimeError):
@@ -66,10 +69,11 @@ def confirmation_phrase(notional_usd: Decimal, symbol: str) -> str:
 
 
 def check_live_trade(config: ExecutionConfig, notional_usd: Decimal, spent_live_usd: Decimal,
-                     guard_allowed: bool, entry_cost_usd: Decimal | None = None) -> None:
+                     guard_allowed: bool, entry_cost_usd: Decimal | None = None, count_in_total: bool = True) -> None:
     """`entry_cost_usd` is set only for an exit that sells an open position: the per-trade cap then applies to what
     the entry spent (the amount put at risk), since a profitable exit is worth more than the entry. The session
-    total still counts the exit's full value, so an exit can never be worth more than the total cap leaves."""
+    total still counts the exit's full value, so an exit can never be worth more than the total cap leaves, unless
+    `count_in_total=False` (autonomous version A: the total caps the BUYS, max_rounds x per-trade cap)."""
     if not config.live:
         raise LiveGateError('not in LIVE mode')
     if not guard_allowed:
@@ -78,7 +82,7 @@ def check_live_trade(config: ExecutionConfig, notional_usd: Decimal, spent_live_
     if notional_usd <= 0 or capped <= 0 or capped > config.max_trade_usd:
         what = 'notional' if entry_cost_usd is None else 'entry cost of the position being sold'
         raise LiveGateError(f'{what} ${capped} exceeds the per-trade cap ${config.max_trade_usd}')
-    if spent_live_usd + notional_usd > config.max_total_usd:
+    if count_in_total and spent_live_usd + notional_usd > config.max_total_usd:
         raise LiveGateError(f'session total would reach ${spent_live_usd + notional_usd} > ${config.max_total_usd}')
 
 

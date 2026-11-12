@@ -5,7 +5,7 @@ VENV    := .venv
 VPY     := $(VENV)/bin/python
 CONTRACT_DIR := contracts/anchorium-guard
 
-.PHONY: help setup freeze test test-py contract-build contract-test contract-deploy demo demo-onchain status agent dashboard
+.PHONY: help setup freeze test test-py contract-build contract-test contract-deploy demo demo-onchain status agent dashboard autonomous autonomous-status live-preflight
 
 help:
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -50,3 +50,12 @@ agent: ## Agent loop on live public candles (DRY_RUN; journals with the agent ke
 
 dashboard: ## Read-only dashboard on http://127.0.0.1:8000 (reads the testnet contract)
 	$(VPY) -m uvicorn dashboard.app:app --host 127.0.0.1 --port 8000
+
+autonomous: ## Version A autonomous rounds (DRY_RUN unless .env has LIVE=1; LIVE asks you to type GO LIVE)
+	caffeinate -i $(VPY) -m anchorium autonomous $(ARGS)
+
+autonomous-status: ## Version A session status, a fresh valuation of an open round, the last 5 events
+	$(VPY) -m anchorium autonomous-status $(ARGS)
+
+live-preflight: ## PASS/FAIL checks before a LIVE version A session (read-only)
+	$(VPY) -m anchorium live-preflight

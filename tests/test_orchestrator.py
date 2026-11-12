@@ -6,7 +6,7 @@ import pytest
 from anchorium.agent.checkpoint import CheckpointStore
 from anchorium.agent.orchestrator import USDC, Agent, AgentConfig
 from anchorium.agent.signals import Signal
-from anchorium.near.intents import FUNDS_LOCATION, OneClickClient, Quote, StatusUpdate, Token, Tracking
+from anchorium.near.intents import FUNDS_LOCATION, Quote, StatusUpdate, Token, Tracking
 from anchorium.near.live import ExecutionConfig, LiveGateError
 from anchorium.near.guard_client import Written
 

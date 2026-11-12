@@ -2,7 +2,7 @@ from decimal import Decimal as D
 
 import pytest
 
-from anchorium.agent import ledger as L
+from research.regime import ledger as L
 
 
 def test_units_round_down_and_decimals():

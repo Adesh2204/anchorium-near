@@ -2,7 +2,7 @@ from decimal import Decimal as D
 
 import pytest
 
-from anchorium.agent import regime as R
+from research.regime import regime as R
 
 
 def bars(closes, start=0, step=R.H1_MS, spread='0.01'):

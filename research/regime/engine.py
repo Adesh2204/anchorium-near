@@ -27,8 +27,8 @@ from decimal import Decimal, localcontext
 from pathlib import Path
 from typing import Any
 
-from anchorium.agent import ledger as L
-from anchorium.agent import regime as R
+from research.regime import ledger as L
+from research.regime import regime as R
 
 IST = timezone(timedelta(hours=5, minutes=30))
 MIN_MS = 60_000

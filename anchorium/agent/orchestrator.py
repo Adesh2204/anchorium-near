@@ -41,6 +41,10 @@ class AgentConfig:
         default_factory=lambda: live_gates.ExecutionConfig(live=False, max_trade_usd=Decimal('0')))
     trader_account: str | None = None  # mainnet account that signs LIVE deposits and receives outputs
     session_label: str | None = None  # optional: mixed into signal hashes for a distinct demo session
+    #: Paper fills at the quote's guaranteed `minAmountOut` instead of `amountOut` (version A: worst case only).
+    paper_fill_worst_case: bool = False
+    #: Autonomous mode: the session total counts BUY deposits only (exits are bounded by the entry they close).
+    live_total_entries_only: bool = False
 
     @property
     def mode(self) -> str:
@@ -178,12 +182,14 @@ class Agent:
                       'method': 'record_decision', 'args': args,
                       'note': 'Path A has no agent key: this exact call is what the agent would sign'})
             return self.store.advance(h, 'SKIPPED', skip_reason='NO_AGENT_KEY_PATH_A')
-        return self._resume(h, self.store.get(h))
+        return self._resume(h, self.store.require(h))
 
     # ----- resumable steps -----
 
     def _resume(self, h: str, row: dict[str, Any]) -> dict[str, Any]:
         data = row['data']
+        if self.writer is None:
+            raise RuntimeError('resuming a journaled leg needs the agent key')
         if row['state'] == 'DECISION_PENDING':
             written = self.writer.record_decision(**data['decision_args'])
             decision = written.result
@@ -201,8 +207,8 @@ class Agent:
                 return self.store.advance(h, 'DONE', result='REJECTED')
             if not self.config.execution.live:
                 q = data['quote']['quote']
-                return self._record_outcome(h, 'DRY_RUN', q['amountIn'], q['amountOut'],
-                                            f'dry:{data["quote"]["correlationId"]}')
+                out = q['minAmountOut'] if self.config.paper_fill_worst_case else q['amountOut']
+                return self._record_outcome(h, 'DRY_RUN', q['amountIn'], out, f'dry:{data["quote"]["correlationId"]}')
             return self._live_settle(h, row)
         if row['state'] == 'DEPOSITED':
             return self._track(h, row)
@@ -212,7 +218,9 @@ class Agent:
         return row
 
     def _record_outcome(self, h: str, status: str, amount_in: str, amount_out: str, tx_ref: str) -> dict[str, Any]:
-        row = self.store.get(h)
+        if self.writer is None:
+            raise RuntimeError('recording an outcome needs the agent key')
+        row = self.store.require(h)
         outcome_args = {'decision_id': row['data']['decision_id'], 'status': status, 'amount_in': str(amount_in),
                         'amount_out': str(amount_out), 'tx_ref': tx_ref[:128]}
         self.store.advance(h, 'OUTCOME_PENDING', outcome_args=outcome_args)
@@ -220,7 +228,7 @@ class Agent:
         outcome = written.result['outcome']
         self.log({'event': 'outcome_journaled', 'signal_hash': h, 'decision_id': outcome_args['decision_id'],
                   'status': status, 'realized_pnl_usd_cents': outcome.get('realized_pnl_usd_cents'),
-                  'paper': status == 'DRY_RUN', 'auto_paused': any('"auto_paused"' in l for l in written.logs),
+                  'paper': status == 'DRY_RUN', 'auto_paused': any('"auto_paused"' in line for line in written.logs),
                   'explorer': tx_url(self.reader.network, written.tx_hash)})
         return self.store.advance(h, 'DONE', result=status, outcome=outcome, outcome_tx=written.tx_hash)
 
@@ -232,7 +240,8 @@ class Agent:
         origin_t = self.oneclick.token(origin_asset)
         amount_human = origin_t.from_units(q['amountIn'])
         notional_usd = Decimal(args['notional_usd_cents']) / 100
-        spent = Decimal(self.store.live_spent_cents()) / 100
+        spent = Decimal(self.store.live_spent_cents(
+            side='BUY' if self.config.live_total_entries_only else None)) / 100
         dest_t = self.oneclick.token(quote['quoteRequest'].get('destinationAsset') or args['asset'])
         details = {
             'guard decision': f'#{data["decision_id"]} ALLOWED on {self.reader.contract_id} ({data["decision_tx_url"]})',
@@ -250,7 +259,8 @@ class Agent:
             cost = data.get('entry_cost_cents')
             live_gates.check_live_trade(self.config.execution, notional_usd, spent, guard_allowed=True,
                                         entry_cost_usd=None if row['side'] == 'BUY' or cost is None
-                                        else Decimal(cost) / 100)
+                                        else Decimal(cost) / 100,
+                                        count_in_total=row['side'] == 'BUY' or not self.config.live_total_entries_only)
             self.confirm(live_gates.confirmation_phrase(notional_usd, origin_t.symbol), details)
             deadline = details['quote deadline']
             if deadline and datetime.fromisoformat(deadline.replace('Z', '+00:00')) <= datetime.now(timezone.utc):
@@ -261,6 +271,8 @@ class Agent:
             return self._record_outcome(h, 'FAILED', q['amountIn'], '0', f'aborted-before-deposit:{str(exc)[:80]}')
         self.store.advance(h, 'DEPOSIT_PENDING', live_notional_cents=args['notional_usd_cents'],
                            near_yocto_before=self._near_yocto())
+        if not origin_t.contract_address:
+            raise live_gates.LiveGateError(f'no token contract for {origin_t.asset_id}')
         tx_hash = live_gates.deposit_nep141(self.trader_near, origin_t.contract_address, q['depositAddress'],
                                             amount_human)
         row = self.store.advance(h, 'DEPOSITED', deposit_tx=tx_hash, deposit_address=q['depositAddress'],
@@ -288,7 +300,7 @@ class Agent:
         if tracking.outcome_status is None:
             self.log({'event': 'intent_status', 'signal_hash': h, 'status': 'TIMEOUT',
                       'funds_location': FUNDS_LOCATION['TIMEOUT']})
-            return self.store.get(h)  # stays DEPOSITED; the next run resumes tracking
+            return self.store.require(h)  # stays DEPOSITED; the next run resumes tracking
         self.store.advance(h, 'DEPOSITED', near_yocto_after=self._near_yocto())
         details = tracking.timeline[-1].swap_details
         q = data['quote']['quote']

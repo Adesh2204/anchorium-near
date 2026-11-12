@@ -153,7 +153,8 @@ def cmd_demo(args) -> int:
     agent, reader, config, oneclick = build(args, onchain=onchain, store_path=store, guard_id=check_guard)
     journal = reader if onchain else GuardReader(os.environ.get('GUARD_CONTRACT_ID') or DEFAULT_GUARD, reader.network)
     if config.execution.live:
-        print('demo runs in DRY_RUN only; unset LIVE'); return 2
+        print('demo runs in DRY_RUN only; unset LIVE')
+        return 2
     header(reader, config, oneclick, 'Path B: journaled on-chain' if onchain else 'Path A: zero keys, zero funds')
     cases = {c.name: c for c in sig.load_replay(Path(args.fixture))}
     names = args.cases.split(',') if args.cases else (['near-entry', 'near-exit'] if onchain else
@@ -197,7 +198,8 @@ def cmd_run(args) -> int:
     agent, reader, config, oneclick = build(args, onchain=True,
                                             store_path=str(ROOT / f'var/agent-{"live" if args.live_ok else "dry"}.sqlite'))
     if config.execution.live and not args.live_ok:
-        print('LIVE flags are set: also pass --i-understand-live to run with real funds'); return 2
+        print('LIVE flags are set: also pass --i-understand-live to run with real funds')
+        return 2
     parked = agent.store.recover()
     for row in parked:
         print(f'NEEDS_REVIEW {row["signal_hash"]}: {row["data"]["review_reason"]}')
@@ -236,7 +238,8 @@ def cmd_exit(args) -> int:
     agent, reader, config, oneclick = build(args, onchain=True, store_path=str(ROOT / f'var/agent-{mode}.sqlite'))
     header(reader, config, oneclick, f'manual exit {args.coin}')
     if config.execution.live and live_ledger(agent.store)['blocked']:
-        print(live_ledger(agent.store)['blocked']); return 1
+        print(live_ledger(agent.store)['blocked'])
+        return 1
     row = agent.process(latest_bar_signal(args.coin, 'MANUAL_EXIT'))
     return report_live(row) if config.execution.live else 0
 
@@ -279,23 +282,28 @@ def cmd_live_trade(args) -> int:
     position (or --manual). Refuses a second entry/exit and stops after any REFUNDED/FAILED."""
     agent, reader, config, oneclick = build(args, onchain=True, store_path=str(ROOT / 'var/agent-live.sqlite'))
     if not config.execution.live:
-        print('live-trade needs LIVE=1 DRY_RUN=0 MAX_LIVE_NOTIONAL_USD<=2 TRADER_ACCOUNT_ID=<mainnet account>'); return 2
+        print('live-trade needs LIVE=1 DRY_RUN=0 MAX_LIVE_NOTIONAL_USD<=2 TRADER_ACCOUNT_ID=<mainnet account>')
+        return 2
     for row in agent.store.recover():
         print(f"NEEDS_REVIEW {row['signal_hash']}: {row['data']['review_reason']}")
     ledger = live_ledger(agent.store)
     if ledger['blocked']:
-        print(ledger['blocked']); return 1
+        print(ledger['blocked'])
+        return 1
     if (args.leg == 'entry' and ledger['entries'] >= 1) or (args.leg == 'exit' and ledger['exits'] >= 1):
-        print(f'REFUSED: the {args.leg} of this micro-trade was already used ({ledger}).'); return 1
+        print(f'REFUSED: the {args.leg} of this micro-trade was already used ({ledger}).')
+        return 1
     header(reader, config, oneclick, f'LIVE micro-trade: {args.leg}')
     for row in agent.store.unfinished():
         if row['state'] in ('DEPOSITED', 'OUTCOME_PENDING'):
-            print('resuming an unfinished LIVE trade'); return report_live(agent.process(sig.Signal(**row['data']['signal'])))
+            print('resuming an unfinished LIVE trade')
+            return report_live(agent.process(sig.Signal(**row['data']['signal'])))
     coins = args.coins.split(',')
     if args.leg == 'exit':
         held = [p for p in reader.positions() if p['mode'] == 'LIVE' and p['state'] == 'OPEN']
         if not held:
-            print('no open LIVE position to exit'); return 1
+            print('no open LIVE position to exit')
+            return 1
         coins = [c for c, a in sig.SPOT_ASSET.items() if a == held[0]['asset']]
         if args.manual:
             return report_live(agent.process(latest_bar_signal(coins[0], 'MANUAL_EXIT')))
@@ -318,7 +326,8 @@ def cmd_live_trade(args) -> int:
                     continue  # the guard said no: keep waiting for the next signal
                 return report_live(row)
         time.sleep(60 - (time.time() % 60) + 2)
-    print('no qualifying signal before the wait limit; nothing was sent'); return 1
+    print('no qualifying signal before the wait limit; nothing was sent')
+    return 1
 
 
 def live_profit_exit(args, agent, reader, position, coin) -> int:
@@ -341,7 +350,8 @@ def live_profit_exit(args, agent, reader, position, coin) -> int:
         exit_signal=lambda c, kind: sig.latest_bar_signal(sig.HyperliquidCandles(), c, kind, source='profit-target'))
     if row is None:
         print(f'profit target not reached by {args.until}: nothing was sold. To exit at market: '
-              'live-trade --leg exit --manual'); return 1
+              'live-trade --leg exit --manual')
+        return 1
     return report_live(row)
 
 
@@ -354,7 +364,8 @@ def cmd_paper_trade(args) -> int:
     from anchorium import paper_trade as pt  # noqa: PLC0415
     load_dotenv(ROOT / '.env')
     if live_gates.ExecutionConfig.from_env(os.environ).live:
-        print('paper-trade is DRY_RUN only; unset LIVE'); return 2
+        print('paper-trade is DRY_RUN only; unset LIVE')
+        return 2
     args.session = args.session or 'paper-trade'
     agent, reader, config, oneclick = build(args, onchain=True, store_path=str(PAPER_DIR / f'{args.session}.sqlite'))
     session = pt.Session(PAPER_DIR / f'{args.session}.json')
@@ -386,17 +397,131 @@ def cmd_setup_trader(args) -> int:
     load_dotenv(ROOT / '.env')
     account = os.environ.get('TRADER_ACCOUNT_ID')
     if not account:
-        print('set TRADER_ACCOUNT_ID'); return 2
+        print('set TRADER_ACCOUNT_ID')
+        return 2
     near = Near.from_file(account, 'mainnet', rpc_url=DEFAULT_RPC['mainnet'])
     print(f'trader {account}: {near.account(account).amount} on mainnet')
     for token in ('17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1', 'wrap.near'):
         if near.view(token, 'storage_balance_of', {'account_id': account}) is not None:
-            print(f'  {token}: already registered'); continue
+            print(f'  {token}: already registered')
+            continue
         minimum = near.view(token, 'storage_balance_bounds')['min']
         result = near.call(token, 'storage_deposit', {'account_id': account, 'registration_only': True},
                            deposit=Amount.yocto(int(minimum)), gas='30 Tgas')
         print(f'  {token}: registered ({int(minimum) / 1e24} NEAR) https://nearblocks.io/txns/{result.transaction_hash}')
     return 0
+
+
+AUTO_DIR = ROOT / 'var/autonomous'
+
+
+def _auto_paths(session: str) -> tuple[Path, Path]:
+    return AUTO_DIR / f'{session}.json', AUTO_DIR / f'{session}.sqlite'
+
+
+def cmd_autonomous(args) -> int:
+    """Version A: fully autonomous long-only NEAR rounds (DRY_RUN unless LIVE=1 + the owner types GO LIVE)."""
+    from dataclasses import replace  # noqa: PLC0415
+
+    from anchorium import autonomous as A  # noqa: PLC0415
+    from anchorium import paper_trade as pt  # noqa: PLC0415
+    from anchorium.notify import notify  # noqa: PLC0415
+    load_dotenv(ROOT / '.env')
+    execution = live_gates.ExecutionConfig.from_env(os.environ)
+    live = execution.live
+    session = args.session or ('live-a' if live else 'paper-a')
+    state_path, store_path = _auto_paths(session)
+    if live:
+        print('LIVE autonomous trading: real mainnet swaps, no per-trade confirmation, only inside the limits '
+              '($2/trade, 1 open round, 3 rounds, INR 20 loss cap).')
+        if not sys.stdin.isatty() or input('Type GO LIVE to start: ').strip() != 'GO LIVE':
+            print('not confirmed: nothing started')
+            return 2
+    args.session = session
+    agent, reader, config, oneclick = build(args, onchain=True, store_path=str(store_path))
+    config.paper_fill_worst_case = True
+    config.live_total_entries_only = True
+    config.order_usd = Decimal('2.00')
+    if live:
+        config.execution = replace(execution, max_total_usd=live_gates.AUTONOMOUS_MAX_ENTRIES_USD)
+        agent.confirm = lambda *a, **k: None  # the owner's GO LIVE covers every trade inside the limits
+    until = int(datetime.fromisoformat(args.until).timestamp() * 1000) if args.until else None
+    cfg = A.AutoConfig(session=session, live=live, profit_target_inr=Decimal(os.environ.get('PROFIT_TARGET_INR', '1.00')),
+                       cost_filter=Decimal(os.environ.get('COST_FILTER_PCT', '1.6')) / 100,
+                       run_until_ms=until, stop_after_closed=args.stop_after_rounds,
+                       report_path='docs/live_trade_report.md' if live else args.report)
+    sf = A.StateFile(state_path)
+    st = sf.load()
+    if st and args.resume_exit:
+        for r in st['rounds']:
+            if r['status'] == 'OPEN' and r.get('exit_blocked'):
+                r['exit_blocked'], r['reject_since_ms'] = False, None
+        sf.save(st)
+    if st and args.clear_hard_stop and st.get('hard_stop'):
+        st['events'].append({'at': A.ist(int(time.time() * 1000)), 'event': 'HARD_STOP_CLEARED',
+                             'text': f'owner cleared: {st["hard_stop"]}'})
+        st['hard_stop'], st['finished'] = None, None
+        sf.save(st)
+    if st and st.get('finished') and not st.get('hard_stop'):
+        st['finished'] = None  # re-running a finished session resumes it (stop conditions are re-checked)
+        sf.save(st)
+    lock = A.SessionLock(AUTO_DIR / 'LOCK')
+    try:
+        lock.acquire()
+    except A.HardStop as exc:
+        print(f'HARD STOP: {exc}')
+        return 3
+    trader_near = agent.trader_near if live else None
+    runner = A.Runner(cfg, agent, A.Market(), A.Wallet(live, trader_near, config.trader_account), sf,
+                      fetch_fx=pt.fetch_fx, notify=lambda t, m: notify(t, m, repeat=1), root=ROOT)
+    runner.install_sigint()
+    try:
+        header(reader, config, oneclick, f'autonomous version A (session {session})')
+        reason = runner.run()
+    finally:
+        lock.release()
+    print(f'\nstopped: {reason}\nreport: {cfg.report_path}\nstate: {state_path.relative_to(ROOT)}')
+    return 3 if reason.startswith('HARD_STOP') else 0
+
+
+def cmd_autonomous_status(args) -> int:
+    from types import SimpleNamespace  # noqa: PLC0415
+
+    from anchorium import autonomous as A  # noqa: PLC0415
+    from anchorium import paper_trade as pt  # noqa: PLC0415
+    load_dotenv(ROOT / '.env')
+    session = args.session or ('live-a' if live_gates.ExecutionConfig.from_env(os.environ).live else 'paper-a')
+    state_path, _ = _auto_paths(session)
+    sf = A.StateFile(state_path)
+    st = sf.load()
+    if st is None:
+        print(f'no session state at {state_path.relative_to(ROOT)}')
+        return 1
+    live_line = None
+    r = next((x for x in st['rounds'] if x['status'] == 'OPEN'), None)
+    if r and not args.offline:  # a fresh read-only valuation; never writes the running session's state
+        class ReadOnly(A.StateFile):
+            def save(self, state): pass
+        cfg = A.AutoConfig(session=session, live=st['mode'] == 'LIVE',
+                           profit_target_inr=Decimal(st['config']['profit_target_inr']),
+                           time_exit_ms=int(st['config']['time_exit_ms']))
+        agent = SimpleNamespace(oneclick=OneClickClient(), config=SimpleNamespace(quote_tolerance_bps=10))
+        ro = A.Runner(cfg, agent, A.Market(), A.Wallet(False), ReadOnly(state_path), fetch_fx=pt.fetch_fx,
+                      notify=lambda t, m: None, print_=lambda s: None)
+        ro.state = st
+        try:
+            ro.status_line(r)
+            live_line = 'now: ' + st['last_status']['line']
+        except Exception as exc:  # noqa: BLE001
+            live_line = f'now: could not quote ({type(exc).__name__}: {exc})'
+    print(A.status_text(st, live_line))
+    return 0
+
+
+def cmd_live_preflight(args) -> int:
+    from anchorium.preflight import run_preflight  # noqa: PLC0415
+    load_dotenv(ROOT / '.env')
+    return run_preflight(os.environ, AUTO_DIR / 'LOCK')
 
 
 def main(argv=None) -> int:
@@ -438,8 +563,20 @@ def main(argv=None) -> int:
     pt.add_argument('--target-usd', default='0.01', help='PROFIT_TARGET: minimum net profit after every cost')
     pt.add_argument('--cutoff', help='PROFIT_TARGET: ISO time to stop and report (e.g. 2026-11-14T18:00:00+05:30)')
     pt.add_argument('--report', help='report path relative to the repo (default docs/paper_trade_report.md)')
+    au = sub.add_parser('autonomous', help='version A: autonomous long-only NEAR rounds (DRY_RUN unless LIVE=1)')
+    au.add_argument('--session', help='session name (default paper-a, or live-a when LIVE=1)')
+    au.add_argument('--until', help='stop the session at this ISO time (an open round is reported open)')
+    au.add_argument('--stop-after-rounds', type=int, help='stop after this many closed rounds')
+    au.add_argument('--report', default='docs/paper_trade_A_report.md', help='paper report path')
+    au.add_argument('--resume-exit', action='store_true', help='retry a guard-blocked stop/time exit for 30 more min')
+    au.add_argument('--clear-hard-stop', action='store_true', help='owner: clear a recorded hard stop and resume')
+    ast = sub.add_parser('autonomous-status', help='version A session status (+ a fresh valuation of an open round)')
+    ast.add_argument('--session')
+    ast.add_argument('--offline', action='store_true', help='no network: saved state only')
+    sub.add_parser('live-preflight', help='PASS/FAIL checks before a LIVE autonomous session')
     args = parser.parse_args(argv)
-    return {'demo': cmd_demo, 'status': cmd_status, 'run': cmd_run, 'exit': cmd_exit, 'live-trade': cmd_live_trade,
+    return {'autonomous': cmd_autonomous, 'autonomous-status': cmd_autonomous_status,
+            'live-preflight': cmd_live_preflight, 'demo': cmd_demo, 'status': cmd_status, 'run': cmd_run, 'exit': cmd_exit, 'live-trade': cmd_live_trade,
             'setup-trader': cmd_setup_trader, 'paper-trade': cmd_paper_trade}[args.cmd](args)
 
 

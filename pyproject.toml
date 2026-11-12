@@ -30,5 +30,15 @@ include = ["anchorium*", "dashboard*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 markers = ["network: hits a real public API (opt-in: pytest -m network)"]
 addopts = "-m 'not network'"
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["vendor"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+exclude = ["vendor/"]

@@ -1,8 +1,8 @@
 # Regime backtest: A (long-only) vs B (regime long-only) vs C (regime long + bear)
 
 Run 2026-11-12 01:33 IST on branch `regime`. Every number below comes from
-`docs/data/regime_backtest_results.json`; the tables are printed by `scripts/render_regime_backtest.py` from that file.
-Reproduce with `.venv/bin/python scripts/backtest_regime.py --seeds 200` (about 10 min after the one-off signal replay).
+`docs/data/regime_backtest_results.json`; the tables are printed by `research/regime/render_regime_backtest.py` from that file.
+Reproduce with `.venv/bin/python research/regime/backtest_regime.py --seeds 200` (about 10 min after the one-off signal replay).
 
 **Summary.** Out of sample (days 31-60), **neither B nor C beat A. All three made the same single trade and
 ended with identical results**: one bull round opened on 12 Oct 09:31 IST at $5.871 (the regime was still BULL
@@ -18,7 +18,7 @@ Every variant spent 90-99% of the time inside one open round. That, not the regi
 | Why not Hyperliquid 1m | Hyperliquid's public API serves only about 3.5 days of 1m candles (checked: nothing older than 4 days). Its 15m/1h history was used as a cross-check (section 5). |
 | Windows | Days 1-30 = 12 Sep to 11 Oct (sanity check only). Days 31-60 = 12 Oct to 10 Nov (strictly out of sample). Each window starts with a fresh INR 500 wallet. 4 extra warm-up days before 12 Sep feed the indicators only. |
 | Signals | The frozen strategy, unchanged, through `signals.evaluate_latest` (the live agent's exact code path and 26 h window), on every one of the 86,400 minutes: 5,635 signals (BREAKOUT_LONG 2,214, PULLBACK_LONG 433, BREAKDOWN_SHORT 2,596, PULLBACK_SHORT 392). Freeze check passes. |
-| Regime | `anchorium/agent/regime.py`, the six parameters fixed before any run and never changed: EMA20/EMA50 on 1h closes, EMA20 rising = above its value one completed 1h bar earlier, price vs EMA20 (15m close), CHOP when 1h ATR14% < 2 x the round-trip cost, 2-bar 15m hysteresis. Only 1h bars that had closed are used (no look-ahead). |
+| Regime | `research/regime/regime.py`, the six parameters fixed before any run and never changed: EMA20/EMA50 on 1h closes, EMA20 rising = above its value one completed 1h bar earlier, price vs EMA20 (15m close), CHOP when 1h ATR14% < 2 x the round-trip cost, 2-bar 15m hysteresis. Only 1h bars that had closed are used (no look-ahead). |
 | Leg costs | 60 real 1Click DRY quotes per direction for $2, taken 2026-11-12 00:57-01:04 IST (`docs/data/quote_costs_2026-11-12.json`), measured on the GUARANTEED output (`minAmountOut`) against the Hyperliquid mid. USDC->wNEAR: median 35.4 bps (min 28.2, p90 38.0, max 45.3). wNEAR->USDC: median 58.3 bps (min 49.2, p90 61.7, max 66.2). Both include the 20 bps 1Click fee. Each simulated quote draws one sample (bootstrap, seeded). |
 | Gas | 0.001467 NEAR per leg = a measured mainnet `ft_transfer` (0.000217) + storage registration of the new 1Click deposit address (0.00125, `storage_balance_bounds`), as in the live exit floor. Valued at the NEAR price of the moment, paid from the separate gas NEAR (not capital), and subtracted from every result. |
 | FX | ECB USD/INR reference rate of each day (Frankfurter; `docs/data/fx_usd_inr_ecb.json`), 93.69-96.78 over the period. |

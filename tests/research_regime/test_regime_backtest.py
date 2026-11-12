@@ -1,9 +1,9 @@
 """Backtest engine invariants on synthetic data (no network)."""
 from decimal import Decimal as D
 
-from anchorium import regime_backtest as B
-from anchorium.agent import ledger as L
-from anchorium.agent import regime as R
+from research.regime import engine as B
+from research.regime import ledger as L
+from research.regime import regime as R
 
 T0 = 1_790_000_000_000 - 1_790_000_000_000 % 86_400_000  # a UTC midnight
 

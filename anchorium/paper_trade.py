@@ -46,7 +46,7 @@ def fetch_fx(client: httpx.Client | None = None) -> dict[str, Any]:
     """Live USD/INR from Coinbase's public rates API, with the ECB reference rate as a cross-check."""
     client = client or httpx.Client(timeout=15)
     rate = Decimal(str(client.get(COINBASE_FX).raise_for_status().json()['data']['rates']['INR']))
-    fx = {'usd_inr': str(rate.quantize(Decimal('0.0001'))), 'source': 'Coinbase public exchange-rates API',
+    fx: dict[str, Any] = {'usd_inr': str(rate.quantize(Decimal('0.0001'))), 'source': 'Coinbase public exchange-rates API',
           'url': COINBASE_FX, 'fetched_at': utcnow()}
     try:
         ecb = client.get(ECB_FX).raise_for_status().json()
@@ -370,7 +370,7 @@ def render_report(g: dict[str, Any], state: dict[str, Any], *, guard: str, netwo
     profit_rule = state.get('exit_rule') == 'PROFIT_TARGET'
     held_min = (x['decision_time_ms'] - e['decision_time_ms']) / 60000
     pct = lambda usd: q(usd * rate / paper_inr * 100, '0.001')  # noqa: E731
-    L = []
+    L: list[str] = []
     a = L.append
     a(f'# Paper trade report: INR {q(paper_inr, "1")}, one $2 round trip'
       + (' with a profit-target exit' if profit_rule else ''))
@@ -602,12 +602,12 @@ def render_open_report(g: dict[str, Any], state: dict[str, Any], *, guard: str, 
     unreal = value - e['usdc'] - gas
     sym = 'wNEAR' if e['coin'] == 'NEAR' else {'BTC': 'nBTC', 'ETH': 'ETH'}.get(e['coin'], e['coin'])
     best = state.get('best_check') or {}
-    L = []
+    L: list[str] = []
     a = L.append
     a(f'# Paper trade report: INR {q(paper_inr, "1")}, profit-target exit (position still open)')
     a('')
     a('**Paper trade (DRY_RUN). No real money moved.** The exit quote never covered every cost plus the target '
-      f'before the cut-off, so the position was **not sold** and is reported open at its quoted value.')
+      'before the cut-off, so the position was **not sold** and is reported open at its quoted value.')
     a('')
     a('## Result at the cut-off')
     a('')
