@@ -38,6 +38,10 @@ addopts = "-m 'not network'"
 line-length = 120
 extend-exclude = ["vendor"]
 
+[tool.ruff.lint]
+# Pinned to the classic default rule set: ruff >= 0.17 enables many more rules by default.
+select = ["E4", "E7", "E9", "F"]
+
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
