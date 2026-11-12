@@ -6,7 +6,7 @@ prices, decision counts) change over time. The shape of the output and the verdi
 ## 0. Setup (1 min)
 
 ```sh
-git clone https://github.com/Adesh2204/anchorium-near && cd anchorium-near
+git clone https://github.com/Adesh2204/anchorium-near-Paypal && cd anchorium-near-Paypal
 make setup            # -> setup OK: Python 3.x.y   (needs Python >= 3.12; `make setup PY=python3.12` if your default python3 is older)
 ```
 

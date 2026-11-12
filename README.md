@@ -1,5 +1,7 @@
 # Anchorium
 
+**Repository:** [github.com/Adesh2204/anchorium-near-Paypal](https://github.com/Adesh2204/anchorium-near-Paypal)
+
 Anchorium is an autonomous trading agent whose risk limits live in a NEAR smart contract. Before any trade it
 asks the contract, journals the decision on-chain, and settles spot swaps through NEAR Intents (1Click) into
 the user's own account.
@@ -111,7 +113,7 @@ toolchain 1.95.0 is pinned in `rust-toolchain.toml`, plus cargo-near 0.23.0.
 
 ### Path A: zero keys, zero funds (about 1 minute)
 
-1. `git clone https://github.com/Adesh2204/anchorium-near && cd anchorium-near`
+1. `git clone https://github.com/Adesh2204/anchorium-near-Paypal && cd anchorium-near-Paypal`
 2. `make setup` → you will see `setup OK: Python 3.x.y`.
 3. `make freeze` → you will see `"vendored_files_verified": 13`, `"parameter_count": 28` and `"passed": true`.
 4. `make demo` → what you will see:
@@ -269,7 +271,7 @@ deposit.
 ## Hackathon disclosure
 
 - **Judged work:** `git diff baseline...hackathon-submission`
-  ([compare](https://github.com/Adesh2204/anchorium-near/compare/baseline...hackathon-submission)). This repo
+  ([compare](https://github.com/Adesh2204/anchorium-near-Paypal/compare/baseline...hackathon-submission)). This repo
   was created during NEAR HACKATHON. Its first commit, tagged `baseline`, contains only the vendored strategy.
 - **Prior work (not judged):** `vendor/anchorium_strategy/` is our team's earlier non-NEAR VWAP/EMA/ATR
   strategy, built for Perpetual Alpha, a separate trading competition. It is copied byte-identical;
