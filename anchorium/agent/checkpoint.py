@@ -22,6 +22,8 @@ from typing import Any
 STATES = ('NEW', 'DECISION_PENDING', 'DECISION_RECORDED', 'DEPOSIT_PENDING', 'DEPOSITED', 'OUTCOME_PENDING',
           'DONE', 'SKIPPED', 'NEEDS_REVIEW')
 TERMINAL = ('DONE', 'SKIPPED')
+#: A deposit that may have been broadcast can only be confirmed (DEPOSITED) or parked for a human.
+AFTER_DEPOSIT_PENDING = ('DEPOSIT_PENDING', 'DEPOSITED', 'NEEDS_REVIEW')
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -84,6 +86,10 @@ class CheckpointStore:
             current = self.get(signal_hash)
             if current is None:
                 raise KeyError(signal_hash)
+            if current['state'] == 'DEPOSIT_PENDING' and state not in AFTER_DEPOSIT_PENDING:
+                raise ValueError(f'illegal transition DEPOSIT_PENDING -> {state} for {signal_hash[:12]}...')
+            if current['state'] in TERMINAL + ('NEEDS_REVIEW',) and state != current['state']:
+                raise ValueError(f'illegal transition {current["state"]} -> {state} for {signal_hash[:12]}...')
             merged = {**current['data'], **data}
             self.db.execute(
                 'UPDATE runs SET state = ?, side = COALESCE(?, side), data = ?, '

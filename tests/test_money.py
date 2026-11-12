@@ -113,8 +113,11 @@ def test_receipt_displayed_lines_add_up_exactly(seed):
         assert sum(comps) == L['received'][i]
         assert L['received'][i] + L['tax'][i] == L['after_tax'][i]
         assert -L['tax'][i] >= (r.tax * (fx if i else 1)).quantize(D('0.01') if i else D('0.000001'), 'ROUND_FLOOR')
-    assert L['received'][1] == (r.received * fx).quantize(D('0.01'), 'ROUND_HALF_EVEN')
-    assert L['received'][0] == r.received.quantize(D('0.000001'), 'ROUND_HALF_EVEN')
+    assert L['received'][1] == (r.received * fx).quantize(D('0.01'), 'ROUND_FLOOR')
+    assert L['received'][0] == r.received.quantize(D('0.000001'), 'ROUND_FLOOR')
+    # never rounded in our favour: displayed net and after-tax are never above the exact values
+    assert L['received'][0] <= r.received and L['received'][1] <= r.received * fx
+    assert L['after_tax'][0] <= r.after_tax and L['after_tax'][1] <= r.after_tax * fx
     text = r.render(wallet_usdc=D('5.3'), wallet_inr=D('500'), session_after_tax_inr=D('-1'), ist=M.__dict__.get('IST')
                     or __import__('datetime').timezone.utc)
     assert f'ROUND #{seed}  CLOSED: STOP_LOSS' in text and 'YOURS AFTER TAX' in text

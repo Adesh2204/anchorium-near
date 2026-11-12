@@ -450,6 +450,12 @@ def cmd_autonomous(args) -> int:
                        cost_filter=Decimal(os.environ.get('COST_FILTER_PCT', '1.6')) / 100,
                        run_until_ms=until, stop_after_closed=args.stop_after_rounds,
                        report_path='docs/live_trade_report.md' if live else args.report)
+    lock = A.SessionLock(AUTO_DIR / 'LOCK')
+    try:
+        lock.acquire()  # before touching the saved state: never edit a running session's file
+    except A.HardStop as exc:
+        print(f'HARD STOP: {exc}')
+        return 3
     sf = A.StateFile(state_path)
     st = sf.load()
     if st and args.resume_exit:
@@ -465,12 +471,6 @@ def cmd_autonomous(args) -> int:
     if st and st.get('finished') and not st.get('hard_stop'):
         st['finished'] = None  # re-running a finished session resumes it (stop conditions are re-checked)
         sf.save(st)
-    lock = A.SessionLock(AUTO_DIR / 'LOCK')
-    try:
-        lock.acquire()
-    except A.HardStop as exc:
-        print(f'HARD STOP: {exc}')
-        return 3
     trader_near = agent.trader_near if live else None
     runner = A.Runner(cfg, agent, A.Market(), A.Wallet(live, trader_near, config.trader_account), sf,
                       fetch_fx=pt.fetch_fx, notify=lambda t, m: notify(t, m, repeat=1), root=ROOT)

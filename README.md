@@ -4,6 +4,13 @@ Anchorium is an autonomous trading agent whose risk limits live in a NEAR smart 
 asks the contract, journals the decision on-chain, and settles spot swaps through NEAR Intents (1Click) into
 the user's own account.
 
+**Version A (the trading mode we run):** long-only NEAR, entered on the unchanged frozen strategy's LONG signal.
+It is **autonomous within owner-set limits; profit exits cover fees, gas and a 31.2% tax reserve; a -5% safety
+stop and a time exit cap the downside**. Limits: $2 per trade, 1 open round, 3 rounds per session, an INR 20
+session loss cap, a 1.6% round-trip cost filter, every leg checked by the guard and journaled on-chain. A regime
+filter with bear rounds was researched and did not beat version A out of sample: see the honest
+[regime backtest](docs/regime_backtest.md) (roadmap, not runtime).
+
 **The problem**
 
 - You have to trust a trading bot to follow its own risk rules. When it breaks one, nobody sees it.
@@ -123,6 +130,19 @@ grants the agent a function-call key, and runs the same replay with **real** `re
 `record_outcome` transactions on your contract. Each line prints a testnet explorer link. Keys go to
 `~/.near-credentials`, never into the repo. No mainnet, no funds.
 
+### Version A: autonomous rounds
+
+- `make autonomous` runs version A under `caffeinate -i`: DRY_RUN by default (real 1Click dry quotes, paper fills
+  at each quote's guaranteed minimum, real testnet journal). `ARGS="--until <ISO time> --stop-after-rounds 1"`
+  bounds a paper session. Re-running the same command resumes it; Ctrl+C saves and exits cleanly.
+- `make autonomous-status` prints the session, a fresh valuation of an open round (net and after-tax P&L in INR,
+  distance to the profit target and to the stop) and the last 5 events.
+- LIVE needs `LIVE=1 DRY_RUN=0 MAX_LIVE_NOTIONAL_USD=2 TRADER_ACCOUNT_ID=<mainnet account>` in `.env`,
+  `make live-preflight` (PASS/FAIL: balances, storage registration, key, guard not paused, no open position,
+  no other session, clock), and the owner typing `GO LIVE` once at start.
+- Each closed round prints a receipt (gross move, 1Click fees, slippage, gas, net, tax reserve, after tax) and is
+  appended to `docs/paper_trade_A_report.md` (paper) or `docs/live_trade_report.md` (LIVE).
+
 ### Optional
 
 - `make agent` runs the live loop on current candles. It stays DRY_RUN but journals with the agent key, so only
@@ -193,7 +213,13 @@ contract is idempotent per `signal_hash`. An interrupted LIVE deposit is parked 
 
 **What the agent enforces** (`anchorium/near/live.py`, `orchestrator.py`):
 
-- **DRY_RUN by default.** LIVE needs all of these:
+- **Version A autonomous LIVE** (the owner's written authorization): no per-trade confirmation, only inside its
+  limits ($2 per trade, at most 3 buys = $6 of entries per session, 1 open round, INR 20 loss cap), only after
+  `make live-preflight` and the owner typing `GO LIVE`. Every leg still needs an ALLOWED on-chain decision.
+  STOP_LOSS (net <= -5% of the entry) and TIME_EXIT can sell at a loss; a guard-rejected stop is retried for 30 min,
+  then the bot waits for the owner. REFUNDED, FAILED, INCOMPLETE_DEPOSIT, a balance mismatch, a missing key or a
+  paused guard stop it (hard stop, notification).
+- **DRY_RUN by default.** The micro-trade command (`live-trade`) needs all of these:
   - `LIVE=1` **and** `DRY_RUN=0`;
   - `MAX_LIVE_NOTIONAL_USD` ≤ 2 (a hard cap) and a session total ≤ $5;
   - an ALLOWED on-chain decision and an unexpired quote;
@@ -206,6 +232,16 @@ contract is idempotent per `signal_hash`. An interrupted LIVE deposit is parked 
 
 **Kill switch.** The owner calls `pause`: one transaction, no agent involvement. Entries stop at the next
 `check_trade`, and exits stay possible. The contract also pauses itself at the daily loss cap.
+
+```sh
+near contract call-function as-transaction guard.anchorium-team.testnet pause json-args '{}' \
+  prepaid-gas '30 Tgas' attached-deposit '0 NEAR' sign-as anchorium-team.testnet \
+  network-config testnet sign-with-legacy-keychain send
+# resume: the same command with `resume` instead of `pause`
+```
+
+Version A treats a paused guard as a hard stop when it has no open round; with an open round it keeps managing the
+exit (exits are never blocked by the pause) and stops once the round is closed.
 
 **The limitation, plainly.** The guard runs on **testnet**; Intents settle on **mainnet**. The contract cannot
 block a mainnet transfer. Enforcement is the agent refusing to deposit without an ALLOWED on-chain decision, and
@@ -257,7 +293,14 @@ deposit.
 - **Slippage is measured against 1Click reference prices**, which ran 0.5–1% away from executable quotes in our
   measurements. That is why the owner raised the cap from 100 to 150 bps.
 - **No strategy edge is claimed.** The strategy was built for perpetual futures; here it drives long-only spot.
-  Its exit rule is new agent logic: sell on the next SHORT signal or after a timer.
+  Version A's exits (profit target after costs and tax, -5% stop, time exit) are new agent logic, not part of the
+  frozen strategy. A $2 round trip costs about 1.4-1.5% (1Click fee + slippage about 0.9%, plus about 0.5% of NEAR
+  for gas and the storage registration of each new 1Click deposit address), so a round needs a move of roughly
+  2% to close at the INR 1 target.
+- **Roadmap: regime filter + bear rounds.** A BULL/BEAR/CHOP detector that would also sell wNEAR in a downtrend
+  and buy it back lower. Researched in [docs/regime_backtest.md](docs/regime_backtest.md) (60 days, honest
+  out-of-sample test): it did not beat version A out of sample, and it would need a guard contract upgrade, so it
+  stays research (`research/regime/`), not runtime.
 - **The build is not reproducible.** The wasm is built with `cargo near build non-reproducible-wasm` (no Docker),
   so compare the hash instead.
 - **Not used yet:** NEAR AI Cloud (a co-pilot whose rationale hash would go into `rationale_hash`) and Chain

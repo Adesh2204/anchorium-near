@@ -49,6 +49,8 @@ HL_INFO = 'https://api.hyperliquid.xyz/info'
 BACKOFF_S = (5, 15, 60, 60)  # between 5 tries
 NETWORK_PAUSE_S = 300
 STATE_VERSION = 1
+SIGNAL_MAX_AGE_MS = 180_000  # a buy acts on a signal bar at most 3 min old
+DECISIONS_RESERVED_FOR_TRADES = 50  # on-chain skip journaling stops when the guard's daily budget runs this low
 
 
 def ist(ms: int) -> str:
@@ -258,6 +260,26 @@ class Runner:
                 self.sleep(BACKOFF_S[i])
         raise AssertionError('unreachable')
 
+    def leg(self, sig: Signal, min_proceeds_units: int | None = None) -> dict[str, Any]:
+        """Runs one leg through the orchestrator. A network error is retried (the orchestrator resumes from its
+        checkpoint, idempotently), EXCEPT when a LIVE deposit may already have been sent: that row is parked as
+        NEEDS_REVIEW and the bot hard-stops. A deposit is never re-sent automatically."""
+        for i in range(len(BACKOFF_S) + 1):
+            try:
+                return self.agent.process(sig, min_proceeds_units=min_proceeds_units)
+            except Exception as exc:  # noqa: BLE001
+                if not is_network_error(exc):
+                    raise
+                parked = self.agent.store.recover()
+                if parked:
+                    raise HardStop(f'DEPOSIT_NEEDS_REVIEW: network error while a deposit was being sent '
+                                   f'({type(exc).__name__}: {exc}); check the trader account and 1Click status') from exc
+                if i == len(BACKOFF_S):
+                    raise NetworkDown(f'{type(exc).__name__}: {exc}') from exc
+                self.print(f'  network error in a leg ({type(exc).__name__}); resuming it in {BACKOFF_S[i]} s')
+                self.sleep(BACKOFF_S[i])
+        raise AssertionError('unreachable')
+
     def fx(self) -> dict[str, Any]:
         cur = self.state.get('fx')
         if cur is None or self.now_ms() - cur['_ms'] >= self.cfg.fx_refresh_s * 1000:
@@ -306,8 +328,8 @@ class Runner:
                           'last_heartbeat_ms': self.now_ms(), 'hard_stop': None, 'loss_cap_hit': False,
                           'finished': None}
             if self.cfg.live:
-                self.state['start_usdc_units'] = self.wallet.usdc_units(self.state)
-                self.state['start_near_yocto'] = self.wallet.near_yocto()
+                self.state['start_usdc_units'] = self.net(self.wallet.usdc_units, self.state)
+                self.state['start_near_yocto'] = self.net(self.wallet.near_yocto)
             else:
                 self.state['start_usdc_units'] = paper_usdc
             start_usd = M.usdc(self.state['start_usdc_units'])
@@ -331,6 +353,11 @@ class Runner:
     def install_sigint(self) -> None:
         def handler(signum, frame):
             if self.stop_requested:
+                pending = self.agent.store.db.execute(
+                    "SELECT COUNT(*) FROM runs WHERE state = 'DEPOSIT_PENDING'").fetchone()[0]
+                if pending:
+                    self.print('\nA deposit is being sent: not interrupting it. The bot exits right after.')
+                    return
                 raise KeyboardInterrupt
             self.stop_requested = True
             self.print('\nCtrl+C: finishing the current step, then saving and exiting '
@@ -341,11 +368,14 @@ class Runner:
         """Runs until a stop condition. Returns the reason."""
         try:
             self.start()
-        except HardStop as exc:
-            return self.hard_stop(str(exc))
+        except (HardStop, NetworkDown) as exc:
+            return self.hard_stop(f'{"" if isinstance(exc, HardStop) else "STARTUP_NETWORK_DOWN: "}{exc}')
+        except Exception as exc:  # noqa: BLE001
+            return self.hard_stop(f'UNEXPECTED_ERROR at startup: {type(exc).__name__}: {exc}')
         if self.state.get('hard_stop'):
             return self.finish(f'HARD_STOP already recorded: {self.state["hard_stop"]}')
-        if self.state.get('loss_cap_hit'):
+        if self.loss_cap_reached():
+            self.state['loss_cap_hit'] = True
             return self.finish('SESSION_LOSS_CAP already hit')
         while True:
             if self.stop_requested:
@@ -353,6 +383,7 @@ class Runner:
             reason = self.stop_reason()
             if reason:
                 return self.finish(reason)
+            started = self.clock()
             try:
                 self.tick()
             except HardStop as exc:
@@ -361,13 +392,15 @@ class Runner:
                 self.event('NETWORK_PAUSE', f'{exc}; pausing {NETWORK_PAUSE_S // 60} min, then resuming')
                 self.wait(NETWORK_PAUSE_S)
                 continue
+            except Exception as exc:  # noqa: BLE001  (never die silently with a round open)
+                return self.hard_stop(f'UNEXPECTED_ERROR: {type(exc).__name__}: {exc}')
             if self.state.get('loss_cap_hit'):
                 return self.finish('SESSION_LOSS_CAP')
             reason = self.stop_reason()
             if reason:
                 return self.finish(reason)
             self.heartbeat()
-            self.wait(self.cfg.tick_s)
+            self.wait(max(1.0, self.cfg.tick_s - (self.clock() - started)))  # a tick every 60 s, not 60 s + work
 
     def wait(self, seconds: float) -> None:
         end = self.clock() + seconds
@@ -424,11 +457,18 @@ class Runner:
         if r is None:
             self.maybe_enter()
         elif r['status'] == 'BUYING':
-            self.book_buy(r, self.net(self.agent.process, Signal(**r['signal'])))
+            row = self.agent.store.get(self.agent._hash(Signal(**r['signal'])))
+            if row is None or row['state'] == 'NEW':  # crashed before the leg started: re-check every entry gate
+                block = self.entry_block(self.now_ms(), Signal(**r['signal']))
+                if block:
+                    r['status'], r['abort_reason'] = 'ABORTED', f'RESUME_{block}'
+                    self.save()
+                    self.event('BUY_NOT_ALLOWED', f'round #{r["n"]}: not resumed ({block})')
+                    return
+            self.book_buy(r, self.leg(Signal(**r['signal'])))
         elif r['status'] == 'SELLING':
             p = r['pending_exit']
-            self.book_sell(r, self.net(self.agent.process, Signal(**p['signal']),
-                                       min_proceeds_units=p['floor_units']))
+            self.book_sell(r, self.leg(Signal(**p['signal']), min_proceeds_units=p['floor_units']))
         else:
             self.manage_exit(r)
 
@@ -447,21 +487,16 @@ class Runner:
         if sig.direction != 'LONG':
             return  # long-only: a SHORT signal without a position is nothing to do
         label = f'{sig.signal_type} bar {ist(sig.bar_open_ms)} close {sig.close}'
-        opened = sum(1 for r in self.state['rounds'] if r['status'] in ('OPEN', 'SELLING', 'CLOSED'))
-        if opened >= self.cfg.max_rounds:
-            return self.local_skip('SKIPPED_ROUND_CAP', f'{label}: {opened} of {self.cfg.max_rounds} rounds used')
-        if now >= self.cfg.no_buy_after_ms:
-            return self.local_skip('SKIPPED_BUY_CUTOFF', f'{label}: no new buys after {ist(self.cfg.no_buy_after_ms)}')
-        if now < self.state['cooldown_until_ms']:
-            return self.local_skip('SKIPPED_COOLDOWN', f'{label}: STOP_LOSS cooldown until '
-                                                       f'{ist(self.state["cooldown_until_ms"])}')
+        block = self.entry_block(now, sig)
+        if block:
+            return self.local_skip(f'SKIPPED_{block}', f'{label}: {self.block_text(block)}')
         if self.net(self.agent.reader.policy)['paused']:
             raise HardStop('GUARD_PAUSED: the owner paused the guard contract (new buys blocked)')
         order_units = M.to_units(self.cfg.order_usd, M.USDC_DECIMALS)
-        if self.wallet.usdc_units(self.state) < order_units:
+        if self.net(self.wallet.usdc_units, self.state) < order_units:
             return self.local_skip('SKIPPED_BALANCE', f'{label}: USDC balance below ${self.cfg.order_usd}')
         if self.cfg.live:
-            near = self.wallet.near_yocto() or 0
+            near = self.net(self.wallet.near_yocto) or 0
             if Decimal(near) / Decimal(10) ** 24 < 3 * self.leg_gas_estimate():
                 raise HardStop(f'NEAR_GAS_LOW: {Decimal(near) / Decimal(10) ** 24} NEAR is below 3 legs of gas')
         cost = self.cost_check(order_units)
@@ -476,7 +511,32 @@ class Runner:
         self.save()  # durable BEFORE the leg: a crash resumes this exact signal
         self.event('BUY_START', f'round #{n}: {label}; round-trip cost {cost["round_trip_pct"]}% '
                                 f'<= {self.cfg.cost_filter * 100}%')
-        self.book_buy(rnd, self.net(self.agent.process, sig))
+        self.book_buy(rnd, self.leg(sig))
+
+    def entry_block(self, now: int, sig: Signal) -> str | None:
+        """The time/count gates of an entry (also re-checked when a crashed buy is resumed)."""
+        opened = sum(1 for r in self.state['rounds'] if r['status'] in ('OPEN', 'SELLING', 'CLOSED'))
+        if self.loss_cap_reached():
+            return 'LOSS_CAP'
+        if opened >= self.cfg.max_rounds:
+            return 'ROUND_CAP'
+        if now >= self.cfg.no_buy_after_ms:
+            return 'BUY_CUTOFF'
+        if now < self.state['cooldown_until_ms']:
+            return 'COOLDOWN'
+        if now - sig.bar_close_ms > SIGNAL_MAX_AGE_MS:
+            return 'STALE_SIGNAL'
+        return None
+
+    def block_text(self, block: str) -> str:
+        return {'LOSS_CAP': f'session loss cap INR {self.cfg.loss_cap_inr} reached',
+                'ROUND_CAP': f'{self.cfg.max_rounds} rounds used',
+                'BUY_CUTOFF': f'no new buys after {ist(self.cfg.no_buy_after_ms)}',
+                'COOLDOWN': f'STOP_LOSS cooldown until {ist(self.state["cooldown_until_ms"])}',
+                'STALE_SIGNAL': 'the signal bar is more than 3 min old'}[block]
+
+    def loss_cap_reached(self) -> bool:
+        return self.state.get('loss_cap_hit') or self.session_after_tax_inr() <= -self.cfg.loss_cap_inr
 
     def cost_check(self, order_units: int) -> dict[str, Any]:
         oc = self.agent.oneclick
@@ -500,6 +560,10 @@ class Runner:
         text = (f'{label}: round-trip cost {cost["round_trip_pct"]}% > {self.cfg.cost_filter * 100}% '
                 f'(quotes {cost["entry_quote"]} / {cost["exit_quote"]})')
         onchain = now - self.state['last_skip_journal_ms'] >= self.cfg.skip_journal_gap_s * 1000
+        if onchain:
+            today = self.net(self.agent.reader.stats)['today']['decisions']
+            budget = self.net(self.agent.reader.policy).get('max_decisions_per_day', 100)
+            onchain = budget - today > DECISIONS_RESERVED_FOR_TRADES
         if onchain:
             self.state['last_skip_journal_ms'] = now
             url = self.journal_skip(sig, f'SKIPPED_COST:{cost["round_trip_pct"]}%')
@@ -550,6 +614,9 @@ class Runner:
         if row['state'] == 'NEEDS_REVIEW':
             raise HardStop(f'{leg}: NEEDS_REVIEW ({row["data"].get("review_reason")})')
         result = row['data'].get('result')
+        if row['state'] == 'DONE' and result == 'FAILED' and \
+                str((row['data'].get('outcome_args') or {}).get('tx_ref', '')).startswith('aborted-before-deposit'):
+            return  # refused locally before anything was sent (e.g. an expired quote): handled like a rejection
         if row['state'] == 'DONE' and result in ('REFUNDED', 'FAILED'):
             last = (row['data'].get('timeline') or [{}])[-1].get('status', result)
             raise HardStop(f'{leg}: 1Click {last}')
@@ -566,7 +633,7 @@ class Runner:
             if not self.cfg.live:
                 self.state['paper_usdc_units'] = int(self.state['paper_usdc_units']) - int(leg['amount_in'])
             else:
-                held = self.wallet.wnear_units(self.state)
+                held = self.net(self.wallet.wnear_units, self.state)
                 if held < int(leg['amount_out']):
                     raise HardStop(f'BALANCE_MISMATCH: wNEAR balance {held} < bought {leg["amount_out"]}')
             self.save()
@@ -607,7 +674,7 @@ class Runner:
 
     def manage_exit(self, rnd: dict[str, Any]) -> None:
         if self.cfg.live:
-            held = self.wallet.wnear_units(self.state)
+            held = self.net(self.wallet.wnear_units, self.state)
             if held < int(rnd['buy']['wnear_units']):
                 raise HardStop(f'BALANCE_MISMATCH: wNEAR balance {held} < round #{rnd["n"]} bought '
                                f'{rnd["buy"]["wnear_units"]}')
@@ -616,6 +683,8 @@ class Runner:
         if rnd.get('exit_blocked'):
             self.print('  exit blocked by the guard for 30 min: waiting for the owner (run with --resume-exit)')
             return
+        if decision in (M.HOLD, M.PROFIT_EXIT):
+            rnd['reject_since_ms'] = None  # a stop/time exit episode ended: a later one gets a fresh 30 min
         if decision == M.HOLD:
             return
         if decision == M.STOP_LOSS and not rnd['stop_notified']:
@@ -637,7 +706,7 @@ class Runner:
         rnd['status'] = 'SELLING'
         rnd['sell_mid'] = self.state['last_status']['near_usd']
         self.save()  # durable BEFORE the leg
-        self.book_sell(rnd, self.net(self.agent.process, sig, min_proceeds_units=floor))
+        self.book_sell(rnd, self.leg(sig, min_proceeds_units=floor))
 
     def book_sell(self, rnd: dict[str, Any], row: dict[str, Any]) -> None:
         p = rnd['pending_exit']
@@ -697,17 +766,20 @@ class Runner:
             self.state['paper_usdc_units'] = int(self.state['paper_usdc_units']) + int(s['usdc_units'])
         if rnd['exit_reason'] == M.STOP_LOSS:
             self.state['cooldown_until_ms'] = self.now_ms() + self.cfg.stop_cooldown_s * 1000
-        wallet_usdc = M.usdc(self.wallet.usdc_units(self.state))
+        try:
+            wallet_usdc = M.usdc(self.net(self.wallet.usdc_units, self.state))
+        except NetworkDown:  # the round is booked; only the wallet line of the receipt is affected
+            wallet_usdc = M.usdc(self.state.get('paper_usdc_units', 0))
         text = receipt.render(wallet_usdc=wallet_usdc, wallet_inr=wallet_usdc * receipt.usd_inr,
                               session_after_tax_inr=self.session_after_tax_inr(), ist=IST)
         rnd['receipt_text'] = text
-        self.save()
+        if self.session_after_tax_inr() <= -self.cfg.loss_cap_inr:
+            self.state['loss_cap_hit'] = True
+        self.save()  # the closed round, the paper balance, the cooldown and the loss cap: one atomic write
         self.print('\n' + text + '\n')
         self.event('SELL', f'round #{rnd["n"]} {rnd["exit_reason"]}: after tax INR {lines["after_tax"][1]:+.2f} '
                            f'(net INR {lines["received"][1]:+.2f})', notify=True)
-        if self.session_after_tax_inr() <= -self.cfg.loss_cap_inr:
-            self.state['loss_cap_hit'] = True
-            self.save()
+        if self.state['loss_cap_hit']:
             self.event('SESSION_LOSS_CAP', f'realized after tax INR {self.session_after_tax_inr():+.2f} reached '
                                            f'-INR {self.cfg.loss_cap_inr}: stopped for good', notify=True)
         self.write_report()

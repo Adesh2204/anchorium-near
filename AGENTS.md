@@ -18,7 +18,13 @@ Trades settle through the NEAR Intents 1Click API. The judged work is `git diff 
    - `MAX_LIVE_NOTIONAL_USD` (at most 2 USD per trade, 5 USD in total)
    - a confirmation typed in the terminal
    - an ALLOWED verdict from the guard contract
-3. **Contracts are deployed to NEAR testnet only.** Mainnet deployment is out of scope.
+   - **Exception, version A autonomous mode** (owner's written authorization, FINAL TASK 2026-11-12): after the
+     owner types `GO LIVE` at session start, `python -m anchorium autonomous` trades without a per-trade typed
+     confirmation, ONLY inside: $2 per trade, at most 3 buys ($6 of entries) per session, 1 open round, INR 20
+     session loss cap, no buys after Fri 13 Nov 16:00 IST, every leg ALLOWED by the guard and journaled. Its
+     STOP_LOSS (-5%) and TIME_EXIT may sell at a loss (approved). Never widen these limits without the owner.
+3. **Contracts are deployed to NEAR testnet only.** Never upgrade or redeploy the deployed guards (owner's
+   instruction 2026-11-12); version A runs on the deployed v1 guard as is. Mainnet deployment is out of scope.
 4. **No secrets in git.** Keys live in `~/.near-credentials` or a gitignored `.env`. `.env.example` holds
    placeholders only. The agent account uses a function-call access key restricted to the guard contract.
 5. **Never submit the hackathon form, call the submission API, or post on X.** Humans do that.
@@ -39,7 +45,10 @@ Trades settle through the NEAR Intents 1Click API. The judged work is `git diff 
 - **Not allowed:** exchange order or signing paths of any kind (Hyperliquid or otherwise), Angel One / NSE code,
   or any import from the old repository beyond the vendored closure.
 - **Settlement:** only through the 1Click API (`https://1click.chaindefuser.com/v0`), spot, long-only. A SHORT
-  signal exits an open position; without one it is skipped locally (a spot account cannot short).
+  signal exits an open position; without one it is skipped locally (a spot account cannot short). Version A
+  ignores SHORT signals and exits only by its profit / stop / time rules (`anchorium/money.py`).
+- **Research only:** `research/regime/` (regime filter + bear rounds, docs/regime_backtest.md) is never imported
+  by the runtime.
 
 ## Layout
 

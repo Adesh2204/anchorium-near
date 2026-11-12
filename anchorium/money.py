@@ -16,7 +16,7 @@ storage registration of the new 1Click deposit address (0.00125 NEAR on USDC and
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import ROUND_CEILING, ROUND_DOWN, ROUND_HALF_EVEN, Decimal, localcontext
+from decimal import ROUND_CEILING, ROUND_DOWN, ROUND_FLOOR, ROUND_HALF_EVEN, Decimal, localcontext
 from typing import Any
 
 USDC_DECIMALS = 6
@@ -177,9 +177,10 @@ def profit_floor_units(entry_cost_units: int, gas_total_usd: Decimal, usd_inr: D
 # ----- receipt -----
 
 def _alloc(values: list[Decimal], total: Decimal, quantum: Decimal) -> list[Decimal]:
-    """Rounds `values` to `quantum` so that they sum exactly to `total` rounded half-even (largest remainder)."""
+    """Rounds `values` to `quantum` so that they sum exactly to `total` rounded DOWN (largest remainder), so the
+    displayed net is never above the exact net."""
     with _ctx():
-        target = total.quantize(quantum, rounding=ROUND_HALF_EVEN)
+        target = total.quantize(quantum, rounding=ROUND_FLOOR)
         rounded = [v.quantize(quantum, rounding=ROUND_HALF_EVEN) for v in values]
         diff = int(((target - sum(rounded, Decimal(0))) / quantum).to_integral_value())
         order = sorted(range(len(values)), key=lambda i: (values[i] - rounded[i]) * (1 if diff > 0 else -1),
@@ -244,8 +245,8 @@ class Receipt:
 
     def lines(self) -> dict[str, tuple[Decimal, Decimal]]:
         """Displayed (USD 6 dp, INR 2 dp) values that add up exactly. Components are rounded with the largest
-        remainder method to the rounded total; the tax is rounded UP (never in our favour) and the after-tax
-        line is RECEIVED - TAX as displayed."""
+        remainder method to the net rounded DOWN; the tax is rounded UP and the after-tax line is RECEIVED - TAX as
+        displayed, so neither the net nor the after-tax line is ever shown above its exact value."""
         with _ctx():
             out = {}
             for unit, q, fx in (('usd', Decimal('0.000001'), Decimal(1)), ('inr', Decimal('0.01'), self.usd_inr)):

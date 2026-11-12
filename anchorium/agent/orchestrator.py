@@ -103,6 +103,9 @@ class Agent:
             return row
         if row['state'] in ('DECISION_PENDING', 'DECISION_RECORDED', 'DEPOSITED', 'OUTCOME_PENDING'):
             return self._resume(h, row)
+        if row['state'] != 'NEW':  # DEPOSIT_PENDING: a deposit may have been sent. Never redo the leg.
+            return self.store.advance(h, 'NEEDS_REVIEW', review_reason=f'leg found in {row["state"]}: a deposit may '
+                                      'have been sent; check the trader account and the 1Click status')
 
         self.log({'event': 'signal', 'signal_hash': h, 'mode': self.config.mode, **signal.to_dict()})
         asset = signal.spot_asset
@@ -261,6 +264,8 @@ class Agent:
                                         entry_cost_usd=None if row['side'] == 'BUY' or cost is None
                                         else Decimal(cost) / 100,
                                         count_in_total=row['side'] == 'BUY' or not self.config.live_total_entries_only)
+            if not origin_t.contract_address:
+                raise live_gates.LiveGateError(f'no token contract for {origin_t.asset_id}')
             self.confirm(live_gates.confirmation_phrase(notional_usd, origin_t.symbol), details)
             deadline = details['quote deadline']
             if deadline and datetime.fromisoformat(deadline.replace('Z', '+00:00')) <= datetime.now(timezone.utc):
@@ -271,8 +276,7 @@ class Agent:
             return self._record_outcome(h, 'FAILED', q['amountIn'], '0', f'aborted-before-deposit:{str(exc)[:80]}')
         self.store.advance(h, 'DEPOSIT_PENDING', live_notional_cents=args['notional_usd_cents'],
                            near_yocto_before=self._near_yocto())
-        if not origin_t.contract_address:
-            raise live_gates.LiveGateError(f'no token contract for {origin_t.asset_id}')
+        assert origin_t.contract_address  # checked before DEPOSIT_PENDING
         tx_hash = live_gates.deposit_nep141(self.trader_near, origin_t.contract_address, q['depositAddress'],
                                             amount_human)
         row = self.store.advance(h, 'DEPOSITED', deposit_tx=tx_hash, deposit_address=q['depositAddress'],

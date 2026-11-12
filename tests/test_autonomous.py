@@ -28,8 +28,12 @@ class FakeGuard:
         self.pos = {}
         self.decisions, self.by_hash = [], {}
         self.crash_after = None  # 'record_decision' | 'record_outcome': raise once after the tx "landed"
+        self.today_decisions = 0
 
     def policy(self): return {'paused': self.paused, 'max_slippage_bps': 150, 'max_notional_per_trade_usd_cents': 200}
+
+    def stats(self):
+        return {'today': {'decisions': self.today_decisions + len(self.decisions)}}
     def roles(self): return {'owner': 'o', 'agent': 'a'}
     def positions(self): return [dict(p) for p in self.pos.values()]
 
@@ -113,10 +117,11 @@ class FakeOneClick:
             out = M.to_units(M.usdc(req.amount) / self.price * (1 - c), 24)
         else:
             out = M.to_units(M.wnear(req.amount) * self.price * (1 - c), 6)
+        live = {} if req.dry else {'depositAddress': f'dep{self.n}', 'deadline': '2099-01-01T00:00:00Z'}
         body = {'correlationId': f'q{self.n}', 'timestamp': 't', 'signature': 's',
                 'quoteRequest': {'dry': req.dry, 'originAsset': req.origin_asset,
                                  'destinationAsset': req.destination_asset, 'appFees': [{'fee': 20}]},
-                'quote': {'amountIn': str(req.amount), 'amountOut': str(out + 1), 'minAmountOut': str(out)}}
+                'quote': {'amountIn': str(req.amount), 'amountOut': str(out + 1), 'minAmountOut': str(out), **live}}
         return Quote.from_api(body)
 
 
@@ -490,3 +495,163 @@ def test_status_text_shows_the_last_five_events(w):
     for _ in range(4):
         w.runner.event('X', 'filler')
     assert A.status_text(w.runner.state).count('\n  [') == 5
+
+
+# ----- regressions from the independent review -----
+
+class FakeTrader:
+    """Mainnet trader account: balances + an ft_transfer that can fail after (maybe) broadcasting."""
+
+    def __init__(self):
+        self.transfers = []
+        self.fail_with = None
+        self.usdc, self.wnear, self.near = 5_000_000, 0, 10 ** 23
+
+    def ft_transfer(self, token, to, amount, register=True):
+        self.transfers.append((token, to, amount))
+        if self.fail_with:
+            raise self.fail_with
+        raise AssertionError('not expected in this test')
+
+    def ft_balance(self, contract, account):
+        return self.usdc if contract != 'wrap.near' else self.wnear
+
+    def account(self, account):
+        return type('Acct', (), {'amount': self.near})()
+
+
+def live_world(tmp_path):
+    w = World(tmp_path)
+    trader = FakeTrader()
+    agent = Agent(AgentConfig(execution=ExecutionConfig(live=True, max_trade_usd=D('2'), max_total_usd=D('6')),
+                              session_label='t', trader_account='trader.near', paper_fill_worst_case=True,
+                              live_total_entries_only=True),
+                  w.guard, w.oc, CheckpointStore(tmp_path / 'live.sqlite'), writer=w.guard, trader_near=trader,
+                  confirm=lambda *a, **k: None, log=lambda e: None)
+    w.runner = A.Runner(A.AutoConfig(session='t', live=True, report_path='report.md'), agent, w.market,
+                        A.Wallet(True, trader, 'trader.near'), A.StateFile(tmp_path / 'live.json'),
+                        fetch_fx=lambda: {'usd_inr': '93.50', 'source': 'test-fx', 'fetched_at': 'now'},
+                        notify=lambda t, m: w.notes.append((t, m)), clock=w.clock, sleep=w.clock.sleep,
+                        print_=w.out.append, root=tmp_path)
+    w.runner.start()
+    return w, trader
+
+
+def test_live_network_error_during_a_deposit_hard_stops_and_never_resends(tmp_path):
+    w, trader = live_world(tmp_path)
+    trader.fail_with = TimeoutError('RPC timed out after broadcasting?')
+    w.long_now()
+    with pytest.raises(A.HardStop, match='DEPOSIT_NEEDS_REVIEW'):
+        w.runner.tick()
+    assert len(trader.transfers) == 1  # one deposit attempt, never re-sent
+    rows = w.runner.agent.store.db.execute("SELECT state FROM runs").fetchall()
+    assert ('NEEDS_REVIEW',) in rows
+    # a restart hard-stops on the parked row instead of buying again
+    with pytest.raises(A.HardStop, match='NEEDS_REVIEW'):
+        w.runner.start()
+    assert len(trader.transfers) == 1
+
+
+def test_orchestrator_never_reruns_a_deposit_pending_leg(w):
+    s = sig(1_000_000)
+    h = w.runner.agent._hash(s)
+    store = w.runner.agent.store
+    store.create(h, 'DRY_RUN', 'NEAR', {'signal': s.to_dict()})
+    store.advance(h, 'DEPOSIT_PENDING')
+    row = w.runner.agent.process(s)
+    assert row['state'] == 'NEEDS_REVIEW' and w.guard.decisions == []
+
+
+def test_checkpoint_rejects_illegal_transitions(tmp_path):
+    store = CheckpointStore(tmp_path / 'x.sqlite')
+    store.create('a' * 64, 'LIVE', 'NEAR', {})
+    store.advance('a' * 64, 'DEPOSIT_PENDING')
+    with pytest.raises(ValueError):
+        store.advance('a' * 64, 'SKIPPED')
+    store.advance('a' * 64, 'NEEDS_REVIEW')
+    with pytest.raises(ValueError):
+        store.advance('a' * 64, 'DONE')
+
+
+def test_reject_window_restarts_for_a_new_stop_episode(w):
+    buy(w)
+    w.oc.price = D('3.80')
+    w.oc.cost = D('0.02')  # rejected
+    w.minute()
+    w.runner.tick()
+    assert w.rnd()['reject_since_ms'] is not None
+    w.oc.price, w.oc.cost = D('4.00'), D('0.004')  # recovers: HOLD ends the episode
+    w.minute()
+    w.runner.tick()
+    assert w.rnd()['reject_since_ms'] is None
+    w.minute(120)
+    w.oc.price, w.oc.cost = D('3.80'), D('0.02')  # a new stop, rejected once
+    w.runner.tick()
+    assert not w.rnd()['exit_blocked']  # a fresh 30 min window, not "blocked after one try"
+    w.oc.cost = D('0.004')
+    w.minute()
+    w.runner.tick()
+    assert w.rnd()['status'] == 'CLOSED' and w.rnd()['exit_reason'] == M.STOP_LOSS
+
+
+def test_resumed_buy_rechecks_the_gates(tmp_path):
+    w = World(tmp_path, no_buy_after_ms=T0 + 5 * MIN)
+    w.runner.start()
+    orig = w.runner.leg
+    w.runner.leg = lambda *a, **k: (_ for _ in ()).throw(KeyboardInterrupt('killed before the leg'))
+    w.long_now()
+    with pytest.raises(KeyboardInterrupt):
+        w.runner.tick()
+    assert w.rnd()['status'] == 'BUYING'
+    w.runner.leg = orig
+    w.clock.t = (T0 + 10 * MIN) / 1000  # restarted after the buy cut-off
+    r = w.restart()
+    r.tick()
+    assert w.rnd()['status'] == 'ABORTED' and w.guard.decisions == []
+
+
+def test_loss_cap_is_derived_from_closed_rounds_on_restart(tmp_path):
+    w = World(tmp_path, loss_cap_inr=D('5'))
+    w.runner.start()
+    buy(w)
+    w.oc.price = D('3.60')
+    w.minute()
+    w.runner.tick()
+    st = A.StateFile(tmp_path / 'state.json').load()
+    st['loss_cap_hit'] = False  # as if the process died before the flag was saved
+    A.StateFile(tmp_path / 'state.json').save(st)
+    assert w.make().run() == 'SESSION_LOSS_CAP already hit'
+
+
+def test_unexpected_error_is_a_notified_hard_stop(w):
+    def boom(now):
+        raise RuntimeError('contract panic DAILY_DECISION_LIMIT')
+    w.market.entry_signal = boom
+    assert w.runner.run().startswith('HARD_STOP: UNEXPECTED_ERROR')
+    assert 'Anchorium PAPER: HARD_STOP' in [t for t, _ in w.notes]
+
+
+def test_skip_journaling_keeps_a_reserve_of_daily_decisions(w):
+    w.guard.today_decisions = 60  # only 40 of 100 left
+    w.oc.cost = D('0.01')
+    w.long_now()
+    w.runner.tick()
+    assert w.events()[-1] == 'SKIPPED_COST' and w.guard.decisions == []
+
+
+def test_stale_signal_is_not_bought(w):
+    w.long_now()
+    w.minute(4)
+    w.market.signals[int(w.clock.t * 1000) - int(w.clock.t * 1000) % MIN - MIN] = None
+    s = sig(int(w.clock.t * 1000) - 5 * MIN)
+    assert w.runner.entry_block(int(w.clock.t * 1000), s) == 'STALE_SIGNAL'
+
+
+def test_sell_refused_before_any_deposit_is_retried_not_a_hard_stop(w):
+    buy(w)
+    row = {'state': 'DONE', 'data': {'result': 'FAILED', 'outcome_args': {'tx_ref': 'aborted-before-deposit:QUOTE_EXPIRED'},
+                                     'decision': {'reason': 'OK'}}}
+    w.rnd()['pending_exit'] = {'reason': M.STOP_LOSS, 'attempt': 1, 'started_ms': int(w.clock.t * 1000),
+                               'floor_units': None, 'signal': {}}
+    w.runner.book_sell(w.rnd(), row)
+    assert w.rnd()['status'] == 'OPEN' and 'SELL_NOT_ALLOWED' in w.events()

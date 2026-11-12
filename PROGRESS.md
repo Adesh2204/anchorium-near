@@ -14,7 +14,10 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 - [x] Phase 6: README + docs/JUDGES.md (live-trade evidence and the paper-trade report still to add)
 - [x] Paper trade (INR 500, user request 2026-11-11): done, docs/paper_trade_report.md
 - [x] Phase 7: fresh-clone self-judging + review pass (Path A and Path B clean from a fresh clone)
-- [x] Regime backtest (user task 2026-11-12, branch `regime`): docs/regime_backtest.md. STOP: waiting for the user's variant choice (A/B/C)
+- [x] Regime backtest (2026-11-12): docs/regime_backtest.md. Owner's decision: version A only; regime + bear rounds stay research (`research/regime/`), no guard change
+- [x] Version A autonomous build (branch `autonomous-a`): money maths, runner, status, live-preflight, tests, ruff + mypy clean
+- [ ] Version A: independent review fixes, paper INR 500 run (docs/paper_trade_A_report.md), merge to main
+- [ ] Version A LIVE: only after the owner types GO LIVE
 - [ ] Phase 8: submission pack drafted in submission/; tag `hackathon-submission` waits for the live trade and the human TODOs (Checkpoint 3)
 
 ## Decisions
@@ -53,6 +56,14 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 | 2026-11-12 01:35 IST | "Round-trip cost" (1.3% filter, CHOP rule) = both legs' worst-case quote cost (fee + slippage vs the Hyperliquid mid); gas is charged separately in the profit rule | Matches the earlier "~104 bps NEAR round trip" figure. Measured now: median 35.4 bps buy + 58.3 bps sell |
 | 2026-11-12 01:35 IST | Backtest gas per leg 0.001467 NEAR (ft_transfer + deposit-address storage registration); 3-round cap per IST day | The live exit floor's assumption; the user's "session" mapped to a day for 60 days |
 | 2026-11-12 01:35 IST | Tax proceeds = INR value of what a swap delivered; the received asset takes that value as cost; FIFO across the whole wallet | The user's FIFO rule. Consequence: a bull close sells the starting wNEAR first and pays tax on its whole rise |
+| 2026-11-12 10:35 IST | Owner: version A only, no guard contract change, B/C dropped from the runtime; the guard v2 bear-round work was reverted (never deployed) | Owner's message after the backtest; the in-place guard upgrade had been blocked by the permission check |
+| 2026-11-12 10:50 IST | Every 1Click deposit address is new and NOT storage-registered (checked with two non-dry quotes: `storage_balance_of` = null on USDC and wrap.near), so each deposit leg costs ~0.001467 NEAR (0.000217 gas + 0.00125 registration) | That is ~0.5% of a $2 round trip at NEAR $3.54; with the quote cost (~0.92%) the total was 1.44% > the 1.3% filter |
+| 2026-11-12 10:55 IST | Cost filter = (USDC in - worst-case USDC back + both legs' NEAR cost) / USDC in, threshold **1.6%** (`COST_FILTER_PCT`) | Owner's answer: "Count it, raise to 1.6%" |
+| 2026-11-12 11:00 IST | Session loss cap counts realized after-tax INR (net minus the tax reserve) | The stricter reading of "realized loss" |
+| 2026-11-12 11:00 IST | Version A paper fills = the quote's `minAmountOut` (journaled as the DRY_RUN outcome too); the guard position therefore holds exactly what the sell sells | Owner: use only the worst-case guaranteed amount |
+| 2026-11-12 11:00 IST | Autonomous LIVE: the session total caps BUYS only ($6 = 3 x $2); exits are capped by the entry they close; the micro-trade command keeps its $5 total | Owner's limits are per trade and per round; counting exits would block the third round's sell |
+| 2026-11-12 11:00 IST | A paused guard is a hard stop when flat; with an open round the exit is still managed (the contract never blocks exits) | Sections 5 and 8 together: pausing blocks buys, never traps a position |
+| 2026-11-12 11:00 IST | On-chain SKIPPED_COST decisions are rate-limited to 1 per 15 min (the rest are journaled locally) | The guard's 100 decisions/day cap is shared with real trades |
 | 2026-11-10 | Report the observed 1Click unauthenticated fee: 20 bps (`appFees` in a real dry quote); the docs say 0.25% | The user's GO, point 5 |
 | 2026-11-10 | Python to NEAR: try `near-kit` (Python) first; switch to a `near-api-js` sidecar if blocked for more than 2 h | The user's GO, point 4 |
 
@@ -89,3 +100,17 @@ Times are commit times (`git log`) or `date` output.
 - 2026-11-12 01:04 IST: 60 real dry-quote round trips sampled (docs/data/quote_costs_2026-11-12.json): buy leg median 35.4 bps, sell leg 58.3 bps, fee 20 bps each.
 - 2026-11-12 01:09 IST: 60-day signal replay (86,400 minutes, frozen strategy via evaluate_latest): 5,635 signals.
 - 2026-11-12 01:33 IST: regime backtest (docs/regime_backtest.md). Out of sample, A = B = C: one bull round opened 12 Oct 09:31 IST at $5.871 and stayed open through a 39% fall (unrealized -INR 75.04). Days 1-30: A best. Recommended A for LIVE, C as DRY_RUN experimental; waiting for the user's choice. Tests: 143 Python passed, freeze OK, ruff + mypy clean on the new modules.
+- 2026-11-12 10:35 IST: owner chose version A only. Guard v2 (bear rounds) reverted before any deploy; deployed guards untouched (wasm sha256 7abf4ecc...).
+- 2026-11-12 11:11 IST: version A built on `autonomous-a` (aa2bcb7): 378 Python tests, ruff + mypy clean, freeze OK. Smoke test on real APIs (no journaling): FX 93.7062 (Coinbase), cost check 1.458% <= 1.6%.
+- 2026-11-12 12:05 IST: independent review (a separate agent that had not seen the work) of all money-handling code: 11 real findings, all fixed, each with a regression test (388 Python tests):
+  1. CRITICAL: a network error during a LIVE deposit made the runner re-run the leg (BUY: round mis-booked as aborted, entries silently blocked, or a second deposit; SELL: crash loop). Fixed: the orchestrator never re-runs a non-NEW leg (DEPOSIT_PENDING -> NEEDS_REVIEW), the checkpoint store refuses illegal transitions, and the runner retries a leg only when no deposit can be in flight (otherwise hard stop).
+  2. HIGH: the 30-min retry window for a guard-rejected stop/time sell never reset, so a later stop could be abandoned after one rejection. Fixed: the window is one continuous exit episode.
+  3. MEDIUM: resuming a buy that crashed before its leg started skipped the entry gates (could buy after the 16:00 cut-off). Fixed: gates (cut-off, cooldown, caps, loss cap, signal <= 3 min old) are re-checked.
+  4. MEDIUM: the session loss cap could be lost if the process died between two saves. Fixed: saved atomically with the closed round and re-derived on start.
+  5. MEDIUM: unexpected errors (and LIVE wallet reads outside the retry wrapper) could end the run silently with a round open. Fixed: wallet reads retried; any unexpected error is a notified hard stop.
+  6. MEDIUM-LOW: on-chain SKIPPED_COST journaling could use up the guard's 100 decisions/day needed for exits. Fixed: it stops when fewer than 50 remain.
+  7. LOW: the receipt's net line was rounded half-even (could show above exact). Fixed: net rounded down, tax up, so net and after-tax are never shown above exact.
+  8. LOW: a second Ctrl+C could interrupt a deposit mid-send. Fixed: ignored while a deposit is pending.
+  9. LOW: a missing token contract was detected after DEPOSIT_PENDING. Fixed: checked before.
+  10. LOW: a LIVE stop/time sell refused before any deposit (expired quote) hard-stopped. Fixed: treated as a rejection and retried.
+  11. LOW: CLI state edits ran before taking the session lock. Fixed: lock first.
