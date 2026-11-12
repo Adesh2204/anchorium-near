@@ -32,18 +32,21 @@ def to_mp4(webm: Path, out: Path, start: float, dur: float) -> None:
     print(f'{out.relative_to(ROOT)}: {dur:.1f} s')
 
 
-def record(p, name: str, url: str, dur: float, script=None) -> None:
+def record(p, name: str, url: str, dur: float, script=None, viewport=None, scale: float = 1) -> None:
     tmp = RAW / 'pw_video' / name
     shutil.rmtree(tmp, ignore_errors=True)
     b = p.chromium.launch()
-    ctx = b.new_context(viewport=SIZE, record_video_dir=str(tmp), record_video_size=SIZE, color_scheme='dark')
+    ctx = b.new_context(viewport=viewport or SIZE, device_scale_factor=scale, record_video_dir=str(tmp),
+                        record_video_size=SIZE, color_scheme='dark')
+    if name == 'dashboard':  # browser zoom 160 % (like Cmd+) from the first paint, for legibility in the video
+        ctx.add_init_script("document.addEventListener('DOMContentLoaded', () => document.documentElement.style.zoom = '1.6')")
     t0 = time.monotonic()
     pg = ctx.new_page()
     pg.goto(url)
     pg.evaluate('document.fonts.ready')
     t_load = time.monotonic() - t0
     if script:
-        script(pg)
+        t_load = script(pg, t0) or t_load
     else:
         pg.wait_for_timeout(dur * 1000)
     vid = Path(pg.video.path())
@@ -52,17 +55,18 @@ def record(p, name: str, url: str, dur: float, script=None) -> None:
     to_mp4(vid, CLIPS / f'{name}.mp4', t_load, dur)
 
 
-def dashboard(pg) -> None:
-    """Slow, real scroll: banner + policy, then the journal down to decision #8 (ALLOWED) and #2 (overridden)."""
+def dashboard(pg, t0: float) -> float:
+    """Real dashboard, slow native scroll: journal head, decision #8 (ALLOWED, contract P&L), decision #2 (overridden).
+    Returns the time the journal finished loading, so the clip starts on a fully loaded page."""
     pg.wait_for_selector('.panel.decision', timeout=60_000)
+    pg.wait_for_function("document.querySelector('#policy') && document.querySelector('#policy').innerText.includes('$2.00')")
+    pg.wait_for_timeout(1500)
+    start = time.monotonic() - t0
     pg.wait_for_timeout(2500)
     for target in ('#decisions', '.panel.decision >> nth=0', '.panel.decision >> nth=6'):
-        el = pg.locator(target)
-        y = el.evaluate('e => e.getBoundingClientRect().top + window.scrollY - 140')
-        pg.evaluate(f'''() => new Promise(r => {{ const s = window.scrollY, d = {y} - s, t0 = performance.now();
-            function f(t) {{ const k = Math.min(1, (t - t0) / 1600); window.scrollTo(0, s + d * (1 - Math.pow(1 - k, 3)));
-              k < 1 ? requestAnimationFrame(f) : r(); }} requestAnimationFrame(f); }})''')
-        pg.wait_for_timeout(3500)
+        pg.locator(target).evaluate("e => e.scrollIntoView({behavior: 'smooth', block: 'start'})")
+        pg.wait_for_timeout(4200)
+    return start
 
 
 if __name__ == '__main__':
@@ -74,7 +78,7 @@ if __name__ == '__main__':
     with sync_playwright() as p:
         for t in targets:
             if t == 'dashboard':
-                record(p, 'dashboard', 'http://127.0.0.1:8010/', 18.0, dashboard)
+                record(p, 'dashboard', 'http://127.0.0.1:8010/', 15.9, dashboard)
             else:
                 shutil.copy(TPL / f'{t}.html', BUILD / f'{t}.html')
                 record(p, t, (BUILD / f'{t}.html').as_uri(), CARDS[t])

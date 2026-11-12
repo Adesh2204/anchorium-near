@@ -33,3 +33,5 @@ var/
 # Media build (submission/media): raw captures, build output and the media venv are never committed
 submission/media/raw/
 submission/media/.venv/
+submission/media/video/*.mp4
+Anchorium_Demo_Video*.mp4

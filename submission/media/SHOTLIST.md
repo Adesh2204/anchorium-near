@@ -149,3 +149,12 @@ All terminal recordings were checked for `/Users/` (0 hits). Team and demo guard
 was isolated again for shot 4 (media store `var/agent-demo-onchain.media-19428.sqlite`, event lines in
 `var/decisions.2026-11-12.media-19428.jsonl`); `make demo` lines with replay hashes were moved out of
 `var/decisions.jsonl` so the dashboard shows the original 10-11 Nov quotes.
+
+## Final video (silent, no voiceover; owner's choice on 2026-11-12)
+
+`web/assemble.py` builds `video/anchorium_demo_full.mp4` (2:46, 1920x1080, 30 fps, H.264, silent AAC track) and
+`video/anchorium_demo_60s.mp4` (0:55) from the clips above, with on-screen captions instead of a voiceover
+(`video/captions.srt` for YouTube CC). Footage is trimmed, sped up 2x or 4x with a visible badge, or held on its real
+last frame with highlight boxes (green allowed, red blocked, amber paper, blue code); gallery stills 04 and 09 get a
+slow zoom. Copies at the repo root: `Anchorium_Demo_Video.mp4`, `Anchorium_Demo_Video_60s.mp4` (untracked).
+`vo_script.txt` is kept for a future voiced version but is not used.
