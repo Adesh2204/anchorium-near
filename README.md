@@ -27,9 +27,8 @@ filter with bear rounds was researched and did not beat version A out of sample:
 
 ## Demo
 
-- Demo video / X post: `TODO_DEMO_URL`
-- No hosted deployment. Everything below runs locally against the live testnet contract.
-- Dashboard (`make dashboard`), a real capture of the live contract on 2026-11-11:
+- Demo Youtube video : [Youtube](https://youtu.be/Yi49LsQKRpw)
+- No hosted deployment.
 
   ![Anchorium dashboard](docs/screenshots/dashboard.png)
 
