@@ -62,7 +62,8 @@ def render(event: dict) -> str | None:
         a = event['args']
         return (f'[journal] (Path A, no key) would call {event["contract"]}.record_decision(side={a["side"]}, '
                 f'notional_usd_cents={a["notional_usd_cents"]}, slippage_bps={a["slippage_bps"]}, '
-                f'agent_allowed={a["agent_allowed"]}, agent_reason={a["agent_reason"]})')
+                f'agent_allowed={a["agent_allowed"]}, agent_reason={a["agent_reason"]}'
+                f'{", rationale_hash=" + a["rationale_hash"][:16] + "..." if a.get("rationale_hash") else ""})')
     if e == 'decision_journaled':
         verdict = 'ALLOWED' if event['allowed'] else f'REJECTED ({event["reason"]})'
         extra = '  <- contract overrode the agent (verdict_override event)' if event['verdict_override'] else ''
@@ -76,6 +77,10 @@ def render(event: dict) -> str | None:
         return f'[intent]  {event["status"]}: {event["funds_location"]}'
     if e == 'deposit_sent':
         return f'[deposit] {event["amount"]} {event["symbol"]} -> {event["deposit_address"]}\n          {event["explorer"]}'
+    if e == 'ai_review':
+        return (f'[ai]      co-pilot ({event["provider"]}): {event["verdict"]} risk {event["risk_score"]}/100 '
+                f'{event["reason_code"]}\n          {event["explanation"]}\n'
+                f'          rationale_hash {event["rationale_hash"]}')
     if e == 'skipped':
         return f'[skip]    {event["reason"]}'
     if e == 'already_processed':
@@ -574,7 +579,19 @@ def main(argv=None) -> int:
     ast.add_argument('--session')
     ast.add_argument('--offline', action='store_true', help='no network: saved state only')
     sub.add_parser('live-preflight', help='PASS/FAIL checks before a LIVE autonomous session')
+    pp = sub.add_parser('paypal-demo', help='PayPal AI edition: PayPal sandbox top-up + AI co-pilot + guard demo')
+    pp.add_argument('--topup', default='10.00', help='top-up amount in USD (sandbox), 1.00 to 50.00')
+    pp.add_argument('--order-id', help='capture a PayPal sandbox order the buyer already approved')
+    pp.add_argument('--skip-topup', action='store_true', help='use the existing ledger balance')
+    pp.add_argument('--no-wait', action='store_true', help='print the approve link and exit')
+    pp.add_argument('--wait-seconds', type=int, default=300, help='how long to wait for the buyer to approve')
+    pp.add_argument('--fixture', default=str(DEFAULT_FIXTURE))
+    pp.add_argument('--cases', help='comma-separated replay case names')
+    pp.add_argument('--no-compromised', action='store_true')
     args = parser.parse_args(argv)
+    if args.cmd == 'paypal-demo':
+        from anchorium.paypal_demo import cmd_paypal_demo  # noqa: PLC0415
+        return cmd_paypal_demo(args)
     return {'autonomous': cmd_autonomous, 'autonomous-status': cmd_autonomous_status,
             'live-preflight': cmd_live_preflight, 'demo': cmd_demo, 'status': cmd_status, 'run': cmd_run, 'exit': cmd_exit, 'live-trade': cmd_live_trade,
             'setup-trader': cmd_setup_trader, 'paper-trade': cmd_paper_trade}[args.cmd](args)

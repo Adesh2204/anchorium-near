@@ -4,6 +4,12 @@ Anchorium is an autonomous trading agent whose risk limits live in a NEAR smart 
 asks the contract, journals the decision on-chain, and settles spot swaps through NEAR Intents (1Click) into
 the user's own account.
 
+> **PayPal AI Hackathon edition.** PayPal Checkout (Orders API v2, sandbox)
+> funds the agent's budget, and an AI risk co-pilot (Google Gemini, `gemini-3.8-flash`) reviews every top-up before it is captured
+> and every trade before it is journaled. The co-pilot can only veto; the NEAR contract still has the final word,
+> and each AI review's hash is journaled on-chain in `rationale_hash`. Try it with zero keys: `make setup && make
+> paypal-demo`. Full write-up, architecture and run steps: **[docs/PAYPAL_AI.md](docs/PAYPAL_AI.md)**.
+
 **Version A (the trading mode we run):** long-only NEAR, entered on the unchanged frozen strategy's LONG signal.
 It is **autonomous within owner-set limits; profit exits cover fees, gas and a 31.2% tax reserve; a -5% safety
 stop and a time exit cap the downside**. Limits: $2 per trade, 1 open round, 3 rounds per session, an INR 20
@@ -279,7 +285,14 @@ deposit.
 - **AI-assisted code:** written with Claude Code.
 - **Team:** Adesh, Parth.
 - **Other hackathon projects led by us:** none at NEAR HACKATHON. Perpetual Alpha is a separate, non-NEAR
-  competition, disclosed above.
+  competition, disclosed above. This repository is also our PayPal AI Hackathon entry: the same agent, plus the
+  PayPal funding and AI co-pilot listed below.
+- **New for the PayPal AI Hackathon (12 Nov 2026):** `anchorium/paypal/` (Orders v2
+  sandbox client, funding ledger), `anchorium/ai/` (AI co-pilot), `anchorium/paypal_demo.py`,
+  `dashboard/paypal_routes.py`, `dashboard/static/paypal.html`, `tests/test_paypal_ai.py`, a veto-only hook in
+  `anchorium/agent/orchestrator.py`, and [docs/PAYPAL_AI.md](docs/PAYPAL_AI.md). AI used at runtime: Google Gemini
+  (`gemini-3.8-flash`, falling back to `gemini-3.1-flash-lite` when overloaded) through its OpenAI-compatible API;
+  Anthropic Claude is also supported.
 
 ## Limitations and roadmap
 
@@ -304,8 +317,8 @@ deposit.
   stays research (`research/regime/`), not runtime.
 - **The build is not reproducible.** The wasm is built with `cargo near build non-reproducible-wasm` (no Docker),
   so compare the hash instead.
-- **Not used yet:** NEAR AI Cloud (a co-pilot whose rationale hash would go into `rationale_hash`) and Chain
-  Signatures.
+- **Not used yet:** NEAR AI Cloud and Chain Signatures. The AI co-pilot now exists (Google Gemini, or
+  Anthropic Claude; its review hash goes into `rationale_hash`).
 
 ## License
 

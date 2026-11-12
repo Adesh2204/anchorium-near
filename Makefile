@@ -5,6 +5,8 @@ VENV    := .venv
 VPY     := $(VENV)/bin/python
 CONTRACT_DIR := contracts/anchorium-guard
 
+
+.PHONY: paypal-demo
 .PHONY: help setup freeze test test-py contract-build contract-test contract-deploy demo demo-onchain status agent dashboard autonomous autonomous-status live-preflight media-setup media-gallery
 
 help:
@@ -65,3 +67,6 @@ media-setup: ## Media toolchain venv (Playwright, Pillow, qrcode); also needs vh
 
 media-gallery: ## Render the 11 gallery PNGs + contact sheet from the real captures in submission/media/raw/
 	submission/media/.venv/bin/python submission/media/web/render.py
+
+paypal-demo: ## PayPal AI edition: PayPal sandbox top-up + AI co-pilot + guard demo (offline simulation without keys)
+	$(VPY) -m anchorium paypal-demo $(ARGS)
