@@ -116,3 +116,4 @@ Times are commit times (`git log`) or `date` output.
   11. LOW: CLI state edits ran before taking the session lock. Fixed: lock first.
 - 2026-11-12 11:29 IST: fresh clone of `autonomous-a` (3bdc6fa) following the README: make setup (Python 3.12.5), make freeze (13 files, 28 parameters, passed), make test-py 388 passed, make demo (3 signals OK + compromised agent NOTIONAL_ABOVE_MAX), make status, make contract-test (40 unit + 2 sandbox). All pass.
 - 2026-11-12 11:24 IST: paper INR 500 session `paper-a` started (DRY_RUN, until 1 round closes or 20:00 IST): 5.334437 USDC = INR 500.00 at 93.7306 INR/USD (Coinbase).
+- 2026-11-12 14:11 IST: main fast-forwarded to autonomous-a (4384132): version A + docs/regime_backtest.md, no B/C runtime code. 388 tests, freeze OK, mypy clean, ruff clean (rule set pinned: ruff 0.17 widened its defaults). Paper session paper-a still running (flat: only SHORT signals since 11:24 IST). Live trader account not yet funded.
