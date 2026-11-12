@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- Gallery frame (GALLERY_SPEC.md v2), 1800x1200, rendered at 2x by web/render.py and downscaled with Lanczos.
+     Filled with: {{N}}, {{GLOW}}, {{BODY}}, {{CHIP_DOT}}, {{CHIP}}, {{RAIL}}, {{HEAD_EXTRA}}.
+     {{BODY}} holds only real captured text/screenshots or explanatory graphics (see SHOTLIST.md). -->
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="gallery.css">
+{{HEAD_EXTRA}}
+</head>
+<body>
+  <div class="grid-bg"></div>
+  {{GLOW}}
+  <header><div class="word">ANCHORIUM</div><div class="num">{{N}} / 11</div></header>
+  <main>{{BODY}}</main>
+  <footer><div class="chip"><i class="{{CHIP_DOT}}"></i>{{CHIP}}</div>
+          <div class="tags">NEAR testnet · NEAR Intents 1Click · Rust guard</div></footer>
+  <div class="rail {{RAIL}}"></div>
+  <svg id="leaders"></svg>
+  <script>
+    // Leader lines: each .lbl[data-for=X] is joined to marker #X by a 2 px line in the marker's colour.
+    function drawLeaders() {
+      const svg = document.getElementById('leaders');
+      svg.setAttribute('width', 1800); svg.setAttribute('height', 1200);
+      svg.innerHTML = '';
+      document.querySelectorAll('.lbl[data-for]').forEach(l => {
+        const m = document.getElementById(l.dataset.for); if (!m) return;
+        const a = m.getBoundingClientRect(), b = l.querySelector('.n').getBoundingClientRect();
+        const ax = a.left + a.width / 2, ay = a.top + a.height / 2, bx = b.left + b.width / 2, by = b.top + b.height / 2;
+        const col = getComputedStyle(m).backgroundColor;
+        // right-angled leader: straight down (or up) from the marker, then across to the label
+        const ln = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        Object.entries({points: `${ax},${ay} ${ax},${by} ${bx},${by}`, fill: 'none', stroke: col, 'stroke-width': 2})
+          .forEach(([k, v]) => ln.setAttribute(k, v));
+        svg.appendChild(ln);
+      });
+    }
+    window.__ready = (async () => { await document.fonts.ready; if (window.__beforeReady) await window.__beforeReady(); drawLeaders(); return true; })();
+  </script>
+</body></html>

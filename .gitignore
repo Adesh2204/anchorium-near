@@ -29,3 +29,7 @@ var/
 .DS_Store
 .idea/
 .vscode/
+
+# Media build (submission/media): raw captures, build output and the media venv are never committed
+submission/media/raw/
+submission/media/.venv/

@@ -5,7 +5,7 @@ VENV    := .venv
 VPY     := $(VENV)/bin/python
 CONTRACT_DIR := contracts/anchorium-guard
 
-.PHONY: help setup freeze test test-py contract-build contract-test contract-deploy demo demo-onchain status agent dashboard autonomous autonomous-status live-preflight
+.PHONY: help setup freeze test test-py contract-build contract-test contract-deploy demo demo-onchain status agent dashboard autonomous autonomous-status live-preflight media-setup media-gallery
 
 help:
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -59,3 +59,9 @@ autonomous-status: ## Version A session status, a fresh valuation of an open rou
 
 live-preflight: ## PASS/FAIL checks before a LIVE version A session (read-only)
 	$(VPY) -m anchorium live-preflight
+
+media-setup: ## Media toolchain venv (Playwright, Pillow, qrcode); also needs vhs, ffmpeg, pngquant, oxipng + fonts
+	python3.12 -m venv submission/media/.venv && submission/media/.venv/bin/pip install -q -r submission/media/requirements.txt && submission/media/.venv/bin/python -m playwright install chromium
+
+media-gallery: ## Render the 11 gallery PNGs + contact sheet from the real captures in submission/media/raw/
+	submission/media/.venv/bin/python submission/media/web/render.py

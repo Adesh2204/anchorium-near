@@ -1,0 +1,5 @@
+# Media toolchain (separate venv: submission/media/.venv). Also needs: vhs, ffmpeg, pngquant, oxipng (Homebrew)
+# and the fonts Inter + JetBrains Mono (brew install --cask font-inter font-jetbrains-mono).
+playwright==1.65.1
+pillow==13.0.0
+qrcode==8.2
