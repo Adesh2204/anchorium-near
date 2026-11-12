@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anchorium: fund with PayPal</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --muted: #5d6573; --line: #e2e5ea;
+    --ok: #12805c; --ok-bg: #e5f5ee; --bad: #b42318; --bad-bg: #fdecea; --warn: #9a6700; --warn-bg: #fff4d6;
+    --accent: #2f5bd3; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1216; --panel: #171b21; --ink: #e8ebef; --muted: #98a1ad; --line: #283039;
+      --ok: #4cc38a; --ok-bg: #12291f; --bad: #f97066; --bad-bg: #2d1614; --warn: #f5b546; --warn-bg: #2b2210;
+      --accent: #7c9cff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .banner { padding: 8px 16px; font-weight: 700; letter-spacing: .04em; text-align: center; position: sticky; top: 0;
+    z-index: 10; background: var(--warn-bg); color: var(--warn); }
+  main { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 8px 0 2px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .sub { color: var(--muted); margin-bottom: 16px; }
+  a { color: var(--accent); }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-bottom: 12px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+  .big { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .muted { color: var(--muted); } .mono { font-family: var(--mono); font-size: 12px; word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; } td, th { padding: 6px 4px; border-bottom: 1px solid var(--line);
+    text-align: left; vertical-align: top; } th { color: var(--muted); font-weight: 500; }
+  input { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; width: 110px;
+    background: var(--panel); color: var(--ink); }
+  button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); cursor: pointer;
+    background: var(--panel); color: var(--ink); }
+  .ai { border-left: 3px solid var(--line); padding: 4px 10px; margin: 10px 0; }
+  .ai.ok { border-color: var(--ok); } .ai.bad { border-color: var(--bad); }
+  #paypal-buttons { margin-top: 12px; max-width: 360px; }
+</style>
+</head>
+<body>
+<div class="banner" id="banner">PAYPAL SANDBOX &middot; PAPER TRADING &middot; NO REAL MONEY</div>
+<main>
+  <h1>Fund your Anchorium agent with PayPal</h1>
+  <div class="sub">PayPal funds the agent's paper budget. An AI co-pilot reviews every top-up before it is captured and
+    every trade before it is journaled. It can only say no. The NEAR guard contract still has the final word on every
+    trade. <a href="/">&larr; guard dashboard</a></div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>1. Top up</h2>
+      <label>Amount (USD) <input id="amount" value="10.00" inputmode="decimal"></label>
+      <span class="muted" id="limits"></span>
+      <div id="mode" class="muted" style="margin-top:8px"></div>
+      <div id="paypal-buttons"></div>
+      <button id="simulate" style="display:none;margin-top:12px">Simulate top-up (offline, no PayPal call)</button>
+      <div id="review"></div>
+      <div id="result" class="muted"></div>
+    </section>
+    <section class="panel">
+      <h2>2. Agent budget</h2>
+      <div class="big" id="balance">...</div>
+      <div class="muted" id="funded"></div>
+      <div class="muted" style="margin-top:8px">Paper trades debit this budget once per signal (<code>make paypal-demo</code>).
+        A buy the guard or the AI rejects is never debited.</div>
+    </section>
+  </div>
+
+  <section class="panel" style="margin-bottom:12px">
+    <h2>Top-ups (idempotent ledger)</h2>
+    <div style="overflow-x:auto"><table><thead><tr><th>Order</th><th>Status</th><th>Amount</th><th>Source</th>
+      <th>AI review</th></tr></thead><tbody id="topups"></tbody></table></div>
+  </section>
+
+  <section class="panel">
+    <h2>3. On-chain decisions, explained by AI</h2>
+    <div class="muted" style="margin-bottom:8px">Read from the guard contract's journal on NEAR testnet.</div>
+    <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Trade</th><th>Verdict</th><th>Explanation</th></tr></thead>
+      <tbody id="decisions"></tbody></table></div>
+  </section>
+</main>
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = id => document.getElementById(id);
+
+function showReview(r, prefix) {
+  if (!r) { $('review').innerHTML = ''; return; }
+  const ok = r.verdict === 'ALLOW';
+  $('review').innerHTML = `<div class="ai ${ok ? 'ok' : 'bad'}"><b>${esc(prefix)}</b>
+    <span class="pill ${ok ? 'ok' : 'bad'}">${esc(r.verdict)}</span> risk ${esc(r.risk_score)}/100
+    <span class="mono">${esc(r.reason_code)}</span> <span class="muted">(${esc(r.provider)})</span>
+    <div>${esc(r.explanation)}</div>
+    <div class="mono muted">rationale_hash ${esc(r.rationale_hash)}</div></div>`;
+}
+
+let MODE = 'sandbox';
+function renderLedger(l) {
+  $('balance').textContent = `$${l.balance_usd} available`;
+  $('funded').textContent = MODE === 'sandbox' ? `$${l.funded_usd} funded through PayPal sandbox`
+                                               : `$${l.funded_usd} funded (OFFLINE SIMULATION, not PayPal)`;
+  $('topups').innerHTML = l.topups.map(t => {
+    let ai = {};
+    try { ai = JSON.parse(t.ai_note || '{}'); } catch (e) {}
+    const amt = t.captured_cents != null ? t.captured_cents : t.requested_cents;
+    const st = t.status === 'COMPLETED' ? 'ok' : (t.status === 'CREATED' ? 'warn' : 'bad');
+    return `<tr><td class="mono">${esc(t.order_id)}</td><td><span class="pill ${st}">${esc(t.status)}</span></td>
+      <td>$${(amt / 100).toFixed(2)}</td><td>${esc(t.source)}</td>
+      <td>${ai.verdict ? `${esc(ai.verdict)} &middot; ${esc(ai.explanation)}` : ''}</td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="muted">No top-ups yet.</td></tr>';
+}
+
+async function postJson(url, body) {
+  const r = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'},
+                              body: body ? JSON.stringify(body) : undefined});
+  const data = await r.json();
+  if (!r.ok) { const err = new Error(typeof data.detail === 'string' ? data.detail : data.detail?.message);
+               err.detail = data.detail; throw err; }
+  return data;
+}
+
+async function config() {
+  const c = await (await fetch('/api/paypal/config')).json();
+  MODE = c.mode;
+  $('limits').textContent = ` between $${c.min_usd} and $${c.max_usd}`;
+  renderLedger(c.ledger);
+  if (c.mode === 'sandbox') {
+    $('mode').innerHTML = `PayPal <b>sandbox</b>: log in with a sandbox personal account. AI co-pilot: <b>${esc(c.ai_provider)}</b>`;
+    const s = document.createElement('script');
+    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(c.client_id)}&currency=USD&intent=capture`;
+    s.onload = mountButtons;
+    document.head.appendChild(s);
+  } else {
+    $('banner').textContent = 'OFFLINE SIMULATION · NO PAYPAL KEYS SET · NO REAL MONEY';
+    $('mode').innerHTML = `No PayPal keys set: top-ups are <b>simulated locally</b> (no PayPal call). Set
+      PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET in .env for real sandbox checkout. AI co-pilot: <b>${esc(c.ai_provider)}</b>`;
+    $('simulate').style.display = '';
+  }
+}
+
+function mountButtons() {
+  paypal.Buttons({
+    style: {layout: 'vertical', label: 'pay'},
+    createOrder: async () => {
+      $('result').textContent = 'AI co-pilot is reviewing the top-up...';
+      try {
+        const o = await postJson('/api/paypal/orders', {amount: $('amount').value});
+        showReview(o.review, 'AI top-up review:');
+        $('result').textContent = `Sandbox order ${o.id} created. Approve it in the PayPal window.`;
+        return o.id;
+      } catch (e) {
+        showReview(e.detail?.review, 'AI top-up review:');
+        $('result').textContent = e.message;
+        throw e;
+      }
+    },
+    onApprove: async (data) => {
+      $('result').textContent = 'Capturing on the server...';
+      const c = await postJson(`/api/paypal/orders/${data.orderID}/capture`);
+      $('result').textContent = `Captured ${c.capture_id}: ${c.status} $${c.amount_usd}` +
+        (c.credited ? ' and credited to the agent budget.' : ' (already credited, not counted twice).');
+      renderLedger(c.ledger);
+    },
+    onCancel: () => { $('result').textContent = 'Cancelled: nothing was charged.'; },
+    onError: (err) => { $('result').textContent = `PayPal error: ${err}`; },
+  }).render('#paypal-buttons');
+}
+
+$('simulate').onclick = async () => {
+  try {
+    const r = await postJson('/api/paypal/simulate', {amount: $('amount').value});
+    showReview(r.review, 'AI top-up review:');
+    $('result').textContent = `OFFLINE SIMULATION ${r.order_id}: credited locally, no PayPal call was made.`;
+    renderLedger(r.ledger);
+  } catch (e) { showReview(e.detail?.review, 'AI top-up review:'); $('result').textContent = e.message; }
+};
+
+async function decisions() {
+  const rows = await (await fetch('/api/decisions?limit=8')).json();
+  $('decisions').innerHTML = rows.map(d => `<tr><td>${esc(d.id)}</td>
+    <td>${esc(d.mode)} ${esc(d.side)} ${esc(d.asset)} $${(d.notional_usd_cents / 100).toFixed(2)}</td>
+    <td><span class="pill ${d.allowed ? 'ok' : 'bad'}">${d.allowed ? 'ALLOWED' : esc(d.reason)}</span></td>
+    <td id="x${esc(d.id)}"><button data-id="${esc(d.id)}">Explain with AI</button></td></tr>`).join('');
+  document.querySelectorAll('#decisions button').forEach(b => b.onclick = async () => {
+    const cell = $('x' + b.dataset.id);
+    cell.textContent = 'Asking the co-pilot...';
+    const x = await (await fetch(`/api/ai/explain/${b.dataset.id}`)).json();
+    cell.innerHTML = `${esc(x.text)} <span class="muted">(${esc(x.provider)})</span>`;
+  });
+}
+
+config();
+decisions().catch(e => { $('decisions').innerHTML = `<tr><td colspan="4">${esc(e)}</td></tr>`; });
+</script>
+</body>
+</html>

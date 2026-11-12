@@ -60,11 +60,15 @@ class Agent:
     def __init__(self, config: AgentConfig, reader: GuardReader, oneclick: OneClickClient, store: CheckpointStore,
                  writer: GuardWriter | None = None, trader_near=None,
                  confirm: Callable[..., None] = live_gates.require_typed_confirmation,
-                 log: Callable[[dict[str, Any]], None] = emit):
+                 log: Callable[[dict[str, Any]], None] = emit, copilot: Any = None,
+                 copilot_context: Callable[[], dict[str, Any]] | None = None):
         if config.execution.live and (writer is None or trader_near is None or not config.trader_account):
             raise live_gates.LiveGateError('LIVE needs the agent key, TRADER_ACCOUNT_ID and its mainnet key')
         self.config, self.reader, self.oneclick, self.store = config, reader, oneclick, store
         self.writer, self.trader_near, self.confirm, self.log = writer, trader_near, confirm, log
+        #: Optional AI risk co-pilot (anchorium.ai.copilot.Copilot). Veto-only: it can turn the agent's vote into
+        #: "no", never into "yes". None (the default) keeps the original NEAR-edition behaviour.
+        self.copilot, self.copilot_context = copilot, copilot_context
 
     # ----- helpers -----
 
@@ -165,7 +169,19 @@ class Agent:
             except OneClickError as exc:
                 agent_ok, agent_reason = False, f'QUOTE_FAILED:{str(exc)[:100]}'
                 self.log({'event': 'quote_failed', 'signal_hash': h, 'error': str(exc)})
-        if compromised:
+        review = None
+        if self.copilot is not None and agent_ok and quote is not None and not compromised:
+            from anchorium.ai.copilot import trade_context  # noqa: PLC0415
+            review = self.copilot.review_trade(trade_context(
+                signal=signal, asset=asset, side=side, notional_cents=notional_cents, policy=policy,
+                slippage_bps=slippage, quote=quote, in_symbol=origin_t.symbol, out_symbol=dest_t.symbol,
+                amount_in=origin_t.from_units(quote.amount_in), amount_out=dest_t.from_units(quote.amount_out),
+                min_amount_out=dest_t.from_units(quote.min_amount_out),
+                extra=self.copilot_context() if self.copilot_context else None))
+            self.log({'event': 'ai_review', 'signal_hash': h, **review.to_dict()})
+            if review.vetoed:
+                agent_ok, agent_reason = False, f'AI_VETO:{review.reason_code}'
+        if compromised:  # a compromised agent skips its own checks, the co-pilot included: only the contract is left
             agent_ok, agent_reason = True, 'COMPROMISED_AGENT_SIMULATION'
 
         # LIVE quotes carry the deposit address so anyone can rebuild the intent timeline from the chain alone
@@ -175,7 +191,8 @@ class Agent:
         args = {'signal_hash': h, 'asset': asset, 'side': side, 'mode': self.config.mode,
                 'notional_usd_cents': notional_cents, 'slippage_bps': slippage,
                 'quote_id': quote_id, 'agent_allowed': agent_ok,
-                'agent_reason': agent_reason[:128], 'rationale_hash': None}
+                'agent_reason': agent_reason[:128],
+                'rationale_hash': review.rationale_hash if review else None}
         quote_data = quote.raw if quote else None
         self.store.advance(h, 'DECISION_PENDING', side=side, decision_args=args, quote=quote_data,
                            ref_prices_usd={'in': str(origin_t.price_usd), 'out': str(dest_t.price_usd)},

@@ -1,4 +1,6 @@
-"""Read-only dashboard. Contract state is read from NEAR testnet on every request; nothing here can sign.
+"""Dashboard. Contract state is read from NEAR testnet on every request; nothing here can sign a NEAR transaction.
+The PayPal AI edition adds /paypal (dashboard/paypal_routes.py): PayPal sandbox top-ups of the paper budget and
+AI explanations of guard decisions.
 
     make dashboard   ->  http://127.0.0.1:8000
 
@@ -35,6 +37,11 @@ app = FastAPI(title='Anchorium dashboard', docs_url=None, redoc_url=None)
 reader = GuardReader(GUARD, NETWORK, rpc_url=os.environ.get('NEAR_RPC_URL') or None)
 oneclick = OneClickClient(os.environ.get('ONECLICK_BASE_URL') or 'https://1click.chaindefuser.com')
 _cache: dict[str, tuple[float, Any]] = {}
+
+from dashboard import paypal_routes  # noqa: E402
+
+paypal_routes.State.reader = reader
+app.include_router(paypal_routes.router)
 
 
 def cached(key: str, ttl: float, fn):
