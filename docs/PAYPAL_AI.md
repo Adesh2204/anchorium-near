@@ -9,7 +9,7 @@ bot. This edition adds two things:
    Checkout. The server creates and captures the order, and an idempotent ledger credits it once. The agent can
    only trade money that was funded this way: every paper buy is debited from the PayPal budget, and a buy the
    budget can't cover is skipped.
-2. **An AI risk co-pilot reviews money before it moves.** A language model reviews **every top-up before PayPal
+2. **An AI risk co-pilot (Google Gemini) reviews money before it moves.** A language model reviews **every top-up before PayPal
    captures it** (protecting the user from over-funding a bot) and **every trade before it is journaled** on
    NEAR. It also explains on-chain guard decisions in plain English. The co-pilot can only say **no**. An AI
    "yes" never overrides the contract.
@@ -62,10 +62,10 @@ bot. This edition adds two things:
 
 ## AI used
 
-- **Model:** Anthropic Claude through the Messages API (`ANTHROPIC_API_KEY`; the model is set by `AI_MODEL`,
-  default `claude-haiku-5-5`), temperature 0, JSON-only replies. Any OpenAI-compatible chat API also works
-  (`AI_BASE_URL` + `AI_API_KEY` + `AI_MODEL`, for example Google Gemini or Groq); the provider used is printed
-  on every review.
+- **Model:** Google **Gemini `gemini-2.5-flash`** through Gemini's OpenAI-compatible API (`AI_BASE_URL`,
+  `AI_API_KEY`, `AI_MODEL`; free key from aistudio.google.com), temperature 0, JSON-only replies. Anthropic
+  Claude also works (`ANTHROPIC_API_KEY`), and so does any other OpenAI-compatible chat API (for example Groq).
+  The provider used is printed on every review.
 - **What it does:**
   - `review_trade`: sees the signal (price, VWAP, ATR, EMAs), the 1Click quote (expected vs guaranteed output,
     worst-case slippage, fee), the on-chain policy and the PayPal budget. It answers ALLOW or VETO with a risk
@@ -97,7 +97,8 @@ make paypal-demo
 
 # 2) Real PayPal sandbox + real AI: put your keys in .env (see .env.example)
 #    PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET  from developer.paypal.com -> Apps & Credentials -> Sandbox
-#    ANTHROPIC_API_KEY                        from console.anthropic.com
+#    AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+#    AI_API_KEY + AI_MODEL=gemini-2.5-flash   free key from aistudio.google.com (or ANTHROPIC_API_KEY)
 make paypal-demo                       # prints a sandbox approve link, waits for approval, captures
 make dashboard                         # http://127.0.0.1:8000/paypal  -> PayPal buttons, AI review, ledger
 

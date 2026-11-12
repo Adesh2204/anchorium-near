@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import time
 from dataclasses import asdict, dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -191,11 +192,14 @@ class Copilot:
 
     def _ask(self, system: str, payload: dict[str, Any], max_tokens: int = 300) -> str:
         if self.base_url:
-            r = self._http.post(f'{self.base_url}/chat/completions', headers={
-                'Authorization': f'Bearer {self.api_key}', 'content-type': 'application/json'},
-                json={'model': self.model, 'max_tokens': max_tokens, 'temperature': 0, 'messages': [
-                    {'role': 'system', 'content': system},
-                    {'role': 'user', 'content': json.dumps(payload, default=str)}]})
+            body = {'model': self.model, 'max_tokens': max(max_tokens, 2048), 'temperature': 0, 'messages': [
+                {'role': 'system', 'content': system}, {'role': 'user', 'content': json.dumps(payload, default=str)}]}
+            for attempt in range(2):  # one retry on an overloaded / rate-limited model
+                r = self._http.post(f'{self.base_url}/chat/completions', json=body, headers={
+                    'Authorization': f'Bearer {self.api_key}', 'content-type': 'application/json'})
+                if r.status_code not in (429, 500, 503) or attempt:
+                    break
+                time.sleep(2)
             if r.status_code != 200:
                 raise RuntimeError(f'AI HTTP {r.status_code}: {r.text[:160]}')
             return r.json()['choices'][0]['message']['content'] or ''

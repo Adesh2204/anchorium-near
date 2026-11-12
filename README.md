@@ -5,7 +5,7 @@ asks the contract, journals the decision on-chain, and settles spot swaps throug
 the user's own account.
 
 > **PayPal AI Hackathon edition.** PayPal Checkout (Orders API v2, sandbox)
-> funds the agent's budget, and an AI risk co-pilot (Anthropic Claude) reviews every top-up before it is captured
+> funds the agent's budget, and an AI risk co-pilot (Google Gemini, `gemini-2.5-flash`) reviews every top-up before it is captured
 > and every trade before it is journaled. The co-pilot can only veto; the NEAR contract still has the final word,
 > and each AI review's hash is journaled on-chain in `rationale_hash`. Try it with zero keys: `make setup && make
 > paypal-demo`. Full write-up, architecture and run steps: **[docs/PAYPAL_AI.md](docs/PAYPAL_AI.md)**.
@@ -290,8 +290,8 @@ deposit.
 - **New for the PayPal AI Hackathon (12 Nov 2026):** `anchorium/paypal/` (Orders v2
   sandbox client, funding ledger), `anchorium/ai/` (AI co-pilot), `anchorium/paypal_demo.py`,
   `dashboard/paypal_routes.py`, `dashboard/static/paypal.html`, `tests/test_paypal_ai.py`, a veto-only hook in
-  `anchorium/agent/orchestrator.py`, and [docs/PAYPAL_AI.md](docs/PAYPAL_AI.md). AI used at runtime: Anthropic
-  Claude via the Messages API.
+  `anchorium/agent/orchestrator.py`, and [docs/PAYPAL_AI.md](docs/PAYPAL_AI.md). AI used at runtime: Google Gemini
+  (`gemini-2.5-flash`) through its OpenAI-compatible API; Anthropic Claude is also supported.
 
 ## Limitations and roadmap
 
@@ -316,8 +316,8 @@ deposit.
   stays research (`research/regime/`), not runtime.
 - **The build is not reproducible.** The wasm is built with `cargo near build non-reproducible-wasm` (no Docker),
   so compare the hash instead.
-- **Not used yet:** NEAR AI Cloud and Chain Signatures. The AI co-pilot now exists (Anthropic Claude via
-  the Messages API; its review hash goes into `rationale_hash`).
+- **Not used yet:** NEAR AI Cloud and Chain Signatures. The AI co-pilot now exists (Google Gemini, or
+  Anthropic Claude; its review hash goes into `rationale_hash`).
 
 ## License
 
