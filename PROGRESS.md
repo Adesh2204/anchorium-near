@@ -114,3 +114,5 @@ Times are commit times (`git log`) or `date` output.
   9. LOW: a missing token contract was detected after DEPOSIT_PENDING. Fixed: checked before.
   10. LOW: a LIVE stop/time sell refused before any deposit (expired quote) hard-stopped. Fixed: treated as a rejection and retried.
   11. LOW: CLI state edits ran before taking the session lock. Fixed: lock first.
+- 2026-11-12 11:29 IST: fresh clone of `autonomous-a` (3bdc6fa) following the README: make setup (Python 3.12.5), make freeze (13 files, 28 parameters, passed), make test-py 388 passed, make demo (3 signals OK + compromised agent NOTIONAL_ABOVE_MAX), make status, make contract-test (40 unit + 2 sandbox). All pass.
+- 2026-11-12 11:24 IST: paper INR 500 session `paper-a` started (DRY_RUN, until 1 round closes or 20:00 IST): 5.334437 USDC = INR 500.00 at 93.7306 INR/USD (Coinbase).

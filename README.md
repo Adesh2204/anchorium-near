@@ -251,10 +251,11 @@ deposit.
 
 ## Tests
 
-| Command | What | Result (2026-11-11) |
+| Command | What | Result (2026-11-12, fresh clone of `autonomous-a`) |
 |---|---|---|
 | `make freeze` | the vendored strategy is byte-identical; freeze manifest checks | pass (13 files, 28 parameters) |
-| `make test-py` | Python: 1Click client (mocked), LIVE gates, signal parity against the original source, orchestrator incl. crash/resume, paper session, dashboard | **102 passed**, 1 deselected (network) |
+| `make test-py` | Python: 1Click client (mocked), LIVE gates, signal parity against the original source, orchestrator incl. crash/resume, paper session, dashboard, version A money maths (exit rules, tax, receipts adding up) and runner (caps, cost filter, guard-reject retry, backoff vs hard stops, Ctrl+C, crash/resume with no double trades, LIVE deposit never re-sent), regime research | **388 passed**, 1 deselected (network) |
+| `ruff check .` / `mypy anchorium dashboard` | lint and types | clean |
 | `.venv/bin/python -m pytest -m network` | one real 1Click dry quote | opt-in |
 | `make contract-test` | Rust unit tests + sandbox tests on a local NEAR node | **40 passed** + **2 passed** |
 | `make test` | all of the above except the network test | |
