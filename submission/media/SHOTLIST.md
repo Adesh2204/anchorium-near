@@ -130,3 +130,22 @@ and the event log were restored; the media and today's Path A demo lines are in
 | 09 | README paper trade 2 line (+$0.0317, −$0.0080, −$0.0011, −$0.0016 = +$0.0210, +INR 1.97; the sum is asserted) and paper trade 1 (−$0.0224, −INR 2.10). The formula is version A's PROFIT_EXIT rule (`anchorium/money.py`); paper trade 2 used the earlier profit-target rule |
 | 10 | `make test-py` 388 passed; `make contract-test` 40 + 2 passed; `make freeze` 28 parameters, passed; PROGRESS 11 findings incl. 1 CRITICAL; 60 samples in `docs/data/quote_costs_2026-11-12.json`; 0 occurrences of `float` in the money modules |
 | 11 | `LICENSE` (MIT); QR encodes `https://github.com/Adesh2204/anchorium-near` |
+
+## Video capture log, 2026-11-12 (Part A, step 3)
+
+| Shot | Clip (raw/, untracked) | Real source and values |
+|---|---|---|
+| 1 | `01_cold_open.mp4` | `tapes/01_cold_open.tape`: `make demo` against `demo.anchorium-team.testnet`; `$4.99 -> NOTIONAL_ABOVE_MAX`. NearBlocks blocks headless browsers (Cloudflare), so the "hard cut" uses gallery 04 (the same tx's real contract log from RPC) |
+| 2, 3, 8 | `clips/v_title.mp4`, `clips/v_arch.mp4`, `clips/v_end.mp4` | `templates/v_*.html` on `video.css` (= gallery.css at 1920x1080), recorded by `web/record_cards.py`. Graphics, no metrics |
+| 4 | `04_cycle.mp4` | `tapes/04_cycle.tape` on media owner 2 **`anchorium-media-19428.testnet`** (created off camera by `scripts/near/deploy_testnet.sh`: near-cli prints key-file paths). `make demo-onchain`: #0 BUY ALLOWED, worst case 58 bps <= 100, tx `iUMzJAyScbGUigT7y3PKcG3HDdKVwkT7Hgbg49CW6n7`, outcome `GA1PPiK3XsK8CmpfLyH3X2StdzXBgdm8LpVyTU1gERNq`; #1 SELL ALLOWED, tx `FCi4jFQYBQRYMKwAt6DSQkhUnkZPYG1QAsJkdLPV8thG`, outcome `H9XvE4CYs3viXqVDicLsk5jvADWrENfWEWexYK1m7TtT` (contract paper P&L **-$0.02**); #2 compromised BUY REJECTED `NOTIONAL_ABOVE_MAX`, tx `9Zg3o6w7Dud4pDwiX3wMzVmWtywEdEMmkMVYReUt8TCA` |
+| 4 (right) | `clips/dashboard.mp4` | `make dashboard` on :8010 reading the team guard; slow real scroll. The DRY RUN banner was made sticky in `dashboard/static/index.html` (display only) so it stays visible (rule 3) |
+| 5a | `05a_keys.mp4` | The README curl (`view_access_key_list agent.anchorium-team.testnet`): one FunctionCall key, guard only, `record_decision` + `record_outcome` |
+| 5b | `05b_pause.mp4` | `web/kill_switch_capture.sh` on `guard.anchorium-media-19428.testnet` only: OK -> `pause` tx `DZHNSLmrfpUY3oQ4Y63wZ7tebFxbCTQhQnZrzwcSe9QW` -> PAUSED -> `resume` tx `FKLwabo3E3dcxWizmNjfD2eDer9hfGBmpDunHDwNfDCr` -> OK |
+| 5c | `05c_autopause.mp4` | `sed -n 603,612p src/lib.rs` (`maybe_auto_pause`) + `cargo test --test sandbox guard_rules_kill_switch_and_auto_pause_on_chain`: 1 passed, 13.61 s. Label: local sandbox test |
+| 6 | (gallery 09 still) | Paper trades 1 and 2 from the README / reports; PAPER label |
+| 7 | `07_verify.mp4` | Fresh `git clone` from GitHub in an empty temp dir: `time (make setup && make demo)` = **real 0m30.064s** (pip cache warm on this machine); `make test-py` 388 passed; `make contract-test` 40 + 2 passed (build cache reused via CARGO_TARGET_DIR, same sources) |
+
+All terminal recordings were checked for `/Users/` (0 hits). Team and demo guards were never written to. Local state
+was isolated again for shot 4 (media store `var/agent-demo-onchain.media-19428.sqlite`, event lines in
+`var/decisions.2026-11-12.media-19428.jsonl`); `make demo` lines with replay hashes were moved out of
+`var/decisions.jsonl` so the dashboard shows the original 10-11 Nov quotes.

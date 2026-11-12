@@ -1,11 +1,12 @@
-# Shot 4 / gallery 06: Path B on the media deployment (owner anchorium-media-6018.testnet, created 2026-11-12 by
-# `OWNER=anchorium-media-$RANDOM.testnet make demo-onchain`; never the team or demo guard). The accounts and the
-# guard already exist, so the script prints "exists" lines (no key paths) and then journals a real cycle.
+# Shot 4: Path B on a fresh media deployment (owner anchorium-media-19428.testnet, created off camera by
+# scripts/near/deploy_testnet.sh because near-cli prints key-file paths). Never the team or demo guard.
+# The script reuses the existing accounts (prints "exists" lines) and journals a real DRY_RUN cycle.
 Output submission/media/raw/04_cycle.mp4
 Output submission/media/raw/04_cycle.txt
 Source submission/media/tapes/settings.tape
-Type "OWNER=anchorium-media-6018.testnet make demo-onchain"
-Sleep 400ms
+Type "OWNER=anchorium-media-19428.testnet make demo-onchain"
+Sleep 500ms
 Enter
-Wait+Screen@900s /Stats read from the contract/
-Sleep 5s
+Sleep 170s
+Screenshot submission/media/raw/04_cycle_end.png
+Sleep 1s

@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- Shot 3 (0:27-0:47): how it works. Boxes light up in order; owner pause arrow in red. Graphic only. 20 s. -->
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="video.css">
+<style>
+  .node { flex: 1; padding: 30px 22px; min-height: 260px; }
+  .node .t { font-family: var(--mono); font-size: 30px; font-weight: 800; margin-top: 10px; white-space: nowrap; }
+  .node .s { font-size: 26px; color: var(--muted); margin-top: 12px; line-height: 1.35; }
+  .z { margin-top: 18px; font-family: var(--mono); font-size: 22px; font-weight: 700; border: 2px solid; border-radius: 8px; padding: 6px 10px; text-align: center; }
+  .z.t { color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, transparent); }
+  .z.m { color: var(--ink); background: rgba(232,235,239,.08); }
+  .z.o { color: var(--muted); border-color: var(--line); }
+  .arrow { font-size: 44px; color: var(--muted); margin-top: 110px; }
+  .lit { animation: lit 500ms both; }
+</style></head>
+<body>
+  <div class="grid-bg"></div>
+  <header><div class="word">ANCHORIUM</div><div class="num">HOW IT WORKS</div></header>
+  <main>
+    <div class="headline in" style="font-size:96px">The rules live on-chain, not in the bot.</div>
+    <div class="row" style="margin-top:56px;height:150px;position:relative">
+      <div class="col fade" style="position:absolute;left:calc(20% + 6px);width:calc(20% - 30px);align-items:center;height:150px;animation-delay:13.5s">
+        <div class="panel mono" style="padding:12px 26px;font-size:30px;font-weight:800;border:2px solid var(--bad)">OWNER</div>
+        <div style="width:3px;flex:1;background:var(--bad);margin-top:6px"></div>
+        <div class="bad" style="font-size:28px;line-height:1;margin-top:-6px">▼</div>
+        <div class="mono bad" style="position:absolute;left:calc(50% + 24px);top:84px;font-size:26px;white-space:nowrap">pause / update_policy</div>
+      </div>
+    </div>
+    <div class="row" style="gap:14px;align-items:flex-start">
+      <div class="col" style="flex:1"><div class="panel node lit" style="animation-delay:2.5s"><div class="mono muted" style="font-size:24px">1</div><div class="t">Signal</div><div class="s">frozen strategy</div></div><div class="z o">OFF-CHAIN · AGENT</div></div>
+      <div class="arrow">→</div>
+      <div class="col" style="flex:1"><div class="panel node lit" style="animation-delay:4.5s"><div class="mono muted" style="font-size:24px">2</div><div class="t">check_trade</div><div class="s">guard contract</div></div><div class="z t">NEAR TESTNET</div></div>
+      <div class="arrow">→</div>
+      <div class="col" style="flex:1"><div class="panel node lit" style="animation-delay:6.5s"><div class="mono muted" style="font-size:24px">3</div><div class="t">1Click quote</div><div class="s">NEAR Intents</div></div><div class="z m">NEAR MAINNET</div></div>
+      <div class="arrow">→</div>
+      <div class="col" style="flex:1"><div class="panel node lit" style="animation-delay:8.5s"><div class="mono muted" style="font-size:24px">4</div><div class="t">record_decision</div><div class="s">on-chain journal</div></div><div class="z t">NEAR TESTNET</div></div>
+      <div class="arrow">→</div>
+      <div class="col" style="flex:1"><div class="panel node lit" style="animation-delay:10.5s"><div class="mono muted" style="font-size:24px">5</div><div class="t">Settle</div><div class="s">into your account, then record_outcome</div></div><div class="z m">MAINNET + TESTNET</div></div>
+    </div>
+  </main>
+  <div class="rail ok"></div>
+</body></html>

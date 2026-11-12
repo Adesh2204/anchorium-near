@@ -1,0 +1,12 @@
+/* Video cards: the gallery design system at 1920x1080 (same tokens, rail, panels, type). */
+@import url("gallery.css");
+html, body { width: 1920px; height: 1080px; }
+main { left: 96px; right: 96px; top: 150px; bottom: 120px; }
+header { left: 96px; right: 96px; }
+.rail { height: 10px; transform-origin: left center; animation: rail-draw 900ms cubic-bezier(.2,.7,.2,1) both; }
+@keyframes rail-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lit { from { border-color: var(--line); box-shadow: none; } to { border-color: var(--blue); box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 25%, transparent), 0 12px 40px rgba(0,0,0,.45); } }
+.in { opacity: 0; animation: rise 650ms cubic-bezier(.2,.7,.2,1) both; }
+.fade { opacity: 0; animation: fade 700ms both; }
