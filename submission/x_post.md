@@ -5,7 +5,7 @@ Attach the 90-second screen recording (see `video_script.md`). After posting, pu
 
 ## Main post
 
-> You have to trust a trading bot to follow its own risk rules. We moved the rules into a NEAR contract.
+> Don't trust the bot. Verify it. We moved a trading bot's risk rules into a NEAR contract.
 >
 > Our agent asked for a $4.99 trade and claimed it was allowed. The guard contract said no (cap $2), recorded the
 > rejection on-chain and flagged the override.
@@ -14,10 +14,10 @@ Attach the 90-second screen recording (see `video_script.md`). After posting, pu
 >
 > [video]
 
-Length: 314 characters (counted with `len()`), no link. If the account cannot post more than 280
-characters, use the shorter version (257 characters):
+Length: 310 characters (counted with `len()`), no link. If the account cannot post more than 280
+characters, use the shorter version (229 characters):
 
-> Trading bots break their own risk rules and nobody sees it. We moved the rules into a NEAR contract: our agent
+> Don't trust the bot. Verify it. We moved the rules into a NEAR contract: our agent
 > asked for $4.99 and claimed "allowed". The contract said no (cap $2) and logged it on-chain.
 >
 > Built at NEAR HACKATHON @NEARProtocol #NEARHackathon

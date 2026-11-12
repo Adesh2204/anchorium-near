@@ -2,7 +2,7 @@
 @import url("gallery.css");
 html, body { width: 1920px; height: 1080px; }
 main { left: 96px; right: 96px; top: 150px; bottom: 120px; }
-header { left: 96px; right: 96px; }
+header, footer { left: 96px; right: 96px; }
 .rail { height: 10px; transform-origin: left center; animation: rail-draw 900ms cubic-bezier(.2,.7,.2,1) both; }
 @keyframes rail-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }

@@ -1,0 +1,17 @@
+<!doctype html>
+<!-- Chapter card (1.8 s): ?k=<kicker>&t=<title>&r=<rail class>. Graphic only. -->
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="video.css"></head>
+<body>
+  <div class="grid-bg"></div>
+  <main style="justify-content:center;align-items:flex-start">
+    <div class="kicker in" id="k" style="font-size:30px"></div>
+    <div class="headline in" id="t" style="font-size:136px;margin-top:18px;animation-delay:.15s"></div>
+  </main>
+  <div class="rail" id="r"></div>
+  <script>
+    const q = new URLSearchParams(location.search);
+    document.getElementById('k').textContent = q.get('k') || '';
+    document.getElementById('t').textContent = q.get('t') || '';
+    document.getElementById('r').classList.add(q.get('r') || 'ok');
+  </script>
+</body></html>

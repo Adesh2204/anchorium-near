@@ -60,7 +60,7 @@ Brief: `submission/MEDIA_PROMPT.md` (updated version: 8 shots, 11 gallery images
 
 | # | File | Headline | Real source | Rail |
 |---|---|---|---|---|
-| 01 | `01_cover.png` | A trading bot you don't have to trust | The `NOTIONAL_ABOVE_MAX` line from `make demo` (2026-11-12) | red → green |
+| 01 | `01_cover.png` | Don't trust the bot. Verify it. | The `NOTIONAL_ABOVE_MAX` line from `make demo` (2026-11-12) | red → green |
 | 02 | `02_problem.png` | Today you just trust the bot | Graphic | muted |
 | 03 | `03_architecture.png` | The rules live on-chain, not in the bot | Graphic (still of shot 3) | green |
 | 04 | `04_overruled.png` | The bot tried to cheat. The contract said no. | Dashboard card #2 + NearBlocks tx `4KxLnhn9…` | red |
@@ -158,3 +158,11 @@ was isolated again for shot 4 (media store `var/agent-demo-onchain.media-19428.s
 last frame with highlight boxes (green allowed, red blocked, amber paper, blue code); gallery stills 04 and 09 get a
 slow zoom. Copies at the repo root: `Anchorium_Demo_Video.mp4`, `Anchorium_Demo_Video_60s.mp4` (untracked).
 `vo_script.txt` is kept for a future voiced version but is not used.
+
+### Revision 2026-11-12 evening (owner request)
+
+Tagline changed everywhere to "Don't trust the bot. Verify it." (title and end cards, gallery 01, youtube.md, x_post.md,
+form.md idea = 1997/2000 characters). New cold open: `templates/v_hook.html`, every value filled from the real tx
+4KxLnhn9 and the on-chain policy (BUY $4.99, allowed: true, $2.00 cap, NOTIONAL_ABOVE_MAX, 10 Nov 2026 16:27 UTC),
+then the raw `make demo` line and the RPC log as proof. Chapter cards (`templates/v_chapter.html`) and 0.3 s
+cross-fades. Full cut 2:49, X cut 0:57. `submission/MEDIA_PROMPT.md` (the owner's brief) is left as written.

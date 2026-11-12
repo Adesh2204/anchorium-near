@@ -240,7 +240,7 @@ def g01(rc: bool) -> None:
     <div class="row" style="flex:1;align-items:center;gap:56px">
       <div class="col" style="width:calc(7 * var(--col) + 6 * 24px)">
         <div class="kicker">NEAR HACKATHON · DEFI · AGENTS</div>
-        <div class="headline xl" style="margin-top:22px">A trading bot you don’t have to trust.</div>
+        <div class="headline xl" style="margin-top:22px">Don’t trust the bot. Verify it.</div>
         <div class="row b" style="margin-top:44px;flex-wrap:wrap;gap:16px">
           <span class="tag">Rules in a NEAR contract</span><span class="tag">Every decision on-chain</span>
           <span class="tag">Never holds your money</span></div>

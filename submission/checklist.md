@@ -32,5 +32,5 @@ Only humans submit the form and post on X.
 - [ ] NEAR mainnet payout address double-checked (lowercase, an account you control)
 - [ ] Tracks: `defi`, `security`, `agents`, `business`, `open`
 - [ ] Team size `2 - 4`
-- [ ] Idea pasted from `form.md` (1965 characters, limit 2000)
+- [ ] Idea pasted from `form.md` (1997 characters, limit 2000)
 - [ ] Submitted **once**. Any later correction goes through https://nearhackathon.com/request-changes

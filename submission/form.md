@@ -13,14 +13,14 @@ submitting goes through https://nearhackathon.com/request-changes, never a secon
 | nearAddress | `TODO_HUMAN` (the payout account, lowercase, e.g. `yourname.near`) |
 | projectUrl | https://github.com/Adesh2204/anchorium-near |
 | demoUrl | `TODO_DEMO_URL` (the public X post) |
-| idea | below (1965 characters; the limit is 20-2000) |
+| idea | below (1997 characters; the limit is 20-2000) |
 | consent | ticked by the human after reading the contact notice |
 
 Leave the `website` field empty (it is a spam trap).
 
 ## idea
 
-Anchorium is an autonomous trading agent whose risk limits live in a NEAR smart contract instead of inside the bot.
+Don't trust the bot. Verify it. Anchorium is an autonomous trading agent whose risk limits live in a NEAR smart contract instead of inside the bot.
 
 Problem: you have to trust a trading bot to follow its own rules. When it breaks one, nobody sees it, and its track record is a screenshot.
 

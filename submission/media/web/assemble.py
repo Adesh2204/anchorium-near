@@ -116,17 +116,19 @@ def build_segment(s: Seg, page) -> Path:
 
 MEDIA_GUARD = 'guard.anchorium-media-19428.testnet'
 SEGMENTS = [
-    # 1 cold open (starts on the red verdict: YouTube may use frame 1 as the thumbnail)
-    Seg('s1a_cold', 'still', '01_cold_open_end.png', 4.5, label='make demo · demo.anchorium-team.testnet (keyless)',
-        dot='bad', boxes=[(770, 624, 280, 38, 'bad', 0)], zoom=(1.5, 1.8, (700, 645)),
-        caps=[(0, 4.5, 'A simulated compromised agent asks for $4.99, 2.5x its $2.00 cap, and claims it is allowed.')]),
-    Seg('s1b_overruled', 'still', 'gallery/04_overruled.png', 6.5, fit='still32', dot='bad',
+    # 1 cold open: the hook card (frame 1 = the red verdict, filled from the real tx), then the raw proof
+    Seg('s0_hook', 'card', 'v_hook.mp4', 6.0),
+    Seg('s1a_cold', 'still', '01_cold_open_end.png', 3.5, label='make demo · demo.anchorium-team.testnet (keyless)',
+        dot='bad', boxes=[(770, 624, 280, 38, 'bad', 0)], zoom=(1.45, 1.75, (700, 645)),
+        caps=[(0, 3.5, 'The real output: check_trade on the NEAR testnet guard.')]),
+    Seg('s1b_overruled', 'still', 'gallery/04_overruled.png', 4.5, fit='still32', dot='bad',
         label='NEAR testnet RPC · real tx 4KxLnhn9… · 10 Nov 2026', zoom=(1.0, 1.25, (900, 860)),
-        caps=[(0, 6.5, 'The NEAR contract says no, and journals it on-chain with a verdict_override event.')]),
+        caps=[(0, 4.5, 'The real transaction: rejected, and flagged with a verdict_override event.')]),
     # 2 problem, 3 how it works
     Seg('s2_title', 'card', 'v_title.mp4', 15.0),
     Seg('s3_arch', 'card', 'v_arch.mp4', 20.0),
     # 4 a full cycle on-chain (fresh media guard)
+    Seg('c_cycle', 'card', 'ch_cycle.mp4', 1.8),
     Seg('s4a_cycle', 'clip', '04_cycle.mp4', 16.4, start=2.2, speed=2.0, badge='⏩ 2×', dot='blue',
         label=f'make demo-onchain · fresh guard {MEDIA_GUARD}',
         caps=[(0, 6, 'A brand-new guard deployed for this video. The agent must ask it before every trade.'),
@@ -140,6 +142,7 @@ SEGMENTS = [
         caps=[(0, 7, 'The dashboard reads every decision straight from the contract.'),
               (7, 14, 'Signal, guard verdict, quote, where the funds are, and the outcome.')]),
     # 5 safety
+    Seg('c_safety', 'card', 'ch_safety.mp4', 1.8),
     Seg('s5a_keys', 'clip', '05a_keys.mp4', 6.5, start=0.0, speed=2.0, badge='⏩ 2×', dot='ok',
         label='keyless RPC · view_access_key_list agent.anchorium-team.testnet',
         caps=[(0, 6.5, "The bot's only key: a function-call key for one contract and two journal methods.")]),
@@ -159,11 +162,13 @@ SEGMENTS = [
         boxes=[(92, 100, 1110, 292, 'blue', 0), (40, 508, 1350, 36, 'ok', 0.3)], zoom=(1.1, 1.25, (720, 320)),
         caps=[(0, 3, 'Proven by a sandbox test on a local NEAR node.')]),
     # 6 honest money
+    Seg('c_money', 'card', 'ch_money.mp4', 1.8),
     Seg('s6_money', 'still', 'gallery/09_honest_money.png', 14.0, fit='still32', dot='warn',
         label='PAPER · real 1Click quotes, simulated fill', zoom=(1.0, 1.12, (900, 640)),
         caps=[(0, 7, 'Every fee, the gas and a 31.2% tax reserve are counted before anything is called a profit.'),
               (7, 14, 'Wins and losses are both shown. These are paper trades, and they are labelled paper.')]),
     # 7 verify it yourself (fresh clone)
+    Seg('c_verify', 'card', 'ch_verify.mp4', 1.8),
     Seg('s7a_clone', 'clip', '07_verify.mp4', 13.75, start=0.0, speed=4.0, badge='⏩ 4×', dot='ok',
         label='fresh git clone from GitHub · no keys, no funds',
         caps=[(0, 13.75, "Don't trust us either: clone it and run two commands. No keys, no funds.")]),
@@ -176,29 +181,41 @@ SEGMENTS = [
     # 8 end card
     Seg('s8_end', 'card', 'v_end.mp4', 10.0),
 ]
-CUT_60 = ['s1a_cold', 's1b_overruled', 's3_arch_12', 's4a_cycle', 's4b_cycle_hold', 's8_end']
+CUT_60 = ['s0_hook', 's1a_cold', 's1b_overruled', 's3_arch_12', 's4a_cycle', 's4b_cycle_hold', 's8_end']
+XFADE = 0.3  # cross-fade between every two segments
 
 
-def concat(names: list[str], out: Path) -> float:
-    lst = SEG / f'{out.stem}.txt'
-    lst.write_text(''.join(f"file '{SEG / n}.mp4'\n" for n in names))
-    ff('-f', 'concat', '-safe', '0', '-i', str(lst), '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo',
-       '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p',
-       '-r', str(FPS), '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', str(out))
-    return float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', str(out)],
-                                capture_output=True, text=True).stdout)
+def probe(path: Path) -> float:
+    return float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0',
+                                 str(path)], capture_output=True, text=True).stdout)
 
 
-def srt(segs: list[Seg], out: Path) -> None:
+def concat(names: list[str], out: Path) -> tuple[float, list[float]]:
+    """Joins the segments with XFADE-second cross-fades; returns the duration and each segment's start time."""
+    files = [SEG / f'{n}.mp4' for n in names]
+    lens = [probe(f) for f in files]
+    starts, chain, last, acc = [0.0], [], '0:v', lens[0]
+    for k in range(1, len(files)):
+        off = acc - XFADE
+        starts.append(off)
+        chain.append(f'[{last}][{k}:v]xfade=transition=fade:duration={XFADE}:offset={off:.3f}[x{k}]')
+        last, acc = f'x{k}', off + lens[k]
+    args = [a for f in files for a in ('-i', str(f))]
+    ff(*args, '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-filter_complex', ';'.join(chain) + f';[{last}]format=yuv420p[v]',
+       '-map', '[v]', '-map', f'{len(files)}:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-r', str(FPS),
+       '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', str(out))
+    return probe(out), starts
+
+
+def srt(segs: list[Seg], starts: list[float], out: Path) -> None:
     def ts(t: float) -> str:
         ms = int(round(t * 1000))
         return f'{ms // 3600000:02d}:{ms // 60000 % 60:02d}:{ms // 1000 % 60:02d},{ms % 1000:03d}'
-    lines, t, n = [], 0.0, 1
-    for s in segs:
+    lines, n = [], 1
+    for s, t in zip(segs, starts):
         for t0, t1, text in s.caps:
             lines.append(f'{n}\n{ts(t + t0)} --> {ts(t + t1)}\n{text}\n')
             n += 1
-        t += s.dur
     out.write_text('\n'.join(lines))
 
 
@@ -215,8 +232,9 @@ if __name__ == '__main__':
             print(f'segment {s.name}: {s.dur:.2f} s', flush=True)
         b.close()
     ff('-i', str(SEG / 's3_arch.mp4'), '-t', '12', '-c', 'copy', str(SEG / 's3_arch_12.mp4'))
-    full = concat([s.name for s in SEGMENTS], OUT / 'anchorium_demo_full.mp4')
-    short = concat(CUT_60, OUT / 'anchorium_demo_60s.mp4')
-    srt(SEGMENTS, OUT / 'captions.srt')
+    full, starts = concat([s.name for s in SEGMENTS], OUT / 'anchorium_demo_full.mp4')
+    short, _ = concat(CUT_60, OUT / 'anchorium_demo_60s.mp4')
+    srt(SEGMENTS, starts, OUT / 'captions.srt')
+    (OUT / 'chapters.txt').write_text(''.join(f'{int(t // 60)}:{int(t % 60):02d} {s.name}\n' for s, t in zip(SEGMENTS, starts)))
     print(f'full: {full:.2f} s · 60s cut: {short:.2f} s')
     assert full <= 180 and short <= 60, 'length limit exceeded'
