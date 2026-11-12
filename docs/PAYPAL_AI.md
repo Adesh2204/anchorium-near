@@ -89,7 +89,7 @@ bot. This edition adds two things:
 ## Run it
 
 ```sh
-git clone https://github.com/Parth-2004/anchorium-near && cd anchorium-near
+git clone https://github.com/Adesh2204/anchorium-near-Paypal && cd anchorium-near-Paypal
 make setup
 
 # 1) Zero keys (about 1 min): OFFLINE SIMULATION of the PayPal top-up (labelled) + rules co-pilot + live NEAR
