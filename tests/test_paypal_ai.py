@@ -326,3 +326,12 @@ def test_overloaded_model_falls_back_to_the_next_model():
     c._http = httpx.Client(transport=httpx.MockTransport(handler))
     r = c.review_trade(CTX)
     assert tried == ['gemini-big', 'gemini-lite'] and r.provider == 'example.test:gemini-lite'
+
+
+def test_derived_facts_are_exact():
+    from anchorium.ai.copilot import derived_facts
+    f = derived_facts({'close': '74328.0', 'vwap': '74295.5382', 'atr_14': '93.5714', 'worst_case_slippage_bps': 61,
+                       'policy_max_slippage_bps': 150, 'notional_usd': '1.99', 'policy_max_trade_usd': '2.00',
+                       'paypal_budget_usd': '1.50'})
+    assert f['price_vs_vwap'] == 'ABOVE' and f['slippage_pct_of_cap'] == '41%' and f['notional_within_cap'] is True
+    assert f['budget_covers_trade'] is False and f['atr_pct_of_price'] == '0.126%'

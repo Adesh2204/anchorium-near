@@ -38,7 +38,10 @@ MAX_TOPUPS_PER_HOUR = 3
 TRADE_SYSTEM = """You are the risk co-pilot of Anchorium, an autonomous crypto trading agent.
 An on-chain guard contract enforces hard limits and has the final word. You can only make the agent stricter:
 answer VETO to block a trade that the guard would allow, or ALLOW to leave the decision to the guard.
+The input has precomputed facts (`facts`): price_vs_vwap, atr_pct_of_price, slippage_pct_of_cap, budget_covers_trade,
+notional_within_cap. They were computed exactly by code: trust them, never recompute or contradict them.
 The strategy is trend-following: a buy with price ABOVE VWAP is normal and expected, never a reason to veto.
+A notional at or below the per-trade cap is fine; never veto because it is close to the cap.
 VETO only when the trade looks unwise even though it fits the limits: worst-case slippage close to the cap
 (80% of it or more), price BELOW VWAP on a buy, very high volatility (ATR above 2% of price), a budget that
 cannot cover the trade, or a quote whose guaranteed output is far below the expected output. Otherwise ALLOW.
@@ -272,7 +275,7 @@ def trade_context(*, signal: Any, asset: str, side: str, notional_cents: int, po
                   slippage_bps: int, quote: Any, in_symbol: str, out_symbol: str, amount_in: Any, amount_out: Any,
                   min_amount_out: Any, extra: dict[str, Any] | None = None) -> dict[str, Any]:
     s = signal.to_dict() if hasattr(signal, 'to_dict') else dict(signal or {})
-    return {'asset': asset, 'side': side, 'notional_usd': f'{notional_cents / 100:.2f}',
+    ctx = {'asset': asset, 'side': side, 'notional_usd': f'{notional_cents / 100:.2f}',
             'signal_type': s.get('signal_type'), 'close': s.get('close'), 'vwap': s.get('vwap'),
             'atr_14': s.get('atr_14'), 'ema_9': s.get('ema_9'), 'ema_21': s.get('ema_21'),
             'worst_case_slippage_bps': slippage_bps, 'policy_max_slippage_bps': policy.get('max_slippage_bps'),
@@ -281,3 +284,31 @@ def trade_context(*, signal: Any, asset: str, side: str, notional_cents: int, po
                       'guaranteed_min_out': f'{min_amount_out} {out_symbol}',
                       'app_fee_bps': getattr(quote, 'app_fee_bps', None)},
             **(extra or {})}
+    ctx['facts'] = derived_facts(ctx)
+    return ctx
+
+
+def derived_facts(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Exact comparisons computed in code, so the model never has to do arithmetic (small models get it wrong)."""
+    def dec(key):
+        try:
+            v = Decimal(str(ctx.get(key)))
+            return v if v.is_finite() else None
+        except Exception:  # noqa: BLE001
+            return None
+    close, vwap, atr = dec('close'), dec('vwap'), dec('atr_14')
+    slip, cap = dec('worst_case_slippage_bps'), dec('policy_max_slippage_bps')
+    notional, max_trade, budget = dec('notional_usd'), dec('policy_max_trade_usd'), dec('paypal_budget_usd')
+    facts: dict[str, Any] = {}
+    if close and vwap:
+        facts['price_vs_vwap'] = 'ABOVE' if close > vwap else ('BELOW' if close < vwap else 'EQUAL')
+        facts['price_vs_vwap_pct'] = f'{(close - vwap) / vwap * 100:+.3f}%'
+    if close and atr is not None:
+        facts['atr_pct_of_price'] = f'{atr / close * 100:.3f}%'
+    if cap and slip is not None:
+        facts['slippage_pct_of_cap'] = f'{slip / cap * 100:.0f}%'
+    if notional is not None and max_trade:
+        facts['notional_within_cap'] = notional <= max_trade
+    if notional is not None and budget is not None:
+        facts['budget_covers_trade'] = budget >= notional
+    return facts
