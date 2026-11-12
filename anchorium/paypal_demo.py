@@ -53,7 +53,9 @@ def _fund(args, ledger: FundingLedger, copilot: Copilot, policy: dict, paypal: P
         print(f'[paypal]  OFFLINE SIMULATION (no PayPal keys, no API call): pretend capture of ${amount} '
               f'{cap.capture_id}. Set PAYPAL_CLIENT_ID/SECRET for a real sandbox order.')
         return
-    order = paypal.create_order(amount, custom_id=custom_id)
+    # A return page lets PayPal finish the approval cleanly (no dead end after "Pay"); the CLI then polls and captures.
+    back = os.environ.get('PAYPAL_RETURN_URL') or 'https://github.com/Parth-2004/anchorium-near/blob/main/docs/PAYPAL_AI.md'
+    order = paypal.create_order(amount, custom_id=custom_id, return_url=back)
     ledger.record_order(order['id'], custom_id, amount, 'paypal-sandbox')
     ledger.set_ai_note(order['id'], review.canonical())
     link = approve_url(order)
