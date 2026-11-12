@@ -167,7 +167,7 @@ def test_model_failure_falls_back_to_rules(reply, status):
     transport, _ = anthropic(reply, status)
     c = Copilot('k', transport=transport)
     r = c.review_trade(CTX)
-    assert r.provider == 'rules' and r.verdict == 'ALLOW' and c.last_error
+    assert r.provider == 'rules (AI unavailable)' and r.verdict == 'ALLOW' and c.last_error
 
 
 def test_no_key_means_rules_and_explanations_work():
@@ -309,3 +309,20 @@ def test_openai_compatible_provider(tmp_path):
     url, auth, body = seen[0]
     assert url.endswith('/v1beta/openai/chat/completions') and auth == 'Bearer g'
     assert body['messages'][0]['role'] == 'system' and body['model'] == 'gemini-test'
+
+
+def test_overloaded_model_falls_back_to_the_next_model():
+    tried = []
+
+    def handler(request):
+        model = json.loads(request.content)['model']
+        tried.append(model)
+        if model == 'gemini-big':
+            return httpx.Response(503, json={'error': {'status': 'UNAVAILABLE'}})
+        return httpx.Response(200, json={'choices': [{'message': {'content':
+            '{"verdict": "ALLOW", "risk_score": 10, "reason_code": "OK", "explanation": "Fine."}'}}]})
+    c = Copilot.from_env({'AI_BASE_URL': 'https://example.test/v1', 'AI_API_KEY': 'g', 'AI_MODEL': 'gemini-big',
+                          'AI_FALLBACK_MODELS': 'gemini-lite, gemini-old'})
+    c._http = httpx.Client(transport=httpx.MockTransport(handler))
+    r = c.review_trade(CTX)
+    assert tried == ['gemini-big', 'gemini-lite'] and r.provider == 'example.test:gemini-lite'

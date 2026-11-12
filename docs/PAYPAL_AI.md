@@ -62,10 +62,11 @@ bot. This edition adds two things:
 
 ## AI used
 
-- **Model:** Google **Gemini `gemini-2.5-flash`** through Gemini's OpenAI-compatible API (`AI_BASE_URL`,
-  `AI_API_KEY`, `AI_MODEL`; free key from aistudio.google.com), temperature 0, JSON-only replies. Anthropic
-  Claude also works (`ANTHROPIC_API_KEY`), and so does any other OpenAI-compatible chat API (for example Groq).
-  The provider used is printed on every review.
+- **Model:** Google **Gemini `gemini-3.8-flash`** through Gemini's OpenAI-compatible API (`AI_BASE_URL`,
+  `AI_API_KEY`, `AI_MODEL`; free key from aistudio.google.com), temperature 0, JSON-only replies. When a model is
+  overloaded (HTTP 429/5xx or a timeout), the co-pilot tries the next one in `AI_FALLBACK_MODELS` (we use
+  `gemini-3.1-flash-lite`, then `gemini-2.5-flash`). Every review records the model that actually answered.
+  Anthropic Claude (`ANTHROPIC_API_KEY`) and any other OpenAI-compatible chat API (for example Groq) also work.
 - **What it does:**
   - `review_trade`: sees the signal (price, VWAP, ATR, EMAs), the 1Click quote (expected vs guaranteed output,
     worst-case slippage, fee), the on-chain policy and the PayPal budget. It answers ALLOW or VETO with a risk
@@ -98,7 +99,8 @@ make paypal-demo
 # 2) Real PayPal sandbox + real AI: put your keys in .env (see .env.example)
 #    PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET  from developer.paypal.com -> Apps & Credentials -> Sandbox
 #    AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
-#    AI_API_KEY + AI_MODEL=gemini-2.5-flash   free key from aistudio.google.com (or ANTHROPIC_API_KEY)
+#    AI_API_KEY + AI_MODEL=gemini-3.8-flash   free key from aistudio.google.com (or ANTHROPIC_API_KEY)
+#    AI_FALLBACK_MODELS=gemini-3.1-flash-lite,gemini-2.5-flash
 make paypal-demo                       # prints a sandbox approve link, waits for approval, captures
 make dashboard                         # http://127.0.0.1:8000/paypal  -> PayPal buttons, AI review, ledger
 
@@ -107,6 +109,16 @@ make test-py                           # includes tests/test_paypal_ai.py (no ne
 
 Approve sandbox payments with a **sandbox personal account** (developer.paypal.com → Testing Tools → Sandbox
 Accounts), never a real PayPal login.
+
+## Verified run (12 Nov 2026)
+
+`make paypal-demo` against the PayPal **sandbox** with the team's sandbox app:
+- Sandbox order `0J908874MF194271T`, approved by a sandbox personal account; **capture `4V7136386D273822L`
+  COMPLETED, $10.00**, credited once to the ledger.
+- 3 replay entries through the live testnet guard and real 1Click dry quotes. Gemini allowed 2 (each $1.99
+  debited from the PayPal budget) and vetoed 1. The compromised agent (asking $4.99) bypassed the AI and was
+  rejected by the contract (`NOTIONAL_ABOVE_MAX`). Budget: $10.00 funded, $3.98 paper spent, $6.02 left.
+- These are sandbox and paper figures: no real money moved.
 
 ## What is real and what isn't
 

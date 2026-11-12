@@ -5,7 +5,7 @@ asks the contract, journals the decision on-chain, and settles spot swaps throug
 the user's own account.
 
 > **PayPal AI Hackathon edition.** PayPal Checkout (Orders API v2, sandbox)
-> funds the agent's budget, and an AI risk co-pilot (Google Gemini, `gemini-2.5-flash`) reviews every top-up before it is captured
+> funds the agent's budget, and an AI risk co-pilot (Google Gemini, `gemini-3.8-flash`) reviews every top-up before it is captured
 > and every trade before it is journaled. The co-pilot can only veto; the NEAR contract still has the final word,
 > and each AI review's hash is journaled on-chain in `rationale_hash`. Try it with zero keys: `make setup && make
 > paypal-demo`. Full write-up, architecture and run steps: **[docs/PAYPAL_AI.md](docs/PAYPAL_AI.md)**.
@@ -291,7 +291,8 @@ deposit.
   sandbox client, funding ledger), `anchorium/ai/` (AI co-pilot), `anchorium/paypal_demo.py`,
   `dashboard/paypal_routes.py`, `dashboard/static/paypal.html`, `tests/test_paypal_ai.py`, a veto-only hook in
   `anchorium/agent/orchestrator.py`, and [docs/PAYPAL_AI.md](docs/PAYPAL_AI.md). AI used at runtime: Google Gemini
-  (`gemini-2.5-flash`) through its OpenAI-compatible API; Anthropic Claude is also supported.
+  (`gemini-3.8-flash`, falling back to `gemini-3.1-flash-lite` when overloaded) through its OpenAI-compatible API;
+  Anthropic Claude is also supported.
 
 ## Limitations and roadmap
 

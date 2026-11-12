@@ -148,10 +148,12 @@ def cmd_paypal_demo(args) -> int:
     reviews = [e for e in events if e['event'] == 'ai_review']
     print(f'PayPal budget  : funded ${ledger.funded_cents() / 100:.2f}, paper spent '
           f'${(ledger.funded_cents() - ledger.balance_cents()) / 100:.2f}, available ${ledger.balance_cents() / 100:.2f}')
-    print(f'AI reviews     : {len(reviews)} ({sum(r["verdict"] == "VETO" for r in reviews)} veto) by {copilot.provider}')
+    print(f'AI reviews     : {len(reviews)} ({sum(r["verdict"] == "VETO" for r in reviews)} veto); '
+          f'model {copilot.provider}')
     for r in reviews:
-        print(f'  {r["verdict"]:5} {r["reason_code"]:18} rationale_hash {r["rationale_hash"][:16]}... '
-              '(goes on-chain as record_decision.rationale_hash)')
+        print(f'  {r["verdict"]:5} {r["reason_code"]:22} by {r["provider"]:45} rationale_hash '
+              f'{r["rationale_hash"][:16]}...')
+    print('  (each rationale_hash goes on-chain as record_decision.rationale_hash)')
     print(f'Full AI rationales (re-hash to verify): {AI_LOG.relative_to(ROOT)}')
     print('Dashboard with PayPal checkout buttons: make dashboard -> http://127.0.0.1:8000/paypal')
     return 0

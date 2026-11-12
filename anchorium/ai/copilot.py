@@ -20,7 +20,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import time
 from dataclasses import asdict, dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -39,9 +38,10 @@ MAX_TOPUPS_PER_HOUR = 3
 TRADE_SYSTEM = """You are the risk co-pilot of Anchorium, an autonomous crypto trading agent.
 An on-chain guard contract enforces hard limits and has the final word. You can only make the agent stricter:
 answer VETO to block a trade that the guard would allow, or ALLOW to leave the decision to the guard.
-VETO when the trade looks unwise even though it fits the limits: worst-case slippage close to the cap, price
-below VWAP on a buy, very high volatility (ATR) relative to price, a budget that cannot cover the trade,
-or a quote whose guaranteed output is far below the expected output.
+The strategy is trend-following: a buy with price ABOVE VWAP is normal and expected, never a reason to veto.
+VETO only when the trade looks unwise even though it fits the limits: worst-case slippage close to the cap
+(80% of it or more), price BELOW VWAP on a buy, very high volatility (ATR above 2% of price), a budget that
+cannot cover the trade, or a quote whose guaranteed output is far below the expected output. Otherwise ALLOW.
 Reply with JSON only, no prose around it:
 {"verdict": "ALLOW" | "VETO", "risk_score": <integer 0-100>, "reason_code": "<UPPER_SNAKE, max 24 chars>",
  "explanation": "<plain English for a non-expert, max 60 words, cite the numbers you used>"}"""
@@ -166,10 +166,13 @@ def rules_explain(decision: dict[str, Any]) -> str:
 class Copilot:
     def __init__(self, api_key: str | None = None, model: str = DEFAULT_MODEL,
                  transport: httpx.BaseTransport | None = None, log_path: str | Path | None = None,
-                 timeout: float = 25.0, base_url: str | None = None):
+                 timeout: float = 30.0, base_url: str | None = None, fallback_models: list[str] | None = None):
         self.api_key, self.model = api_key or None, model
         #: OpenAI-compatible chat API (e.g. Gemini, Groq) instead of Anthropic when set.
         self.base_url = base_url.rstrip('/') if base_url else None
+        #: Models tried in order when one is overloaded (HTTP 429/5xx or timeout): `model`, then these.
+        self.fallback_models = [m.strip() for m in (fallback_models or []) if m.strip() and m.strip() != model]
+        self.used_model = model
         self._http = httpx.Client(timeout=timeout, transport=transport)
         self.log_path = Path(log_path) if log_path else None
         self.last_error: str | None = None
@@ -178,7 +181,8 @@ class Copilot:
     def from_env(cls, env: Any, log_path: str | Path | None = None) -> Copilot:
         if env.get('AI_BASE_URL'):
             return cls(env.get('AI_API_KEY') or None, env.get('AI_MODEL') or DEFAULT_MODEL, log_path=log_path,
-                       base_url=env.get('AI_BASE_URL'))
+                       base_url=env.get('AI_BASE_URL'),
+                       fallback_models=(env.get('AI_FALLBACK_MODELS') or '').split(','))
         return cls(env.get('ANTHROPIC_API_KEY') or None, env.get('AI_MODEL') or DEFAULT_MODEL, log_path=log_path)
 
     @property
@@ -187,22 +191,30 @@ class Copilot:
             return 'rules'
         if self.base_url:
             host = self.base_url.split('//', 1)[-1].split('/', 1)[0]
-            return f'{host}:{self.model}'
+            return f'{host}:{self.used_model}'
         return f'anthropic:{self.model}'
 
     def _ask(self, system: str, payload: dict[str, Any], max_tokens: int = 300) -> str:
         if self.base_url:
-            body = {'model': self.model, 'max_tokens': max(max_tokens, 2048), 'temperature': 0, 'messages': [
-                {'role': 'system', 'content': system}, {'role': 'user', 'content': json.dumps(payload, default=str)}]}
-            for attempt in range(2):  # one retry on an overloaded / rate-limited model
-                r = self._http.post(f'{self.base_url}/chat/completions', json=body, headers={
-                    'Authorization': f'Bearer {self.api_key}', 'content-type': 'application/json'})
-                if r.status_code not in (429, 500, 503) or attempt:
-                    break
-                time.sleep(2)
-            if r.status_code != 200:
-                raise RuntimeError(f'AI HTTP {r.status_code}: {r.text[:160]}')
-            return r.json()['choices'][0]['message']['content'] or ''
+            errors = []
+            for model in [self.model, *self.fallback_models]:
+                body = {'model': model, 'max_tokens': max(max_tokens, 2048), 'temperature': 0, 'messages': [
+                    {'role': 'system', 'content': system},
+                    {'role': 'user', 'content': json.dumps(payload, default=str)}]}
+                try:
+                    r = self._http.post(f'{self.base_url}/chat/completions', json=body, headers={
+                        'Authorization': f'Bearer {self.api_key}', 'content-type': 'application/json'})
+                except httpx.TimeoutException:
+                    errors.append(f'{model}: timeout')
+                    continue
+                if r.status_code in (429, 500, 502, 503, 504):  # overloaded / rate-limited: try the next model
+                    errors.append(f'{model}: HTTP {r.status_code}')
+                    continue
+                if r.status_code != 200:
+                    raise RuntimeError(f'AI HTTP {r.status_code} ({model}): {r.text[:160]}')
+                self.used_model = model
+                return r.json()['choices'][0]['message']['content'] or ''
+            raise RuntimeError('all models unavailable: ' + '; '.join(errors))
         r = self._http.post(ANTHROPIC_URL, headers={
             'x-api-key': self.api_key or '', 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
             json={'model': self.model, 'max_tokens': max_tokens, 'temperature': 0, 'system': system,
@@ -220,7 +232,8 @@ class Copilot:
                 self.last_error = None
             except Exception as exc:  # noqa: BLE001 - any model failure falls back to the rules reviewer
                 self.last_error = f'{type(exc).__name__}: {exc}'[:200]
-                review = rules
+                review = Review(rules.kind, rules.verdict, rules.risk_score, rules.reason_code, rules.explanation,
+                                'rules (AI unavailable)')
         if rules.vetoed and not review.vetoed:  # the model may be stricter than the rules, never looser
             review = Review(kind, 'VETO', max(rules.risk_score, review.risk_score), rules.reason_code,
                             f'{rules.explanation} (Hard rule; the model had said: {review.explanation})',
