@@ -14,7 +14,11 @@ jobs:
           python-version: "3.12"
       - run: make setup PY=python3
       - run: make freeze
-      - run: make test-py
+      - name: make test-py (failing tests are also reported as annotations)
+        shell: bash
+        run: |
+          set -o pipefail
+          make test-py PYTEST_ARGS="-rfE" 2>&1 | tee pytest.log || { grep -E "^(FAILED|ERROR) " pytest.log | head -20 | sed 's/^/::error::/'; grep -E "^E  " pytest.log | head -20 | sed 's/^/::error::/'; exit 1; }
       - run: .venv/bin/ruff check .
       - run: .venv/bin/python -m mypy anchorium dashboard
   contracts:
@@ -28,4 +32,10 @@ jobs:
       - name: Rust toolchain from rust-toolchain.toml (1.95.0 + wasm32)
         working-directory: contracts/anchorium-guard
         run: rustup toolchain install && rustup show active-toolchain
-      - run: make contract-test
+      - name: cargo-near CLI (the sandbox tests build the wasm through it)
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/download/cargo-near-v0.23.0/cargo-near-installer.sh | sh
+      - name: make contract-test
+        shell: bash
+        run: |
+          set -o pipefail
+          make contract-test 2>&1 | tee contract.log || { grep -E "error|panicked|FAILED" contract.log | head -20 | sed 's/^/::error::/'; exit 1; }

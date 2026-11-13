@@ -23,7 +23,7 @@ freeze: ## Verify the vendored strategy is byte-identical to its source
 	$(VPY) scripts/check_strategy_freeze.py
 
 test-py: ## Python tests (no network)
-	$(VPY) -m pytest -q
+	$(VPY) -m pytest -q $(PYTEST_ARGS)
 
 test: freeze test-py contract-test ## Freeze check + Python tests + contract tests
 
