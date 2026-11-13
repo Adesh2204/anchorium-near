@@ -117,14 +117,38 @@ print(s)"
 # 9G9w6hEmWJ9VmJ2R5BavB4gfGmZwUCCGYvhLPDyqQGfT  == the code_hash printed by `make demo`
 ```
 
-## 6. Tests (1–2 min)
+## 6. NEAR AI Cloud evidence, offline (5 s, zero keys, zero cost)
 
 ```sh
-make test-py          # -> 102 passed, 1 deselected
-make contract-test    # -> 40 passed (unit), 2 passed (sandbox); needs Rust 1.95 + downloads a local NEAR node
+make verify-ai
 ```
 
-## 7. Optional: your own contract, on-chain (3 min)
+Expected (real output, 13 Nov 2026):
+
+```text
+== attestation attestation-qwen-qwen3-vl-30b-a3b-instruct-2026-11-13.json (Qwen/Qwen3-VL-30B-A3B-Instruct, fetched 2026-11-13T08:41:48+00:00)
+  PASS  report bytes               sha256 = 0e87ce8a6eb86561...
+  PASS  model TEE nodes            1 node(s) serving Qwen/Qwen3-VL-30B-A3B-Instruct
+  PASS  model node 0 TEE binding   TDX v4 report_data = 0x2665cce942fa427ef30d87f4b0bff67fb7645462 + our nonce
+  PASS  gateway TEE binding        TDX v4 report_data = 0xb98a789cdc4817275f5155593ba73ef2a957e779 + our nonce
+  => PASS
+
+1/1 PASS
+```
+
+`make verify-ai ARGS="--full"` also sends the GPU evidence to NVIDIA NRAS (online, free) and checks that its overall
+result is `true` and that NVIDIA saw our nonce. No signed review is committed yet: NEAR AI Cloud answered HTTP 402
+(no credits) on 13 Nov; see [NEAR_AI_CLOUD.md](NEAR_AI_CLOUD.md).
+
+## 7. Tests (1–2 min)
+
+```sh
+make test-py          # -> 454 passed, 1 deselected
+make contract-test    # -> 40 passed (unit), 2 passed (sandbox); needs Rust 1.95 + downloads a local NEAR node
+make vault-test       # -> 16 passed (unit), 1 passed (sandbox)
+```
+
+## 8. Optional: your own contract, on-chain (3 min)
 
 ```sh
 OWNER=judge-$RANDOM.testnet make demo-onchain   # needs near-cli-rs 0.31.1; free testnet faucet account
@@ -132,6 +156,57 @@ OWNER=judge-$RANDOM.testnet make demo-onchain   # needs near-cli-rs 0.31.1; free
 
 You get the same replay, but every decision and paper outcome is a real transaction on **your** `guard.OWNER`,
 each printed with an explorer link.
+
+## 9. Optional: the Vault on your own testnet accounts (a few minutes)
+
+```sh
+OWNER=judge-$RANDOM.testnet make vault-demo   # needs near-cli-rs 0.31.1; free testnet faucet account
+```
+
+Expected (abridged: the account and deposit-address lines are left out), from the real run on 13 Nov 2026
+(`OWNER=anchorium-vault-11674.testnet`; your accounts, deposit address
+and hashes will differ):
+
+```text
+=== Anchorium Vault demo on NEAR testnet (accept_dry_run=True: DEMO deployment) ===
+vault holds 10.000000 mUSDC
+
+--- 1-2. a decision the guard rejected: the vault pays nothing ---
+[guard]  decision #0 BUY $4.99 -> REJECTED NOTIONAL_ABOVE_MAX
+         https://testnet.nearblocks.io/txns/9rqe5bTbuF8cCwh9f15nzbMq7dq9UrFFarWXRjuhvjmX
+[vault]  execute #0 2.00 mUSDC -> REJECTED NOT_ALLOWED
+         https://testnet.nearblocks.io/txns/r1SYretiMuPAmijQgHSnbVEnLZb5YZ7WFmp72i1dk6B
+         deposit address holds 0 (not even registered)
+
+--- 3. an ALLOWED decision: the vault releases exactly its notional ---
+[guard]  decision #1 BUY $2.00 -> ALLOWED
+         https://testnet.nearblocks.io/txns/51LDEvkMvab1873TuRAGXJsSeg4QefrU3F56FQBFb9uM
+[vault]  execute #1 2.00 mUSDC -> RELEASED
+         https://testnet.nearblocks.io/txns/AX9vpHMmtJ8CpHxcwJiMjXGxSQA3gVXoLQ9xtVBDn9Yb
+         deposit address now holds 2.000000 mUSDC; vault holds 8.000000 mUSDC
+
+--- 4. the same decision again ---
+[vault]  execute #1 -> refused by the contract: Smart contract panicked: ALREADY_EXECUTED (receipt GBFshR8YCsWtV6FYja99fTkySnFtyn24dB13wU66uh8n)
+
+--- 5. owner pause: no release; owner withdraw still works ---
+[owner]  pause -> ['paused']
+         https://testnet.nearblocks.io/txns/A9JBJDCrYTZpwctPP5Abh1KhBUBW6NQ2FYqCiZAmjREX
+[guard]  decision #2 BUY $1.50 -> REJECTED POSITION_ALREADY_OPEN
+         https://testnet.nearblocks.io/txns/9RKEbV64oyHAhkvVyUAu2uxEZSkPgYndVUmiYYZCHHYF
+[vault]  execute #2 -> refused by the contract: Smart contract panicked: VAULT_PAUSED (receipt 6LGd7WeoHtEve2NN8oriaXEZqLtKF4q9YGtV7byjDNvJ)
+[owner]  withdraw 1 mUSDC while paused -> ['withdraw']
+         https://testnet.nearblocks.io/txns/EZAQfA7soifhpu8kTry13WRNNBx1rBHnSvFK7KLLSF4v
+[owner]  resume (full-access key, 1 yocto) -> ['resumed']
+         https://testnet.nearblocks.io/txns/AmByWz9L9oGaJePUnxfrYR9Vff53o1Vdi2Fn9AqQ5tcv
+
+vault today: 1 release(s), 2.00 mUSDC released; vault holds 7.000000 mUSDC
+```
+
+In that run, step 5's decision was for the same asset, so the guard already rejected it. The demo now uses another
+asset (and prints the asset after `BUY`), so step 5 shows the paused vault refusing an **allowed** decision; we
+checked that on the same deployment: decision #3 (BUY eth, ALLOWED) → `execute` refused `VAULT_PAUSED`. Every
+transaction of both is listed in [VAULT.md](VAULT.md#testnet-evidence-13-nov-2026-free-testnet-near-test-only-mock-token). The
+mock token is TEST-ONLY, and this DEMO vault accepts DRY_RUN decisions; a production vault refuses them.
 
 ## Where the claims live
 
@@ -143,3 +218,6 @@ each printed with an explorer link.
 | No deposit without LIVE flags, the caps, an ALLOWED decision and a typed confirmation | `anchorium/near/live.py`, `orchestrator._live_settle` | `tests/test_live_gates.py`, `tests/test_orchestrator.py` |
 | Restart resumes and never repeats a side effect | `anchorium/agent/checkpoint.py` | crash tests in `tests/test_orchestrator.py` |
 | Signals match the original strategy | `anchorium/agent/signals.py` | `tests/test_signal_parity.py` (golden outputs from the source commit) |
+| The vault pays only for an ALLOWED, unsettled LIVE decision, at most once, within its caps | `contracts/anchorium-vault/src/lib.rs` `check_release`, `on_guard_answer` | `src/tests.rs`, `tests/sandbox.rs` |
+| `SETTLEMENT=vault` never asks the vault without an ALLOWED decision; refusals journal FAILED, uncertainty parks | `orchestrator._vault_release` | vault cases in `tests/test_orchestrator.py` |
+| A NEAR AI review is accepted only with a valid TEE signature bound to an attested key and our nonce | `anchorium/ai/near_ai.py` `verify_receipt` | `tests/test_near_ai.py` |

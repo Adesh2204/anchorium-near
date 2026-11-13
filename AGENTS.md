@@ -4,9 +4,13 @@ Instructions for any coding agent (Claude Code, Codex, others) working in, or ju
 
 ## What this repo is
 
-Anchorium is an autonomous trading agent whose risk policy and decision journal live in a NEAR smart contract.
-Trades settle through the NEAR Intents 1Click API. The judged work is `git diff baseline...hackathon-submission`.
-`vendor/anchorium_strategy/` is prior non-NEAR work by our team and is not submitted for judging.
+Anchorium is an autonomous trading agent whose risk policy and decision journal live in a NEAR smart contract
+(the guard). A second contract, the Vault, holds the trading funds and releases them only for an ALLOWED guard
+decision (`SETTLEMENT=vault`; proven on testnet, no mainnet vault yet). The AI risk co-pilot runs only on NEAR AI
+Cloud (TEE-signed, veto-only); its receipt hash is journaled as `rationale_hash` and `verify-ai` checks it offline.
+Trades settle through the NEAR Intents 1Click API. PayPal appears only as an optional sandbox fiat on-ramp for the
+paper budget. The judged work is `git diff baseline...hackathon-submission`. `vendor/anchorium_strategy/` is prior
+non-NEAR work by our team and is not submitted for judging.
 
 ## Safety invariants (never weaken these)
 
@@ -54,16 +58,25 @@ Trades settle through the NEAR Intents 1Click API. The judged work is `git diff 
 
 | Path | What |
 | --- | --- |
-| `contracts/anchorium-guard/` | Rust guard contract (near-sdk), unit tests + sandbox tests |
-| `anchorium/near/` | NEAR RPC views, guard client, 1Click client |
+| `contracts/anchorium-guard/` | Rust guard contract (near-sdk), unit tests + sandbox tests; deployed wasm, never rebuilt |
+| `contracts/anchorium-vault/` | Rust vault contract: releases funds only for ALLOWED guard decisions; unit + sandbox tests |
+| `contracts/mock-ft/` | TEST/DEMO-ONLY NEP-141 token for the vault sandbox test and the testnet vault demo |
+| `anchorium/near/` | NEAR RPC views, guard client, vault client, 1Click client |
 | `anchorium/agent/` | Signal adapter, orchestrator, crash-safe checkpoint store |
 | `dashboard/` | Dashboard (contract state + intent timeline); `/paypal` adds PayPal sandbox top-ups (never signs NEAR txs) |
 | `anchorium/paypal/` | Optional fiat on-ramp: PayPal Orders v2 **sandbox-only** client + idempotent funding ledger |
-| `anchorium/ai/` | AI risk co-pilot: veto-only, hard rules it cannot loosen, review hash -> `rationale_hash` |
+| `anchorium/ai/` | NEAR AI Cloud client + receipt verifier (`near_ai.py`), veto-only co-pilot, `verify-ai` commands |
+| `fixtures/near_ai/` | Recorded NEAR AI Cloud attestation(s) (and signed receipts once credits exist) for `make verify-ai` |
+| `docs/` | `VAULT.md`, `NEAR_AI_CLOUD.md`, `FIAT_ONRAMP.md`, `JUDGES.md` (expected outputs), reports |
 | `scripts/` | Freeze check, testnet deploy and account scripts |
 
 ## Checks to run before committing
 
 ```sh
-make test            # freeze check + Python tests + contract tests
+make test            # freeze check + Python tests + guard contract tests
+make vault-test      # vault contract unit + sandbox tests
+bash scripts/secret_scan.sh   # no keys in the staged diff
 ```
+
+NEAR AI Cloud: tests never reach the network (`tests/conftest.py`); never add credit or top up the account; the
+API key lives only in the gitignored `.env`.

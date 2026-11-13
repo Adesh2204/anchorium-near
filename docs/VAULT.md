@@ -87,7 +87,7 @@ needs the human's explicit `GO MAINNET`). The vault itself is proven on testnet 
 
 ## Testnet evidence (13 Nov 2026, free testnet NEAR, TEST-ONLY mock token)
 
-`make vault-demo OWNER=anchorium-vault-11674.testnet` deployed a fresh guard (same wasm as the team guard, code hash
+`OWNER=anchorium-vault-11674.testnet make vault-demo` deployed a fresh guard (same wasm as the team guard, code hash
 `9G9w6hEmWJ9VmJ2R5BavB4gfGmZwUCCGYvhLPDyqQGfT`), the vault (code hash
 `AowRWHGB28oLfZ8h8q2qzepsGu2XYav7z9B2cBBATLGj`, `res/anchorium_vault.wasm` sha256 `91bf6f6d…`) and a mock USDC
 (`contracts/mock-ft`, demo only). This is the DEMO deployment (`accept_dry_run = true`), so the decisions are
@@ -116,7 +116,7 @@ In the first run, step 5's second decision was for the same asset and the guard 
 (`POSITION_ALREADY_OPEN`, [9RKEbV64…](https://testnet.nearblocks.io/txns/9RKEbV64oyHAhkvVyUAu2uxEZSkPgYndVUmiYYZCHHYF));
 the demo now uses another asset so the paused vault is shown refusing an *allowed* decision (the re-check rows).
 
-Reproduce (free, about 8 testnet NEAR from the faucet): `make vault-demo OWNER=<new-name>.testnet`.
+Reproduce (free, about 8 testnet NEAR from the faucet): `OWNER=<new-name>.testnet make vault-demo`.
 
 ## Tests
 

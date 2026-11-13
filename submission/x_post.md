@@ -1,39 +1,59 @@
 # X post draft (a human posts it; nothing has been posted)
 
-Attach the 90-second screen recording (see `video_script.md`). After posting, put the post URL into
-`README.md` (`TODO_DEMO_URL`) and `form.md` (`demoUrl`).
+Attach the 60-second cut (`submission/media/out/anchorium_demo_x.mp4` once Phase 7 renders it). After posting,
+put the post URL into `README.md` (Demo, `X post: TODO_HUMAN`) and `form.md` (`demoUrl`), and commit that before
+the tag.
 
 ## Main post
 
-> Don't trust the bot. Verify it. We moved a trading bot's risk rules into a NEAR contract.
+> Would you hand a trading bot your money and trust it to follow its own rules?
 >
-> Our agent asked for a $4.99 trade and claimed it was allowed. The guard contract said no (cap $2), recorded the
-> rejection on-chain and flagged the override.
+> We don't. Our agent asked to spend $4.99 and said "allowed". The NEAR guard contract said no (cap $2) and
+> logged it on-chain. Our NEAR Vault paid nothing for that decision, and exactly $2 for an allowed one.
 >
 > Built at NEAR HACKATHON @NEARProtocol #NEARHackathon
 >
 > [video]
 
-Length: 310 characters (counted with `len()`), no link. If the account cannot post more than 280
-characters, use the shorter version (229 characters):
+## Reply (thread)
 
-> Don't trust the bot. Verify it. We moved the rules into a NEAR contract: our agent
-> asked for $4.99 and claimed "allowed". The contract said no (cap $2) and logged it on-chain.
+> How NEAR is used:
+> • guard contract: policy, on-chain journal, P&L, auto-pause
+> • Vault: releases funds only for an ALLOWED decision
+> • NEAR AI Cloud: TEE-signed AI reviews, verify offline
+> • NEAR Intents 1Click for swaps
+>
+> Try it, keyless: make demo && make verify-ai
+> github.com/Adesh2204/anchorium-near-Paypal
+>
+> Feedback welcome: what would you want a bot to prove?
+
+Lengths by `len()`: main post 349, reply 361 (fine for accounts that may post more than 280 characters).
+
+## Short versions (≤ 280 characters by `len()`)
+
+Main (279):
+
+> Would you trust a trading bot to follow its own rules?
+>
+> Our agent asked to spend $4.99 and said "allowed". The NEAR guard contract said no (cap $2) and logged it. Our NEAR Vault paid nothing for it, and $2 for an allowed one.
 >
 > Built at NEAR HACKATHON @NEARProtocol #NEARHackathon
 
-## Reply (thread, 274 characters by `len()`)
+Reply (278):
 
 > How NEAR is used:
-> • guard contract: policy, on-chain journal, auto-pause at the loss cap
-> • agent key can only journal, not move funds
-> • swaps via NEAR Intents 1Click into your own account
+> • guard: policy, journal, P&L, auto-pause
+> • Vault: pays only ALLOWED decisions
+> • NEAR AI Cloud: TEE-signed reviews
+> • Intents 1Click swaps
 >
-> No keys needed: make demo
+> Keyless: make demo && make verify-ai
 > github.com/Adesh2204/anchorium-near-Paypal
->
-> Next: a mainnet vault.
+> What should a bot prove? Feedback welcome
 
-Structure (as required): user problem → one complete action with a visible result (the rejected $4.99 trade)
-→ NEAR's concrete role → next step. Before posting, count the characters again in the X composer: it counts
-links and emoji its own way.
+Structure (as required): user problem → one complete action with a visible result (the rejected $4.99 decision,
+the vault paying nothing, then exactly $2 for an allowed one) → NEAR's role (guard, Vault, NEAR AI Cloud,
+Intents) → an invitation for feedback, the repo link and the video. Count the characters in the X composer before
+posting (it counts links its own way); the testnet vault paid a TEST-ONLY token, so keep "$2" tied to the decision,
+as written, rather than claiming real dollars moved.

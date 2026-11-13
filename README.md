@@ -1,16 +1,27 @@
 # Anchorium
 
-**Repository:** [github.com/Adesh2204/anchorium-near-Paypal](https://github.com/Adesh2204/anchorium-near-Paypal)
+**Don't trust the bot. Verify it.**
 
-Anchorium is an autonomous trading agent whose risk limits live in a NEAR smart contract. Before any trade it
-asks the contract, journals the decision on-chain, and settles spot swaps through NEAR Intents (1Click) into
-the user's own account.
+Built for NEAR HACKATHON 2026 · Repo: https://github.com/Adesh2204/anchorium-near-Paypal · Tracks:
+AI Security & Defense, Unstoppable DeFi, Privacy & Private AI, Open Innovation.
 
-> **PayPal AI Hackathon edition.** PayPal Checkout (Orders API v2, sandbox)
-> funds the agent's budget, and an AI risk co-pilot (Google Gemini, `gemini-3.8-flash`) reviews every top-up before it is captured
-> and every trade before it is journaled. The co-pilot can only veto; the NEAR contract still has the final word,
-> and each AI review's hash is journaled on-chain in `rationale_hash`. Try it with zero keys: `make setup && make
-> paypal-demo`. Full write-up, architecture and run steps: **[docs/PAYPAL_AI.md](docs/PAYPAL_AI.md)**.
+Anchorium is an autonomous trading agent whose risk limits live in a NEAR smart contract that checks and journals
+every decision. A NEAR Vault contract holds the money and releases it only for an ALLOWED on-chain decision, so a
+compromised bot cannot spend outside the rules. AI risk reviews run only on NEAR AI Cloud inside a TEE, and each
+signed receipt is verified offline and hashed on-chain next to the decision it explains (the TEE attestation is
+recorded; signed reviews are waiting for NEAR AI credits, see [Limitations](#limitations-and-roadmap)).
+
+## New for judges (built 1–14 Nov 2026)
+
+| Feature | NEAR tech | Check it |
+|---|---|---|
+| **Vault: the contract, not the bot, releases the money** | NEAR contract custody (`contracts/anchorium-vault`), cross-contract read of the guard | `OWNER=<new>.testnet make vault-demo` · [testnet evidence](docs/VAULT.md#testnet-evidence-13-nov-2026-free-testnet-near-test-only-mock-token) |
+| **TEE-attested AI risk reviews** (veto-only) | NEAR AI Cloud, `Qwen/Qwen3-VL-30B-A3B-Instruct`, Intel TDX + NVIDIA attestation | `make verify-ai ARGS="--full"` · [docs/NEAR_AI_CLOUD.md](docs/NEAR_AI_CLOUD.md) |
+| **`verify-ai` offline verifier** | checks attestation, EIP-191 signature, TDX `report_data` binding, on-chain `rationale_hash` | `make verify-ai` (zero keys, zero cost) |
+| **Agent holds only function-call keys** | NEAR access keys: guard `record_decision`/`record_outcome`, vault `execute` | [§ The agent's key can only journal](#how-near-is-used) |
+| **Contract-computed P&L + auto-pause** | guard contract computes realized P&L from settled amounts, pauses at the daily loss cap | `make status` |
+| **NEAR Intents 1Click settlement** | 1Click quotes, deposit, status | `make demo` (real dry quotes) |
+| Fiat on-ramp (optional) | PayPal sandbox funds the paper budget; NEAR still decides | `make paypal-demo` · [docs/FIAT_ONRAMP.md](docs/FIAT_ONRAMP.md) |
 
 **Version A (the trading mode we run):** long-only NEAR, entered on the unchanged frozen strategy's LONG signal.
 It is **autonomous within owner-set limits; profit exits cover fees, gas and a 31.2% tax reserve; a -5% safety
@@ -27,7 +38,9 @@ filter with bear rounds was researched and did not beat version A out of sample:
 
 ## Demo
 
-- Demo Youtube video : [Youtube](https://youtu.be/Yi49LsQKRpw)
+- Demo video: [YouTube](https://youtu.be/Yi49LsQKRpw) (cut of 12 Nov; the re-cut with the Vault and NEAR AI Cloud
+  scenes is TODO_HUMAN to upload)
+- X post: TODO_HUMAN
 - No hosted deployment.
 
   ![Anchorium dashboard](docs/screenshots/dashboard.png)
@@ -44,7 +57,10 @@ filter with bear rounds was researched and did not beat version A out of sample:
 | Same wasm, never journaled to, for the keyless demo | `demo.anchorium-team.testnet` | [explorer](https://testnet.nearblocks.io/address/demo.anchorium-team.testnet) |
 | Owner (sets policy, pauses) | `anchorium-team.testnet` | full-access key |
 | Agent sub-account | `agent.anchorium-team.testnet` | **only** a function-call key (see below) |
+| Vault (Rust, near-sdk 5.30.1): holds the funds, releases only for an ALLOWED decision | `vault.anchorium-vault-11674.testnet` (demo deployment) | [explorer](https://testnet.nearblocks.io/address/vault.anchorium-vault-11674.testnet), code hash `AowRWHGB28oLfZ8h8q2qzepsGu2XYav7z9B2cBBATLGj`, [docs/VAULT.md](docs/VAULT.md) |
+| Agent key for the vault | `agent.anchorium-vault-11674.testnet` | function-call key limited to `execute` ([3pLK2Gvp…](https://testnet.nearblocks.io/txns/3pLK2GvpFehWtjcCDGZrByQPte3SvHepKm8seYs4NkWB)) |
 | Settlement | NEAR Intents 1Click API, mainnet | `anchorium/near/intents.py` |
+| AI risk co-pilot | NEAR AI Cloud, `Qwen/Qwen3-VL-30B-A3B-Instruct`; attestation of 13 Nov in `fixtures/near_ai/` | `make verify-ai ARGS="--full"`, [docs/NEAR_AI_CLOUD.md](docs/NEAR_AI_CLOUD.md) |
 
 **On-chain code hash.** The guard's `code_hash` is `9G9w6hEmWJ9VmJ2R5BavB4gfGmZwUCCGYvhLPDyqQGfT`, the base58
 form of the sha256 in [contracts/anchorium-guard/res/SHA256SUMS](contracts/anchorium-guard/res/SHA256SUMS)
@@ -68,7 +84,8 @@ Python client also refuses to load a full-access key as the agent signer (`load_
 
 1. `GET /v0/tokens` for reference prices.
 2. `POST /v0/quote` (`dry: true` unless LIVE), then the slippage gate and the on-chain decision.
-3. LIVE only: an NEP-141 `ft_transfer` to the quote's deposit address, then `POST /v0/deposit/submit`.
+3. LIVE only: an NEP-141 `ft_transfer` to the quote's deposit address (with `SETTLEMENT=vault`, the vault's
+   `execute` pays it instead), then `POST /v0/deposit/submit`.
 4. `GET /v0/status` until SUCCESS, REFUNDED, FAILED or INCOMPLETE_DEPOSIT, then the on-chain outcome.
 
 Every status maps to where the funds are (`FUNDS_LOCATION` in `intents.py`). Real quotes show a **20 bps**
@@ -102,7 +119,18 @@ slippage) covers the $2 paid, both deposits' estimated gas and $0.01. NEAR rose 
 The rule makes a *closed* trade profitable by construction, but it has no stop: a trade whose price never recovers
 stays open at a loss. Two trades say nothing about the strategy's edge. `make status` lists the latest decisions.
 
-NEAR AI Cloud and Chain Signatures are **not** used yet (see the roadmap).
+**The Vault on testnet.** A guard REJECTED decision → `execute` emits `vault_release_rejected NOT_ALLOWED` and
+nothing moves; an ALLOWED $2.00 decision → `vault_release` pays exactly 2 mUSDC to the journaled deposit address;
+the same decision again → `ALREADY_EXECUTED`; a paused vault refuses an allowed decision while the owner can still
+withdraw. Every transaction is in [docs/VAULT.md](docs/VAULT.md#testnet-evidence-13-nov-2026-free-testnet-near-test-only-mock-token).
+The demo vault accepts DRY_RUN decisions (`accept_dry_run = true`) and pays a TEST-ONLY mock token; a production
+vault refuses DRY_RUN decisions (sandbox-tested).
+
+**NEAR AI Cloud.** The co-pilot calls only NEAR AI Cloud. Each review is a raw HTTP call whose exact request and
+response bytes are signed inside the TEE; `verify-ai` recovers the signer and checks that the Intel TDX quotes bind
+that key and our fresh nonce. The attestation recorded on 13 Nov passes offline and with NVIDIA NRAS.
+
+Chain Signatures are **not** used yet (see the roadmap).
 
 ## Quickstart for judges
 
@@ -125,6 +153,9 @@ toolchain 1.95.0 is pinned in `rust-toolchain.toml`, plus cargo-near 0.23.0.
    Expected output: [docs/JUDGES.md](docs/JUDGES.md).
 5. `make status` → the policy, roles, stats, open positions and latest decisions, read from the chain as JSON.
 6. `make dashboard`, then open http://127.0.0.1:8000 → a read-only view of the same contract.
+7. `make verify-ai` → every committed NEAR AI Cloud attestation is checked offline, zero keys, zero cost:
+   `PASS model node 0 TEE binding  TDX v4 report_data = 0x2665cce9… + our nonce`, the same for the gateway,
+   `1/1 PASS`. `make verify-ai ARGS="--full"` also asks NVIDIA NRAS (online, free).
 
 ### Path B: your own contract, journaled on-chain (about 3 minutes)
 
@@ -136,6 +167,18 @@ This creates a free faucet account `OWNER`, plus `guard.OWNER` and `agent.OWNER`
 grants the agent a function-call key, and runs the same replay with **real** `record_decision` and
 `record_outcome` transactions on your contract. Each line prints a testnet explorer link. Keys go to
 `~/.near-credentials`, never into the repo. No mainnet, no funds.
+
+### Path C: the Vault on your own testnet accounts (a few minutes)
+
+```sh
+OWNER=judge-$RANDOM.testnet make vault-demo
+```
+
+This creates a free faucet account and deploys `guard.OWNER` (the committed guard wasm), `vault.OWNER` (the
+committed vault wasm, DEMO deployment), `usdc.OWNER` (a TEST-ONLY mock token) and `agent.OWNER` with two
+function-call keys. Then: a $4.99 decision is REJECTED and the vault pays nothing; a $2.00 decision is ALLOWED and
+the vault pays exactly 2 mUSDC; the same decision again is refused; a paused vault refuses an allowed decision and
+the owner withdraws. Every step prints its explorer link. Expected output: [docs/JUDGES.md](docs/JUDGES.md).
 
 ### Version A: autonomous rounds
 
@@ -167,9 +210,13 @@ flowchart TD
     SE -->|LONG / SHORT signal| AG[Agent orchestrator<br/>anchorium/agent]
     AG -->|1. check_trade view| G[(Guard contract<br/>NEAR testnet)]
     AG -->|2. dry or live quote| OC[NEAR Intents 1Click<br/>mainnet]
-    AG -->|3. record_decision<br/>function-call key| G
+    AG -->|veto-only review, TEE-signed| AI[NEAR AI Cloud<br/>TEE]
+    AG -->|3. record_decision + rationale_hash<br/>function-call key| G
     G -->|ALLOWED?| AG
-    AG -->|4. LIVE only, after a typed human confirmation:<br/>ft_transfer to the deposit address| U[User's own NEAR account]
+    AG -->|4a. SETTLEMENT=vault: execute decision_id| V[(Vault contract)]
+    V -->|reads the decision| G
+    V -->|releases only if ALLOWED| OC
+    AG -->|4b. direct, after a typed human confirmation:<br/>ft_transfer to the deposit address| U[User's own NEAR account]
     U --> OC
     OC -->|status: SUCCESS / REFUNDED / FAILED| AG
     AG -->|5. record_outcome<br/>contract computes P&L| G
@@ -250,22 +297,33 @@ near contract call-function as-transaction guard.anchorium-team.testnet pause js
 Version A treats a paused guard as a hard stop when it has no open round; with an open round it keeps managing the
 exit (exits are never blocked by the pause) and stops once the round is closed.
 
-**The limitation, plainly.** The guard runs on **testnet**; Intents settle on **mainnet**. The contract cannot
-block a mainnet transfer. Enforcement is the agent refusing to deposit without an ALLOWED on-chain decision, and
-every violation (an override, a rejected trade) is visible in the journal. Funds stay in your own account: the
-agent holds no custody, 1Click pays out to your account and refunds to it, and your account's key signs the
-deposit.
+**What the Vault enforces** (`contracts/anchorium-vault/src/lib.rs`, [docs/VAULT.md](docs/VAULT.md)): the
+agent's only way to move vault funds is `execute(decision_id, …)`. The vault reads that decision from the guard
+and pays only if it is ALLOWED, LIVE, unsettled, not executed before, for the journaled quote and deposit address,
+within the notional (BUY) or the open position (SELL), and within the vault's daily caps. Pause stops every
+release; withdraw, resume and set_agent need the owner's full-access key. Residual risk: the contract cannot check
+off-chain that a deposit address belongs to the 1Click quote, so a compromised agent could misdirect at most one
+allowed, capped decision.
+
+**The limitation, plainly.** With `SETTLEMENT=direct` (the default) the guard runs on **testnet** and Intents
+settle on **mainnet**, so the contract cannot block a mainnet transfer: enforcement is the agent refusing to
+deposit without an ALLOWED on-chain decision, and every violation is visible in the journal. Funds stay in your own
+account. `SETTLEMENT=vault` moves custody into the Vault, which enforces the rules itself; it is proven on testnet
+with a mock token, and a mainnet vault is not deployed yet.
 
 ## Tests
 
-| Command | What | Result (2026-11-12, fresh clone of `autonomous-a`) |
+| Command | What | Result (2026-11-13, fresh clone of `near-grand-prize` `dd33bad`) |
 |---|---|---|
 | `make freeze` | the vendored strategy is byte-identical; freeze manifest checks | pass (13 files, 28 parameters) |
-| `make test-py` | Python: 1Click client (mocked), LIVE gates, signal parity against the original source, orchestrator incl. crash/resume, paper session, dashboard, version A money maths (exit rules, tax, receipts adding up) and runner (caps, cost filter, guard-reject retry, backoff vs hard stops, Ctrl+C, crash/resume with no double trades, LIVE deposit never re-sent), regime research | **388 passed**, 1 deselected (network) |
+| `make test-py` | Python: 1Click client (mocked), LIVE gates, signal parity against the original source, orchestrator incl. crash/resume, paper session, dashboard, version A money maths (exit rules, tax, receipts adding up) and runner (caps, cost filter, guard-reject retry, backoff vs hard stops, Ctrl+C, crash/resume with no double trades, LIVE deposit never re-sent), NEAR AI Cloud client and verifier against a fake signing TEE (tampered response, wrong signer, unbound key, wrong nonce all fail; budget guardrails), vault client and `SETTLEMENT=vault`, fiat on-ramp, regime research | **454 passed**, 1 deselected (network) |
 | `ruff check .` / `mypy anchorium dashboard` | lint and types | clean |
 | `.venv/bin/python -m pytest -m network` | one real 1Click dry quote | opt-in |
-| `make contract-test` | Rust unit tests + sandbox tests on a local NEAR node | **40 passed** + **2 passed** |
-| `make test` | all of the above except the network test | |
+| `make contract-test` | guard: Rust unit tests + sandbox tests on a local NEAR node | **40 passed** + **2 passed** |
+| `make vault-test` | vault: 16 rule-by-rule unit tests + a sandbox test with the committed guard wasm and a mock token | **16 passed** + **1 passed** |
+| `make verify-ai` | committed NEAR AI Cloud attestation, offline | **1/1 PASS** |
+| `make test` | freeze + Python + guard contract tests (no network test) | |
+| CI (`.github/workflows/ci.yml`) | Python gates + guard and vault contract tests on every push | [Actions](https://github.com/Adesh2204/anchorium-near-Paypal/actions) |
 
 ## Hackathon disclosure
 
@@ -277,32 +335,43 @@ deposit.
   [SOURCE.md](vendor/anchorium_strategy/SOURCE.md) has the source commit and the SHA256 manifest.
 - **New in the hackathon:**
   - the guard contract, its tests and the deploy scripts;
+  - the Vault contract (`contracts/anchorium-vault`), the test-only mock token (`contracts/mock-ft`), the vault
+    client, `SETTLEMENT=vault` and the testnet vault demo;
+  - the NEAR AI Cloud client, receipt verifier and `verify-ai` (`anchorium/ai/`);
   - the 1Click client, the orchestrator and the LIVE gates;
   - the dashboard, the paper-trade session and these docs.
 - **Libraries:**
   - Rust: near-sdk 5.30.1, near-sandbox 0.4, near-api 0.8.
-  - Python: near-kit 1.3.0, httpx, FastAPI, uvicorn, pandas, numpy, pytest.
+  - Python: near-kit 1.3.0, httpx, FastAPI, uvicorn, pandas, numpy, pytest; coincurve 21.0.0 and
+    pycryptodome 4.4.0 (EIP-191 signature recovery and keccak for NEAR AI Cloud receipts).
+  - AI at runtime: NEAR AI Cloud only (`Qwen/Qwen3-VL-30B-A3B-Instruct`, OpenAI-compatible API called with raw
+    httpx so the signed bytes are kept). Without credits or a key, a deterministic rules reviewer, labelled as such.
   - Deployment: near-cli-rs. The NEAR agent skills are in `.claude/skills/`.
 - **AI-assisted code:** written with Claude Code.
 - **Team:** Adesh, Parth.
 - **Other hackathon projects led by us:** none at NEAR HACKATHON. Perpetual Alpha is a separate, non-NEAR
-  competition, disclosed above. This repository is also our PayPal AI Hackathon entry: the same agent, plus the
-  PayPal funding and AI co-pilot listed below.
-- **New for the PayPal AI Hackathon (12 Nov 2026):** `anchorium/paypal/` (Orders v2
-  sandbox client, funding ledger), `anchorium/ai/` (AI co-pilot), `anchorium/paypal_demo.py`,
-  `dashboard/paypal_routes.py`, `dashboard/static/paypal.html`, `tests/test_paypal_ai.py`, a veto-only hook in
-  `anchorium/agent/orchestrator.py`, and [docs/PAYPAL_AI.md](docs/PAYPAL_AI.md). AI used at runtime: Google Gemini
-  (`gemini-3.8-flash`, falling back to `gemini-3.1-flash-lite` when overloaded) through its OpenAI-compatible API;
-  Anthropic Claude is also supported.
+  competition, disclosed above.
+- **Fiat on-ramp (optional):** `anchorium/paypal/`, `anchorium/paypal_demo.py` and the dashboard's `/paypal` page
+  fund the paper budget from a PayPal Orders v2 **sandbox** capture (12 Nov 2026); they never sign a NEAR
+  transaction. This code was also entered in the PayPal AI Hackathon ([docs/FIAT_ONRAMP.md](docs/FIAT_ONRAMP.md)).
 
 ## Limitations and roadmap
 
-- **The guard is on testnet, settlement on mainnet** (see the safety model). Roadmap:
-  - a mainnet vault contract that holds the funds and releases them to a 1Click deposit address only for an
-    ALLOWED decision, so the contract enforces the rules itself instead of the agent;
-  - then Chain Signatures, so the vault can settle on other chains.
-- **The trading account needs a full-access key.** NEP-141 `ft_transfer` needs a 1 yoctoNEAR deposit, which
-  function-call keys cannot attach. Keep only a few dollars in it.
+- **The Vault enforces custody on testnet; mainnet deployment is pending.** It is proven on testnet with a
+  TEST-ONLY mock token ([docs/VAULT.md](docs/VAULT.md)) and in the sandbox test. 1Click settles on mainnet, so a
+  LIVE `SETTLEMENT=vault` trade needs a mainnet guard and vault, which we deploy only after the human's explicit
+  approval; until then the orchestrator's vault path is covered by mocked tests only, and the default
+  `SETTLEMENT=direct` keeps the agent-enforced flow. Next: Chain Signatures, so the vault can settle on other chains.
+- **Direct settlement needs a full-access trader key.** NEP-141 `ft_transfer` needs a 1 yoctoNEAR deposit, which
+  function-call keys cannot attach. Keep only a few dollars in it. The vault removes this: the agent's vault key
+  can only call `execute`.
+- **Vault residual risk:** the contract cannot check off-chain that a deposit address belongs to the 1Click quote;
+  a compromised agent could misdirect at most one allowed, capped decision (bounded by the guard and the vault's
+  daily caps; the owner can pause).
+- **NEAR AI Cloud signed reviews are not recorded yet.** The TEE attestation is recorded and verified (13 Nov), but
+  `/chat/completions` answered HTTP 402 `"No spending limit configured. Please contact support to set up credits."`
+  Nothing was spent. Until credits are enabled, the co-pilot runs the deterministic rules reviewer, labelled
+  `rules (out of credits)`; the signed-review path is tested against a fake TEE ([docs/NEAR_AI_CLOUD.md](docs/NEAR_AI_CLOUD.md)).
 - **Live trading is unproven.** No mainnet trade has run yet. One human-confirmed $2 micro-trade is planned, and
   its transactions will be added here. All P&L shown so far is paper.
 - **Slippage is measured against 1Click reference prices**, which ran 0.5–1% away from executable quotes in our
@@ -318,8 +387,7 @@ deposit.
   stays research (`research/regime/`), not runtime.
 - **The build is not reproducible.** The wasm is built with `cargo near build non-reproducible-wasm` (no Docker),
   so compare the hash instead.
-- **Not used yet:** NEAR AI Cloud and Chain Signatures. The AI co-pilot now exists (Google Gemini, or
-  Anthropic Claude; its review hash goes into `rationale_hash`).
+- **Not used yet:** Chain Signatures.
 
 ## License
 
