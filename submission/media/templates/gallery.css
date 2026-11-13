@@ -87,7 +87,7 @@ footer { position: absolute; z-index: 2; left: var(--m); right: var(--m); bottom
 .tags { font-size: 22px; color: var(--muted); white-space: nowrap; }
 
 .rail { position: absolute; left: 0; right: 0; bottom: 0; height: 10px; z-index: 3; }
-.rail.ok { background: var(--ok); } .rail.bad { background: var(--bad); } .rail.warn { background: var(--warn); }
+.rail.ok { background: var(--ok); } .rail.bad { background: var(--bad); } .rail.warn { background: var(--warn); } .rail.blue { background: var(--blue); }
 .rail.bad-ok { background: linear-gradient(90deg, var(--bad) 0%, var(--bad) 28%, var(--ok) 72%, var(--ok) 100%); }
 .rail.muted-ok { background: linear-gradient(90deg, var(--line) 0%, var(--line) 30%, var(--ok) 75%, var(--ok) 100%); }
 

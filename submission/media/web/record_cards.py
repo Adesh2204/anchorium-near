@@ -22,8 +22,10 @@ RAW = MEDIA / 'raw'
 CLIPS = RAW / 'clips'
 BUILD = RAW / 'build'
 SIZE = {'width': 1920, 'height': 1080}
-CARDS = {'v_hook': 6.5, 'v_title': 15.5, 'v_arch': 20.5, 'v_end': 10.5}
+CARDS = {'v_hook': 6.5, 'v_title': 10.5, 'v_arch': 12.5, 'v_end': 10.5}
 CHAPTERS = {'ch_cycle': ('Live on NEAR testnet', 'A full cycle, on-chain.', 'ok'),
+            'ch_vault': ('New · NEAR contract custody', 'The Vault holds the money.', 'ok'),
+            'ch_ai': ('New · NEAR AI Cloud', 'AI reviews you can verify.', 'blue'),
             'ch_safety': ('Safety lives in the contract', 'Three safety proofs.', 'bad'),
             'ch_money': ('Paper trades, labelled paper', 'Honest money.', 'warn'),
             'ch_verify': ('No keys. No funds.', 'Verify it yourself.', 'ok')}

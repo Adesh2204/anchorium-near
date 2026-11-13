@@ -1,79 +1,71 @@
 1
-00:00:05,700 --> 00:00:09,200
-The real output: check_trade on the NEAR testnet guard.
-
-2
-00:00:08,900 --> 00:00:13,400
+00:00:05,200 --> 00:00:08,400
 The real transaction: rejected, and flagged with a verdict_override event.
 
+2
+00:00:30,966 --> 00:00:36,966
+A brand-new guard contract. The agent must ask it before every trade.
+
 3
-00:00:48,967 --> 00:00:54,967
-A brand-new guard deployed for this video. The agent must ask it before every trade.
+00:00:36,966 --> 00:00:42,966
+A real NEAR Intents 1Click quote; every decision is a real testnet transaction.
 
 4
-00:00:54,967 --> 00:01:00,467
-A real NEAR Intents 1Click quote: worst-case slippage has to fit the on-chain policy.
+00:00:42,666 --> 00:00:48,666
+Allowed and journaled; the contract computes the paper result itself. The cheat: rejected.
 
 5
-00:01:00,467 --> 00:01:05,367
-Every decision is a real testnet transaction, journaled by the contract.
+00:00:49,833 --> 00:00:55,833
+The Vault holds the money. The agent can only ask it to pay for one journaled decision.
 
 6
-00:01:05,067 --> 00:01:11,067
-Allowed and journaled. The contract computes the paper result itself (here −$0.02). The cheat: rejected.
+00:00:55,833 --> 00:01:01,633
+The vault reads that decision from the guard on-chain before it pays anything.
 
 7
-00:01:10,767 --> 00:01:17,767
-The dashboard reads every decision straight from the contract.
+00:01:01,333 --> 00:01:04,333
+Rejected decision: the vault pays nothing.
 
 8
-00:01:17,767 --> 00:01:24,767
-Signal, guard verdict, quote, where the funds are, and the outcome.
+00:01:04,333 --> 00:01:07,333
+Allowed $2.00 decision: it pays exactly 2 test USDC to the journaled deposit address.
 
 9
-00:01:25,967 --> 00:01:32,467
-The bot's only key: a function-call key for one contract and two journal methods.
+00:01:07,333 --> 00:01:09,833
+The same decision again: refused.
 
 10
-00:01:32,167 --> 00:01:35,167
-It can't move funds, pause, or change the rules.
+00:01:09,833 --> 00:01:13,333
+Paused by the owner: even an allowed decision is refused. The owner can still withdraw.
 
 11
-00:01:34,867 --> 00:01:43,067
-The owner sends one pause transaction to the guard.
+00:01:14,499 --> 00:01:22,499
+The AI risk co-pilot runs only on NEAR AI Cloud, inside a TEE. It can veto, never approve.
 
 12
-00:01:42,767 --> 00:01:46,267
-The next check returns PAUSED. Resume, and it is OK again.
+00:01:22,199 --> 00:01:28,699
+Offline check: each TEE key is bound to our fresh nonce in Intel TDX quotes; NVIDIA confirms the GPU.
 
 13
-00:01:45,967 --> 00:01:55,967
-At the $1 daily loss cap, the contract pauses itself.
+00:01:28,699 --> 00:01:33,199
+Each review is signed in the TEE and hashed on-chain. Signed reviews wait for NEAR AI credits.
 
 14
-00:01:55,667 --> 00:01:58,667
-Proven by a sandbox test on a local NEAR node.
+00:01:32,899 --> 00:01:36,899
+The bot's only key can journal decisions. It can't move funds, pause, or change the rules.
 
 15
-00:01:59,867 --> 00:02:06,867
-Every fee, the gas and a 31.2% tax reserve are counted before anything is called a profit.
+00:01:36,599 --> 00:01:40,599
+One owner transaction pauses the guard: every new trade stops.
 
 16
-00:02:06,867 --> 00:02:13,867
-Wins and losses are both shown. These are paper trades, and they are labelled paper.
+00:01:40,299 --> 00:01:47,299
+Fiat in. NEAR enforces.
 
 17
-00:02:15,033 --> 00:02:28,783
-Don't trust us either: clone it and run two commands. No keys, no funds.
+00:01:46,999 --> 00:01:49,999
+Don't trust us either: clone it and run it. No keys, no funds.
 
 18
-00:02:28,499 --> 00:02:30,999
-Setup + demo: 30 seconds on this machine.
-
-19
-00:02:30,699 --> 00:02:37,299
-Then the full test suites.
-
-20
-00:02:36,999 --> 00:02:39,499
-388 Python tests and 40 + 2 contract tests pass.
+00:01:49,699 --> 00:01:53,699
+454 Python tests, 40 + 2 guard and 16 + 1 vault contract tests pass.

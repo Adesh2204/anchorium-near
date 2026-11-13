@@ -520,6 +520,8 @@ def g10(rc: bool) -> None:
     py = re.search(r'(\d+) passed', run('test_py', ['make', 'test-py'], rc).strip().splitlines()[-1]).group(1)
     ct = run('contract_test', 'make contract-test', rc, env_path=True)
     unit, sand = re.findall(r'test result: ok\. (\d+) passed', ct)[:2]
+    vt = run('vault_test', 'make vault-test', rc, env_path=True)
+    vunit, vsand = re.findall(r'test result: ok\. (\d+) passed', vt)[:2]
     fzt = run('freeze', ['make', 'freeze'], rc)
     fz = json.loads(fzt[fzt.index('{'):])
     vend = fz['vendored_verify_strategy_freeze']
@@ -532,18 +534,19 @@ def g10(rc: bool) -> None:
     money_files = ['anchorium/money.py', 'anchorium/agent/orchestrator.py', 'anchorium/paper_trade.py',
                    'anchorium/near/live.py', 'anchorium/live_exit.py']
     floats = sum(len(re.findall(r'\bfloat\b', (ROOT / f).read_text())) for f in money_files)
-    stats = [(py, 'Python tests', 'ok'), (f'{unit} + {sand}', 'contract unit + sandbox tests', 'ok'),
+    stats = [(py, 'Python tests', 'ok'), (f'{unit} + {sand}', 'guard contract unit + sandbox tests', 'ok'),
+             (f'{vunit} + {vsand}', 'vault contract unit + sandbox tests', 'ok'),
              (f'{params}/{params}', 'frozen strategy parameters verified', 'ok'),
-             (rev, 'review findings fixed (1 critical)', 'ok'),
              (str(samples), 'real 1Click round trips measured', 'blue'), (str(floats), 'floats in money maths', 'ok')]
+    assert rev
     grid = ''.join(f'<div class="stat" style="width:calc((100% - 48px) / 3)"><div class="v {c}">{E(v)}</div>'
                    f'<div class="k b">{E(k)}</div></div>' for v, k, c in stats)
-    strip = ' · '.join([f'{py} passed', f'{unit} passed', f'{sand} passed', '"passed": true'])
+    strip = ' · '.join([f'{py} passed', f'guard {unit} + {sand} passed', f'vault {vunit} + {vsand} passed', '"passed": true'])
     body = f"""
     <div class="headline">Built like it handles real money.</div>
     <div class="row" style="margin-top:56px;flex-wrap:wrap;gap:52px 24px">{grid}</div>
     <div class="panel term" style="margin-top:auto"><pre class="ok" style="font-size:26px;padding:18px 28px">{E(strip)}</pre></div>"""
-    frame(10, body, f'make test-py · make contract-test · make freeze · {today()}', 'ok', 'ok', 'ok', (900, 560),
+    frame(10, body, f'make test-py · make contract-test · make vault-test · make freeze · {today()}', 'ok', 'ok', 'ok', (900, 560),
           max_words=34)
 
 

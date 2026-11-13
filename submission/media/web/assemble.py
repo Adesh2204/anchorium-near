@@ -115,73 +115,72 @@ def build_segment(s: Seg, page) -> Path:
 
 
 MEDIA_GUARD = 'guard.anchorium-media-19428.testnet'
+VAULT_OWNER = 'anchorium-vault-film-1430.testnet'
 SEGMENTS = [
-    # 1 cold open: the hook card (frame 1 = the red verdict, filled from the real tx), then the raw proof
-    Seg('s0_hook', 'card', 'v_hook.mp4', 6.0),
-    Seg('s1a_cold', 'still', '01_cold_open_end.png', 3.5, label='make demo · demo.anchorium-team.testnet (keyless)',
-        dot='bad', boxes=[(770, 624, 280, 38, 'bad', 0)], zoom=(1.45, 1.75, (700, 645)),
-        caps=[(0, 3.5, 'The real output: check_trade on the NEAR testnet guard.')]),
-    Seg('s1b_overruled', 'still', 'gallery/04_overruled.png', 4.5, fit='still32', dot='bad',
-        label='NEAR testnet RPC · real tx 4KxLnhn9… · 10 Nov 2026', zoom=(1.0, 1.25, (900, 860)),
-        caps=[(0, 4.5, 'The real transaction: rejected, and flagged with a verdict_override event.')]),
-    # 2 problem, 3 how it works
-    Seg('s2_title', 'card', 'v_title.mp4', 15.0),
-    Seg('s3_arch', 'card', 'v_arch.mp4', 20.0),
-    # 4 a full cycle on-chain (fresh media guard)
+    # 0:00 hook: the hook card (frame 1 = the red verdict, filled from the real tx), then the real tx
+    Seg('s0_hook', 'card', 'v_hook.mp4', 5.5),
+    Seg('s1b_overruled', 'still', 'gallery/04_overruled.png', 3.2, fit='still32', dot='bad',
+        label='NEAR testnet RPC · real tx 4KxLnhn9… · 10 Nov 2026', zoom=(1.0, 1.2, (900, 860)),
+        caps=[(0, 3.2, 'The real transaction: rejected, and flagged with a verdict_override event.')]),
+    # 0:08 title + 3 problems, 0:18 how it works
+    Seg('s2_title', 'card', 'v_title.mp4', 10.0),
+    Seg('s3_arch', 'card', 'v_arch.mp4', 12.0),
+    # 0:30 a full cycle on-chain (fresh media guard, filmed 12 Nov)
     Seg('c_cycle', 'card', 'ch_cycle.mp4', 1.8),
-    Seg('s4a_cycle', 'clip', '04_cycle.mp4', 16.4, start=2.2, speed=2.0, badge='⏩ 2×', dot='blue',
-        label=f'make demo-onchain · fresh guard {MEDIA_GUARD}',
-        caps=[(0, 6, 'A brand-new guard deployed for this video. The agent must ask it before every trade.'),
-              (6, 11.5, 'A real NEAR Intents 1Click quote: worst-case slippage has to fit the on-chain policy.'),
-              (11.5, 16.4, 'Every decision is a real testnet transaction, journaled by the contract.')]),
+    Seg('s4a_cycle', 'clip', '04_cycle.mp4', 12.0, start=2.2, speed=2.0, badge='⏩ 2×', dot='blue',
+        label=f'make demo-onchain · fresh guard {MEDIA_GUARD} · 12 Nov',
+        caps=[(0, 6, 'A brand-new guard contract. The agent must ask it before every trade.'),
+              (6, 12, 'A real NEAR Intents 1Click quote; every decision is a real testnet transaction.')]),
     Seg('s4b_cycle_hold', 'still', '04_cycle_end.png', 6.0, dot='blue', label=f'{MEDIA_GUARD} · real txs, DRY RUN',
-        boxes=[(178, 214, 290, 34, 'ok', 0.3), (178, 568, 740, 34, 'warn', 1.6), (178, 744, 1410, 34, 'bad', 2.9)], zoom=(1.0, 1.1, (880, 500)),
-        caps=[(0, 6, 'Allowed and journaled. The contract computes the paper result itself (here −$0.02). The cheat: rejected.')]),
-    Seg('s4c_dashboard', 'clip', 'clips/dashboard.mp4', 14.0, start=0.5, dot='ok',
-        label='make dashboard · reads guard.anchorium-team.testnet',
-        caps=[(0, 7, 'The dashboard reads every decision straight from the contract.'),
-              (7, 14, 'Signal, guard verdict, quote, where the funds are, and the outcome.')]),
-    # 5 safety
-    Seg('c_safety', 'card', 'ch_safety.mp4', 1.8),
-    Seg('s5a_keys', 'clip', '05a_keys.mp4', 6.5, start=0.0, speed=2.0, badge='⏩ 2×', dot='ok',
-        label='keyless RPC · view_access_key_list agent.anchorium-team.testnet',
-        caps=[(0, 6.5, "The bot's only key: a function-call key for one contract and two journal methods.")]),
-    Seg('s5a_keys_hold', 'still', '05a_keys_end.png', 3.0, dot='ok', label='agent.anchorium-team.testnet · 1 key',
-        boxes=[(434, 510, 340, 112, 'ok', 0), (434, 628, 660, 32, 'ok', 0)], zoom=(1.1, 1.35, (760, 580)),
-        caps=[(0, 3, "It can't move funds, pause, or change the rules.")]),
-    Seg('s5b_pause', 'clip', '05b_pause.mp4', 8.2, start=0.0, speed=2.0, badge='⏩ 2×', dot='bad',
-        label=f'owner kill switch · {MEDIA_GUARD}',
-        caps=[(0, 8.2, 'The owner sends one pause transaction to the guard.')]),
-    Seg('s5b_pause_hold', 'still', '05b_pause_end.png', 3.5, dot='bad', label=f'{MEDIA_GUARD} · pause, then resume',
-        boxes=[(108, 158, 870, 32, 'bad', 0), (64, 452, 280, 60, 'bad', 0.4), (64, 893, 250, 60, 'ok', 1.2)], zoom=(1.0, 1.08, (700, 540)),
-        caps=[(0, 3.5, 'The next check returns PAUSED. Resume, and it is OK again.')]),
-    Seg('s5c_auto', 'clip', '05c_autopause.mp4', 10.0, start=0.5, speed=2.0, badge='⏩ 2×', dot='ok',
-        label='local sandbox test · contracts/anchorium-guard',
-        caps=[(0, 10, 'At the $1 daily loss cap, the contract pauses itself.')]),
-    Seg('s5c_auto_hold', 'still', '05c_autopause_end.png', 3.0, dot='ok', label='local sandbox test · local NEAR node',
-        boxes=[(92, 100, 1110, 292, 'blue', 0), (40, 508, 1350, 36, 'ok', 0.3)], zoom=(1.1, 1.25, (720, 320)),
-        caps=[(0, 3, 'Proven by a sandbox test on a local NEAR node.')]),
-    # 6 honest money
-    Seg('c_money', 'card', 'ch_money.mp4', 1.8),
-    Seg('s6_money', 'still', 'gallery/09_honest_money.png', 14.0, fit='still32', dot='warn',
-        label='PAPER · real 1Click quotes, simulated fill', zoom=(1.0, 1.12, (900, 640)),
-        caps=[(0, 7, 'Every fee, the gas and a 31.2% tax reserve are counted before anything is called a profit.'),
-              (7, 14, 'Wins and losses are both shown. These are paper trades, and they are labelled paper.')]),
-    # 7 verify it yourself (fresh clone)
-    Seg('c_verify', 'card', 'ch_verify.mp4', 1.8),
-    Seg('s7a_clone', 'clip', '07_verify.mp4', 13.75, start=0.0, speed=4.0, badge='⏩ 4×', dot='ok',
-        label='fresh git clone from GitHub · no keys, no funds',
-        caps=[(0, 13.75, "Don't trust us either: clone it and run two commands. No keys, no funds.")]),
-    Seg('s7b_time', 'still', '07_verify_demo.png', 2.5, dot='ok', label='time (make setup && make demo)',
-        boxes=[(40, 920, 270, 94, 'ok', 0)], zoom=(1.6, 1.9, (420, 900)), caps=[(0, 2.5, 'Setup + demo: 30 seconds on this machine.')]),
-    Seg('s7c_tests', 'clip', '07_verify.mp4', 6.6, start=160.9, speed=4.0, badge='⏩ 4×', dot='ok',
-        label='make test-py · make contract-test', caps=[(0, 6.6, 'Then the full test suites.')]),
-    Seg('s7d_tests_hold', 'still', '07_verify_end.png', 2.5, dot='ok', label='fresh clone · test results',
-        boxes=[(40, 98, 1350, 92, 'ok', 0)], zoom=(1.25, 1.4, (700, 200)), caps=[(0, 2.5, '388 Python tests and 40 + 2 contract tests pass.')]),
-    # 8 end card
-    Seg('s8_end', 'card', 'v_end.mp4', 10.0),
+        boxes=[(178, 214, 290, 34, 'ok', 0.3), (178, 568, 740, 34, 'warn', 1.6), (178, 744, 1410, 34, 'bad', 2.9)],
+        zoom=(1.0, 1.1, (880, 500)),
+        caps=[(0, 6, 'Allowed and journaled; the contract computes the paper result itself. The cheat: rejected.')]),
+    # 0:50 NEW: the Vault (fresh testnet deployment, filmed 13 Nov)
+    Seg('c_vault', 'card', 'ch_vault.mp4', 1.8),
+    Seg('s6a_vault', 'clip', '06_vault.mp4', 11.8, start=0.0, speed=8.0, badge='⏩ 8×', dot='ok',
+        label=f'vault-demo · vault.{VAULT_OWNER} · real testnet txs',
+        caps=[(0, 6, 'The Vault holds the money. The agent can only ask it to pay for one journaled decision.'),
+              (6, 11.8, 'The vault reads that decision from the guard on-chain before it pays anything.')]),
+    Seg('s6b_vault_hold', 'still', '06_vault_end.png', 12.0, dot='ok',
+        label=f'vault.{VAULT_OWNER} · TEST-ONLY mock token · 13 Nov',
+        boxes=[(515, 158, 300, 32, 'bad', 0.2), (525, 364, 122, 32, 'ok', 3.0), (1074, 511, 236, 32, 'bad', 6.0),
+               (1074, 746, 182, 32, 'bad', 8.5)],
+        zoom=(1.0, 1.06, (960, 500)),
+        caps=[(0, 3, 'Rejected decision: the vault pays nothing.'),
+              (3, 6, 'Allowed $2.00 decision: it pays exactly 2 test USDC to the journaled deposit address.'),
+              (6, 8.5, 'The same decision again: refused.'),
+              (8.5, 12, 'Paused by the owner: even an allowed decision is refused. The owner can still withdraw.')]),
+    # 1:15 NEW: NEAR AI Cloud
+    Seg('c_ai', 'card', 'ch_ai.mp4', 1.8),
+    Seg('s8a_ai', 'clip', '08_near_ai.mp4', 8.0, start=0.0, speed=2.0, badge='⏩ 2×', dot='blue',
+        label='make verify-ai --full · NEAR AI Cloud attestation (13 Nov) + NVIDIA NRAS',
+        caps=[(0, 8, 'The AI risk co-pilot runs only on NEAR AI Cloud, inside a TEE. It can veto, never approve.')]),
+    Seg('s8b_ai_hold', 'still', '08_near_ai_end.png', 11.0, dot='blue', label='verify-ai · zero keys, zero cost',
+        boxes=[(40, 216, 1580, 90, 'ok', 0.3), (40, 423, 270, 30, 'blue', 6.5)], zoom=(1.0, 1.12, (820, 300)),
+        caps=[(0, 6.5, 'Offline check: each TEE key is bound to our fresh nonce in Intel TDX quotes; NVIDIA confirms the GPU.'),
+              (6.5, 11, 'Each review is signed in the TEE and hashed on-chain. Signed reviews wait for NEAR AI credits.')]),
+    # 1:35 safety (kept, trimmed)
+    Seg('s5a_keys_hold', 'still', '05a_keys_end.png', 4.0, dot='ok', label='agent.anchorium-team.testnet · 1 key',
+        boxes=[(434, 510, 340, 112, 'ok', 0), (434, 628, 660, 32, 'ok', 0)], zoom=(1.1, 1.3, (760, 580)),
+        caps=[(0, 4, "The bot's only key can journal decisions. It can't move funds, pause, or change the rules.")]),
+    Seg('s5b_pause_hold', 'still', '05b_pause_end.png', 4.0, dot='bad', label=f'{MEDIA_GUARD} · pause, then resume',
+        boxes=[(108, 158, 870, 32, 'bad', 0), (64, 452, 280, 60, 'bad', 0.4), (64, 893, 250, 60, 'ok', 1.2)],
+        zoom=(1.0, 1.08, (700, 540)),
+        caps=[(0, 4, 'One owner transaction pauses the guard: every new trade stops.')]),
+    # 1:43 optional fiat on-ramp
+    Seg('s9_fiat', 'still', '09_fiat_end.png', 7.0, dot='warn',
+        label='optional fiat on-ramp · PayPal sandbox · offline simulation (no keys)',
+        boxes=[(40, 276, 1840, 60, 'warn', 0.3), (40, 335, 600, 30, 'ok', 1.2)], zoom=(1.0, 1.1, (900, 260)),
+        caps=[(0, 7, 'Fiat in. NEAR enforces.')]),
+    # 1:50 verify it yourself (fresh clone, filmed 13 Nov)
+    Seg('s7b_time', 'still', '07_verify_demo.png', 3.0, dot='ok', label='fresh git clone · time (make setup && make demo)',
+        boxes=[(40, 920, 270, 94, 'ok', 0)], zoom=(1.0, 1.0, None), caps=[(0, 3, "Don't trust us either: clone it and run it. No keys, no funds.")]),
+    Seg('s7d_tests_hold', 'still', '07_verify_end.png', 4.0, dot='ok', label='fresh clone · test results',
+        boxes=[(36, 66, 1350, 154, 'ok', 0)], zoom=(1.25, 1.35, (700, 160)), caps=[(0, 4, '454 Python tests, 40 + 2 guard and 16 + 1 vault contract tests pass.')]),
+    # end card
+    Seg('s8_end', 'card', 'v_end.mp4', 8.5),
 ]
-CUT_60 = ['s0_hook', 's1a_cold', 's1b_overruled', 's3_arch_12', 's4a_cycle', 's4b_cycle_hold', 's8_end']
+CUT_60 = ['s0_hook', 's1b_overruled', 's3_arch', 's6a_vault', 's6b_vault_hold', 's8_end']
 XFADE = 0.3  # cross-fade between every two segments
 
 
@@ -231,10 +230,14 @@ if __name__ == '__main__':
             build_segment(s, page)
             print(f'segment {s.name}: {s.dur:.2f} s', flush=True)
         b.close()
-    ff('-i', str(SEG / 's3_arch.mp4'), '-t', '12', '-c', 'copy', str(SEG / 's3_arch_12.mp4'))
     full, starts = concat([s.name for s in SEGMENTS], OUT / 'anchorium_demo_full.mp4')
     short, _ = concat(CUT_60, OUT / 'anchorium_demo_60s.mp4')
     srt(SEGMENTS, starts, OUT / 'captions.srt')
-    (OUT / 'chapters.txt').write_text(''.join(f'{int(t // 60)}:{int(t % 60):02d} {s.name}\n' for s, t in zip(SEGMENTS, starts)))
+    titles = {'s0_hook': 'The bot gets caught', 's2_title': 'The problem', 's3_arch': 'How it works',
+              'c_cycle': 'A full cycle on-chain', 'c_vault': 'The Vault holds the money',
+              'c_ai': 'NEAR AI Cloud: AI reviews you can verify', 's5a_keys_hold': 'Safety and the fiat on-ramp',
+              's7b_time': 'Verify it yourself'}
+    (OUT / 'chapters.txt').write_text(''.join(f'{int(t // 60)}:{int(t % 60):02d} {titles[s.name]}\n'
+                                              for s, t in zip(SEGMENTS, starts) if s.name in titles))
     print(f'full: {full:.2f} s · 60s cut: {short:.2f} s')
-    assert full <= 180 and short <= 60, 'length limit exceeded'
+    assert full <= 135 and short <= 60, 'length limit exceeded'

@@ -165,3 +165,27 @@ form.md idea = 1997/2000 characters). New cold open: `templates/v_hook.html`, ev
 4KxLnhn9 and the on-chain policy (BUY $4.99, allowed: true, $2.00 cap, NOTIONAL_ABOVE_MAX, 10 Nov 2026 16:27 UTC),
 then the raw `make demo` line and the RPC log as proof. Chapter cards (`templates/v_chapter.html`) and 0.3 s
 cross-fades. Full cut 2:49, X cut 0:57.
+
+## Re-cut 2026-11-13 (NEAR HACKATHON grand-prize pass): Vault + NEAR AI Cloud, ≤ 2:15
+
+Timeline (`web/assemble.py`): hook (real tx 4KxLnhn9) → title + 3 problems → new architecture card "The rules, and the
+money, live on NEAR" (signal → 1Click quote → NEAR AI review (TEE) → guard journals → Vault releases only if ALLOWED)
+→ `make demo-onchain` on the 12 Nov media guard (trimmed) → **NEW Vault** → **NEW NEAR AI Cloud** → agent key + kill
+switch (stills of the 12 Nov captures) → optional fiat on-ramp → fresh-clone verification → end card. The dashboard
+scroll, the auto-pause sandbox clip and the paper-money scene were dropped for time; the money facts stay in the README.
+
+| Scene | Clip (raw/, untracked) | Real source and values |
+|---|---|---|
+| Vault (new) | `06_vault.mp4`, `06_vault_end.png` | `tapes/06_vault.tape`: `python -m anchorium vault-demo --owner anchorium-vault-film-1430.testnet` on a fresh deployment made off camera by `scripts/near/deploy_vault_testnet.sh` (it prints key-file paths). Decision #0 $4.99 REJECTED → execute `NOT_ALLOWED`; #1 $2.00 ALLOWED → `RELEASED` 2 mUSDC (TEST-ONLY mock token); replay `ALREADY_EXECUTED`; pause → #2 eth ALLOWED → `VAULT_PAUSED`; withdraw; resume. Every tx in `docs/VAULT.md` (second run), all confirmed via RPC |
+| NEAR AI Cloud (new) | `08_near_ai.mp4`, `08_near_ai_end.png` | `tapes/08_near_ai.tape`: `make -s verify-ai ARGS="--full"` on the committed 13 Nov attestation: both TDX bindings PASS, NVIDIA NRAS overall `True`, nonce matched; then `tests/test_near_ai.py`: 17 passed (fake TEE). Caption says signed reviews wait for NEAR AI credits (HTTP 402) |
+| Fiat on-ramp (new) | `09_fiat.mp4`, `09_fiat_end.png` | `tapes/09_fiat.tape`: `make -s paypal-demo` keyless (NEAR AI key blanked off camera, no PayPal keys → offline simulation, labelled so on screen). The real sandbox capture of 12 Nov is in `docs/FIAT_ONRAMP.md` |
+| Verify (re-filmed) | `07_verify.mp4`, stills | `tapes/07_verify.tape`: fresh `git clone` of `near-grand-prize` from GitHub, `time (make setup && make demo)`, then `make test-py`, `make contract-test`, `make vault-test` (cargo cache via `ANCHORIUM_MEDIA_CARGO_TARGET`, same sources) |
+| Cards | `clips/v_title.mp4`, `v_arch.mp4`, `v_end.mp4`, `ch_vault.mp4`, `ch_ai.mp4` | `templates/v_*.html` (title 10 s, architecture 12 s, end card per the brief: repo, "Built for NEAR HACKATHON · NEAR Protocol · NEAR Intents · NEAR AI Cloud", small grey "Fiat on-ramp: PayPal sandbox", "Adesh & Parth") |
+
+Secret check: every new terminal recording's `.txt` was grepped for `sk-`, `ed25519:` private keys and `/Users/`
+before assembly.
+
+Result (13 Nov): `video/anchorium_demo_full.mp4` **2:02** (121.9 s), `video/anchorium_demo_60s.mp4` **0:51.5** (hook,
+architecture, Vault, end card), 1920x1080, 30 fps, silent AAC track; `video/captions.srt` and `video/chapters.txt`
+regenerated. Gallery 10 re-rendered from fresh runs (454 · guard 40 + 2 · vault 16 + 1 · freeze passed). Both files
+are untracked; the human uploads them (YouTube, X).

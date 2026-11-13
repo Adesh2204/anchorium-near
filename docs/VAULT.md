@@ -116,6 +116,26 @@ In the first run, step 5's second decision was for the same asset and the guard 
 (`POSITION_ALREADY_OPEN`, [9RKEbV64…](https://testnet.nearblocks.io/txns/9RKEbV64oyHAhkvVyUAu2uxEZSkPgYndVUmiYYZCHHYF));
 the demo now uses another asset so the paused vault is shown refusing an *allowed* decision (the re-check rows).
 
+### Second run, filmed for the demo video (13 Nov 2026)
+
+A fresh deployment (`OWNER=anchorium-vault-film-1430.testnet`, the same committed wasm files) running the current
+demo, where step 5 uses another asset so the guard ALLOWS it and the paused vault has to refuse it:
+
+| Step | Result | Transaction |
+|------|--------|-------------|
+| decision #0, BUY $4.99 | guard REJECTED `NOTIONAL_ABOVE_MAX` | [Ft2rpoNy…](https://testnet.nearblocks.io/txns/Ft2rpoNyfFTAUVr9fFWvAYCiatHibaATVBa3wW3jKavb) |
+| execute #0 | `vault_release_rejected NOT_ALLOWED`, nothing moved | [Gfry6zUv…](https://testnet.nearblocks.io/txns/Gfry6zUvPR23ygg97DXS3ogt63FBEPJAowxv167tRypE) |
+| decision #1, BUY $2.00 | guard ALLOWED | [2WgQobvU…](https://testnet.nearblocks.io/txns/2WgQobvUKhRqCg3zEPwuVzHR9cVXimz8mwhxx6MSUzBe) |
+| execute #1 | `vault_release`: deposit address 0 → 2 mUSDC, vault 10 → 8 | [BAUj38qp…](https://testnet.nearblocks.io/txns/BAUj38qp669EPpS8skCbepJzYbkQ1xFBsD1MKC9LyXds) |
+| execute #1 again | refused `ALREADY_EXECUTED` | receipt `Beb9k3pTXHv8kPeAZpPocR6YFnfw654bg2HNuyRmZh8m` |
+| owner pause | `paused` | [GwHKLhSE…](https://testnet.nearblocks.io/txns/GwHKLhSEmLwkiSN8s2gaRWk3ujCaV4vWAuCkuv2NRy4K) |
+| decision #2, BUY eth $1.50 | guard ALLOWED | [HP9fUDrX…](https://testnet.nearblocks.io/txns/HP9fUDrXbz1B1taZ6gjrjAvJBKhPtunLSLpesbU4T5xB) |
+| execute #2 | refused `VAULT_PAUSED` | receipt `2qNRtiTo1o5ADAETwJC9Srn1CPP1D9katHnz8dH4zkPL` |
+| owner withdraw 1 mUSDC while paused | `withdraw` | [FGyoLhBQ…](https://testnet.nearblocks.io/txns/FGyoLhBQyY4YH2XLzVTRRaboUn46K4vQKwi4Lh4mqyV6) |
+| owner resume | `resumed`; vault holds 7 mUSDC | [HTXmPWyH…](https://testnet.nearblocks.io/txns/HTXmPWyH2ySASf9Rp3nxKStVeo39v3UUR9FVzhJQDyXF) |
+
+Vault account: [vault.anchorium-vault-film-1430.testnet](https://testnet.nearblocks.io/address/vault.anchorium-vault-film-1430.testnet).
+
 Reproduce (free, about 8 testnet NEAR from the faucet): `OWNER=<new-name>.testnet make vault-demo`.
 
 ## Tests
