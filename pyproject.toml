@@ -17,6 +17,9 @@ dependencies = [
     # NEAR + 1Click
     "near-kit==1.3.0",   # Python NEAR client listed at docs.near.org/tools/near-api (imported as `near`)
     "httpx==0.28.1",
+    # NEAR AI Cloud receipt verification: secp256k1 public-key recovery (EIP-191) + keccak-256
+    "coincurve==21.0.0",
+    "pycryptodome==4.4.0",
     # Dashboard
     "fastapi==0.121.1",
     "uvicorn==0.38.0",
