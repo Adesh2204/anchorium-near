@@ -29,6 +29,7 @@ jobs:
         with:
           workspaces: |
             contracts/anchorium-guard
+            contracts/anchorium-vault
       - name: Rust toolchain from rust-toolchain.toml (1.95.0 + wasm32)
         working-directory: contracts/anchorium-guard
         run: rustup toolchain install && rustup show active-toolchain
@@ -39,3 +40,8 @@ jobs:
         run: |
           set -o pipefail
           make contract-test 2>&1 | tee contract.log || { grep -E "error|panicked|FAILED" contract.log | head -20 | sed 's/^/::error::/'; exit 1; }
+      - name: make vault-test
+        shell: bash
+        run: |
+          set -o pipefail
+          make vault-test 2>&1 | tee vault.log || { grep -E "error|panicked|FAILED" vault.log | head -20 | sed 's/^/::error::/'; exit 1; }

@@ -1,0 +1,25 @@
+[package]
+name = "mock-ft"
+description = "TEST/DEMO ONLY: a plain NEP-141 token (mock USDC) for the Anchorium vault's sandbox tests and testnet demo"
+version = "0.1.0"
+edition = "2024"
+resolver = "3"
+rust-version = "1.95"
+license = "MIT"
+repository = "https://github.com/Adesh2204/anchorium-near-Paypal"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = "5.30.1"
+near-contract-standards = "5.30.1"
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true

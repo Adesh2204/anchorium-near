@@ -4,9 +4,10 @@ PY      ?= $(shell command -v python3.13 || command -v python3.12 || command -v 
 VENV    := .venv
 VPY     := $(VENV)/bin/python
 CONTRACT_DIR := contracts/anchorium-guard
+VAULT_DIR    := contracts/anchorium-vault
 
 
-.PHONY: paypal-demo verify-ai near-ai-usage near-ai-attest
+.PHONY: paypal-demo verify-ai near-ai-usage near-ai-attest vault-test vault-build vault-demo
 .PHONY: help setup freeze test test-py contract-build contract-test contract-deploy demo demo-onchain status agent dashboard autonomous autonomous-status live-preflight media-setup media-gallery
 
 help:
@@ -79,3 +80,11 @@ near-ai-usage: ## NEAR AI Cloud spend ledger (every billable call, estimated USD
 
 near-ai-attest: ## Record a fresh NEAR AI Cloud TEE attestation into fixtures/near_ai/ (free endpoint; needs NEAR_AI_API_KEY)
 	$(VPY) -m anchorium near-ai-attest
+
+vault-test: ## Vault contract: unit tests + sandbox test (vault + committed guard wasm + mock USDC on a local NEAR node)
+	cd $(VAULT_DIR) && cargo test
+
+vault-build: ## Build the vault wasm (cargo-near) and refresh res/ + its SHA256SUMS
+	cd $(VAULT_DIR) && cargo near build non-reproducible-wasm
+	cp $(VAULT_DIR)/target/near/anchorium_vault.wasm $(VAULT_DIR)/res/
+	cd $(VAULT_DIR)/res && shasum -a 256 anchorium_vault.wasm
