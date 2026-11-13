@@ -58,7 +58,7 @@ Trades settle through the NEAR Intents 1Click API. The judged work is `git diff 
 | `anchorium/near/` | NEAR RPC views, guard client, 1Click client |
 | `anchorium/agent/` | Signal adapter, orchestrator, crash-safe checkpoint store |
 | `dashboard/` | Dashboard (contract state + intent timeline); `/paypal` adds PayPal sandbox top-ups (never signs NEAR txs) |
-| `anchorium/paypal/` | PayPal AI edition: Orders v2 **sandbox-only** client + idempotent funding ledger |
+| `anchorium/paypal/` | Optional fiat on-ramp: PayPal Orders v2 **sandbox-only** client + idempotent funding ledger |
 | `anchorium/ai/` | AI risk co-pilot: veto-only, hard rules it cannot loosen, review hash -> `rationale_hash` |
 | `scripts/` | Freeze check, testnet deploy and account scripts |
 
