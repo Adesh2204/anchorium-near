@@ -12,12 +12,12 @@ Only humans submit the form and post on X.
 
 ## Repository
 
-- [ ] https://github.com/Adesh2204/anchorium-near is **public** and stays public through judging
+- [ ] https://github.com/Adesh2204/anchorium-near-Paypal is **public** and stays public through judging
 - [ ] `LICENSE` (MIT) is on `main`
 - [ ] `main` contains the final commit
 - [ ] Tag `hackathon-submission` is on the final commit and pushed:
       `git tag hackathon-submission && git push origin hackathon-submission`
-- [ ] https://github.com/Adesh2204/anchorium-near/compare/baseline...hackathon-submission opens and shows the
+- [ ] https://github.com/Adesh2204/anchorium-near-Paypal/compare/baseline...hackathon-submission opens and shows the
       NEAR work
 
 ## Demo

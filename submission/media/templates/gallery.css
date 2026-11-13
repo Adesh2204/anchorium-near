@@ -1,4 +1,4 @@
-/* Anchorium gallery + title-card design system (GALLERY_SPEC.md section 2).
+/* Anchorium gallery + title-card design system (gallery spec v2).
    Colours are sampled from the dashboard's dark theme (dashboard/static/index.html) so media and product match. */
 :root {
   --bg: #0f1216; --panel: #171b21; --line: #283039; --ink: #e8ebef; --muted: #98a1ad;

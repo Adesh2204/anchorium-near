@@ -1,0 +1,31 @@
+# Proves the judge path runs on Linux: setup, strategy freeze, Python tests, lint, types, contract tests.
+# No secrets are used: every test mocks the network (NEAR AI Cloud, 1Click, PayPal) or runs a local NEAR sandbox.
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  python:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: make setup PY=python3
+      - run: make freeze
+      - run: make test-py
+      - run: .venv/bin/ruff check .
+      - run: .venv/bin/python -m mypy anchorium dashboard
+  contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            contracts/anchorium-guard
+      - name: Rust toolchain from rust-toolchain.toml (1.95.0 + wasm32)
+        working-directory: contracts/anchorium-guard
+        run: rustup toolchain install && rustup show active-toolchain
+      - run: make contract-test

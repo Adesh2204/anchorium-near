@@ -7,7 +7,7 @@ resolver = "3"
 rust-version = "1.95"
 license = "MIT"
 # NEP-0330: exposed through the contract_source_metadata view (implemented by cargo-near).
-repository = "https://github.com/Adesh2204/anchorium-near"
+repository = "https://github.com/Adesh2204/anchorium-near-Paypal"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

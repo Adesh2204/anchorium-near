@@ -118,6 +118,8 @@ def build(args, *, onchain: bool, store_path: str, guard_id: str | None = None):
         writer = GuardWriter(reader, load_function_call_signer(agent_id, guard_id, network))
     trader_account = os.environ.get('TRADER_ACCOUNT_ID') or None
     if execution.live:
+        if not trader_account:
+            raise SystemExit('LIVE=1 needs TRADER_ACCOUNT_ID (the mainnet account whose key is in ~/.near-credentials)')
         from near import Near  # noqa: PLC0415
         trader = Near.from_file(trader_account, 'mainnet', rpc_url=DEFAULT_RPC['mainnet'])
     config = AgentConfig(network=network, execution=execution, trader_account=trader_account,

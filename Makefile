@@ -54,7 +54,7 @@ dashboard: ## Read-only dashboard on http://127.0.0.1:8000 (reads the testnet co
 	$(VPY) -m uvicorn dashboard.app:app --host 127.0.0.1 --port 8000
 
 autonomous: ## Version A autonomous rounds (DRY_RUN unless .env has LIVE=1; LIVE asks you to type GO LIVE)
-	caffeinate -i $(VPY) -m anchorium autonomous $(ARGS)
+	$$(command -v caffeinate >/dev/null && echo caffeinate -i) $(VPY) -m anchorium autonomous $(ARGS)
 
 autonomous-status: ## Version A session status, a fresh valuation of an open round, the last 5 events
 	$(VPY) -m anchorium autonomous-status $(ARGS)
@@ -68,5 +68,5 @@ media-setup: ## Media toolchain venv (Playwright, Pillow, qrcode); also needs vh
 media-gallery: ## Render the 11 gallery PNGs + contact sheet from the real captures in submission/media/raw/
 	submission/media/.venv/bin/python submission/media/web/render.py
 
-paypal-demo: ## PayPal AI edition: PayPal sandbox top-up + AI co-pilot + guard demo (offline simulation without keys)
+paypal-demo: ## Fiat on-ramp: PayPal sandbox funds the paper budget; NEAR AI Cloud reviews; the NEAR guard decides
 	$(VPY) -m anchorium paypal-demo $(ARGS)

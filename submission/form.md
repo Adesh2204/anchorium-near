@@ -11,7 +11,7 @@ submitting goes through https://nearhackathon.com/request-changes, never a secon
 | size | `2 - 4` |
 | tracks | `defi`, `security`, `agents`, `business`, `open` |
 | nearAddress | `TODO_HUMAN` (the payout account, lowercase, e.g. `yourname.near`) |
-| projectUrl | https://github.com/Adesh2204/anchorium-near |
+| projectUrl | https://github.com/Adesh2204/anchorium-near-Paypal |
 | demoUrl | `TODO_DEMO_URL` (the public X post) |
 | idea | below (1997 characters; the limit is 20-2000) |
 | consent | ticked by the human after reading the contact notice |

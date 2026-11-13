@@ -24,7 +24,7 @@ Internal deadline: 2026-11-14 20:00 IST. Hard deadline: 2026-11-14 23:59 UTC (20
 
 | When (IST) | Decision | Why |
 | --- | --- | --- |
-| 2026-11-10 21:18 | New clean repo `Adesh2204/anchorium-near`. Judged diff is `baseline...hackathon-submission` | The user's GO. The old repo's 103 non-NEAR commits since 2026-10-19 and 2.32 GB of LFS would bury the NEAR work |
+| 2026-11-10 21:18 | New clean repo `Adesh2204/anchorium-near` (renamed to anchorium-near-Paypal). Judged diff is `baseline...hackathon-submission` | The user's GO. The old repo's 103 non-NEAR commits since 2026-10-19 and 2.32 GB of LFS would bury the NEAR work |
 | 2026-11-10 21:19 | Vendor only FrozenStrategy's 12-file import closure, byte-identical | The user's GO: no NSE/Angel One code, no exchange write paths |
 | 2026-11-10 21:19 | Freeze check scoped to the entry-signal path: 1 file hash + 28 of 32 parameters verified; 8 methods + 4 parameters recorded as excluded with their original values | Those 12 entries live in legacy NSE/Angel One modules that FrozenStrategy never imports. The checker proves nothing was dropped silently (see `vendor/anchorium_strategy/SOURCE.md`) |
 | 2026-11-10 21:19 | No original tests vendored | Every source test touching `signal_brain` imports modules outside the closure. A parity test against the source commit replaces them (Phase 4) |
@@ -118,3 +118,4 @@ Times are commit times (`git log`) or `date` output.
 - 2026-11-12 11:24 IST: paper INR 500 session `paper-a` started (DRY_RUN, until 1 round closes or 20:00 IST): 5.334437 USDC = INR 500.00 at 93.7306 INR/USD (Coinbase).
 - 2026-11-12 14:11 IST: main fast-forwarded to autonomous-a (5fe9f1f): version A + docs/regime_backtest.md, no B/C runtime code. 388 tests, freeze OK, mypy clean, ruff clean (rule set pinned: ruff 0.17 widened its defaults). Paper session paper-a still running (flat: only SHORT signals since 11:24 IST). Live trader account not yet funded.
 - 2026-11-12 20:00 IST: paper session paper-a (version A, DRY_RUN, INR 500) finished at its 20:00 IST cut-off: 0 rounds, INR +0.00, flat. Replay of 11:24-20:00 IST: 45 BREAKDOWN_SHORT signals, 0 LONG, NEAR -4.7% (3.5282 -> 3.3629). docs/paper_trade_A_report.md. Media: gallery (11 images) and silent captioned video (2:49 full, 0:57 X cut) built from real captures; write scenes only on media guards anchorium-media-6018 / -19428.
+- 2026-11-13 08:34 UTC: near-grand-prize phase 0-1: baseline green (418 py, 40+2 contract; fixed a pre-existing mypy error in cli.py LIVE without TRADER_ACCOUNT_ID); repo URL -> anchorium-near-Paypal everywhere; prompt/brief files removed; caffeinate optional; Linux CI; dev tools pinned.

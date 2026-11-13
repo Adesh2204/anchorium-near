@@ -15,7 +15,7 @@ own account. In this silent, captioned video a simulated compromised agent asks 
 Everything shown is a real run: testnet guard contract, real 1Click quotes, real transactions. Money scenes are
 PAPER (real quotes, simulated fill); no live mainnet trade had run at recording time.
 
-- Code: https://github.com/Adesh2204/anchorium-near
+- Code: https://github.com/Adesh2204/anchorium-near-Paypal
 - Guard contract (NEAR testnet): https://testnet.nearblocks.io/address/guard.anchorium-team.testnet
 - Verify it yourself: `git clone`, `make setup`, `make demo` (no keys, no funds)
 

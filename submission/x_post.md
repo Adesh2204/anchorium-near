@@ -30,7 +30,7 @@ characters, use the shorter version (229 characters):
 > • swaps via NEAR Intents 1Click into your own account
 >
 > No keys needed: make demo
-> github.com/Adesh2204/anchorium-near
+> github.com/Adesh2204/anchorium-near-Paypal
 >
 > Next: a mainnet vault.
 

@@ -1,4 +1,4 @@
-"""Builds the Anchorium gallery (GALLERY_SPEC.md v2) from real captures. From the repo root, with the media venv:
+"""Builds the Anchorium gallery (gallery spec v2) from real captures. From the repo root, with the media venv:
 
     submission/media/.venv/bin/python submission/media/web/render.py [--recapture] [g01 ... g11 sheets]
 
@@ -38,7 +38,7 @@ GALLERY = MEDIA / 'gallery'
 IST = timezone(timedelta(hours=5, minutes=30))
 RPC = 'https://archival-rpc.testnet.fastnear.com'
 TEAM_GUARD = 'guard.anchorium-team.testnet'
-REPO = 'github.com/Adesh2204/anchorium-near'
+REPO = 'github.com/Adesh2204/anchorium-near-Paypal'
 SECRET_PATTERNS = [r'ed25519:[1-9A-HJ-NP-Za-km-z]{70,}', r'secret_key', r'private_key', r'\bJWT\b',
                    r'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}', r'\.near-credentials', r'/Users/',
                    r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.(com|org|net|io|in)\b']

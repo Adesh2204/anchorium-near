@@ -9,7 +9,7 @@ Type "export PATH=$HOME/.cargo/bin:$PATH CARGO_TARGET_DIR=$PWD/contracts/anchori
 Enter
 Sleep 500ms
 Show
-Type "git clone -q https://github.com/Adesh2204/anchorium-near && cd anchorium-near"
+Type "git clone -q https://github.com/Adesh2204/anchorium-near-Paypal && cd anchorium-near-Paypal"
 Sleep 300ms
 Enter
 Sleep 12s

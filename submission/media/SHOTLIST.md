@@ -1,6 +1,6 @@
 # Shot list: every frame and its real source
 
-Brief: `submission/MEDIA_PROMPT.md` (updated version: 8 shots, 11 gallery images). Recon 2026-11-12 IST.
+Brief: the owner's media brief of 12 Nov (8 shots, 11 gallery images; the brief itself is not kept in the repo). Recon 2026-11-12 IST.
 **No live mainnet round has happened** (`docs/live_trade_report.md` does not exist, and version A's paper session
 `paper-a` has not closed a round), so every money scene carries the amber label "PAPER: real quotes, simulated fill".
 
@@ -99,7 +99,7 @@ brief's target values:
 VHS 0.12.1 (ttyd 1.7.7), ffmpeg 9.0.2, pngquant 3.0.3, oxipng 10.2.1, Playwright 1.65.1 + Chromium headless shell
 158 in `submission/media/.venv`.
 
-## Capture log, 2026-11-12 (gallery v2, `GALLERY_SPEC.md`)
+## Capture log, 2026-11-12 (gallery v2)
 
 ### Media deployment (write scenes only)
 
@@ -129,7 +129,7 @@ and the event log were restored; the media and today's Path A demo lines are in
 | 08 | `raw/kill_switch.log` on the media guard (above) |
 | 09 | README paper trade 2 line (+$0.0317, −$0.0080, −$0.0011, −$0.0016 = +$0.0210, +INR 1.97; the sum is asserted) and paper trade 1 (−$0.0224, −INR 2.10). The formula is version A's PROFIT_EXIT rule (`anchorium/money.py`); paper trade 2 used the earlier profit-target rule |
 | 10 | `make test-py` 388 passed; `make contract-test` 40 + 2 passed; `make freeze` 28 parameters, passed; PROGRESS 11 findings incl. 1 CRITICAL; 60 samples in `docs/data/quote_costs_2026-11-12.json`; 0 occurrences of `float` in the money modules |
-| 11 | `LICENSE` (MIT); QR encodes `https://github.com/Adesh2204/anchorium-near` |
+| 11 | `LICENSE` (MIT); QR encodes `https://github.com/Adesh2204/anchorium-near-Paypal` |
 
 ## Video capture log, 2026-11-12 (Part A, step 3)
 
@@ -157,7 +157,6 @@ was isolated again for shot 4 (media store `var/agent-demo-onchain.media-19428.s
 (`video/captions.srt` for YouTube CC). Footage is trimmed, sped up 2x or 4x with a visible badge, or held on its real
 last frame with highlight boxes (green allowed, red blocked, amber paper, blue code); gallery stills 04 and 09 get a
 slow zoom. Copies at the repo root: `Anchorium_Demo_Video.mp4`, `Anchorium_Demo_Video_60s.mp4` (untracked).
-`vo_script.txt` is kept for a future voiced version but is not used.
 
 ### Revision 2026-11-12 evening (owner request)
 
@@ -165,4 +164,4 @@ Tagline changed everywhere to "Don't trust the bot. Verify it." (title and end c
 form.md idea = 1997/2000 characters). New cold open: `templates/v_hook.html`, every value filled from the real tx
 4KxLnhn9 and the on-chain policy (BUY $4.99, allowed: true, $2.00 cap, NOTIONAL_ABOVE_MAX, 10 Nov 2026 16:27 UTC),
 then the raw `make demo` line and the RPC log as proof. Chapter cards (`templates/v_chapter.html`) and 0.3 s
-cross-fades. Full cut 2:49, X cut 0:57. `submission/MEDIA_PROMPT.md` (the owner's brief) is left as written.
+cross-fades. Full cut 2:49, X cut 0:57.

@@ -139,7 +139,7 @@ grants the agent a function-call key, and runs the same replay with **real** `re
 
 ### Version A: autonomous rounds
 
-- `make autonomous` runs version A under `caffeinate -i`: DRY_RUN by default (real 1Click dry quotes, paper fills
+- `make autonomous` runs version A (under `caffeinate -i` on macOS, so the Mac stays awake): DRY_RUN by default (real 1Click dry quotes, paper fills
   at each quote's guaranteed minimum, real testnet journal). `ARGS="--until <ISO time> --stop-after-rounds 1"`
   bounds a paper session. Re-running the same command resumes it; Ctrl+C saves and exits cleanly.
 - `make autonomous-status` prints the session, a fresh valuation of an open round (net and after-tax P&L in INR,
