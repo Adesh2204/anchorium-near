@@ -38,9 +38,9 @@ filter with bear rounds was researched and did not beat version A out of sample:
 
 ## Demo
 
-- Demo video: [https://drive.google.com/file/d/1q2Kt1ERaIpI_eMjYLa5TQ63d7_IBA8f2/view?usp=sharing](Video) (cut of 12 Nov; the re-cut with the Vault and NEAR AI Cloud
+- Demo video: https://drive.google.com/file/d/1q2Kt1ERaIpI_eMjYLa5TQ63d7_IBA8f2/view?usp=sharing (cut of 12 Nov; the re-cut with the Vault and NEAR AI Cloud
   scenes is TODO_HUMAN to upload)
-- X post: https://x.com/K2Adesh22/status/2121197791146049600[](Post)
+- X post: https://x.com/K2Adesh22/status/2121197791146049600
 - No hosted deployment.
 
   ![Anchorium dashboard](docs/screenshots/dashboard.png)
