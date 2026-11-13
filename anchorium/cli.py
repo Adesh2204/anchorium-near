@@ -581,7 +581,7 @@ def main(argv=None) -> int:
     ast.add_argument('--session')
     ast.add_argument('--offline', action='store_true', help='no network: saved state only')
     sub.add_parser('live-preflight', help='PASS/FAIL checks before a LIVE autonomous session')
-    pp = sub.add_parser('paypal-demo', help='PayPal AI edition: PayPal sandbox top-up + AI co-pilot + guard demo')
+    pp = sub.add_parser('paypal-demo', help='Fiat on-ramp: PayPal sandbox top-up + NEAR AI Cloud co-pilot + guard demo')
     pp.add_argument('--topup', default='10.00', help='top-up amount in USD (sandbox), 1.00 to 50.00')
     pp.add_argument('--order-id', help='capture a PayPal sandbox order the buyer already approved')
     pp.add_argument('--skip-topup', action='store_true', help='use the existing ledger balance')
@@ -590,7 +590,16 @@ def main(argv=None) -> int:
     pp.add_argument('--fixture', default=str(DEFAULT_FIXTURE))
     pp.add_argument('--cases', help='comma-separated replay case names')
     pp.add_argument('--no-compromised', action='store_true')
+    va = sub.add_parser('verify-ai', help='offline verifier for NEAR AI Cloud evidence (receipt, hash or decision id)')
+    va.add_argument('target', nargs='?', help='receipt/attestation .json, a rationale_hash, or a guard decision id')
+    va.add_argument('--full', action='store_true', help='also ask NVIDIA NRAS about the GPU evidence (online)')
+    sub.add_parser('near-ai-attest', help='record a fresh NEAR AI Cloud attestation report (free, needs a key)')
+    sub.add_parser('near-ai-usage', help='NEAR AI Cloud spend ledger (~/.anchorium/near_ai_usage.json)')
     args = parser.parse_args(argv)
+    if args.cmd in ('verify-ai', 'near-ai-attest', 'near-ai-usage'):
+        from anchorium.ai import commands  # noqa: PLC0415
+        return {'verify-ai': commands.cmd_verify_ai, 'near-ai-attest': commands.cmd_near_ai_attest,
+                'near-ai-usage': commands.cmd_near_ai_usage}[args.cmd](args)
     if args.cmd == 'paypal-demo':
         from anchorium.paypal_demo import cmd_paypal_demo  # noqa: PLC0415
         return cmd_paypal_demo(args)

@@ -1,4 +1,4 @@
-"""AI risk co-pilot: a language model reviews every trade and every PayPal top-up, and explains guard decisions.
+"""AI risk co-pilot: NEAR AI Cloud reviews every trade and every PayPal top-up inside a TEE, and explains decisions.
 
 The co-pilot can only make Anchorium **stricter**:
 * trade review  -> ALLOW or VETO. A VETO turns the agent's own vote into "no" (`agent_allowed=false`). An ALLOW
@@ -6,29 +6,24 @@ The co-pilot can only make Anchorium **stricter**:
 * top-up review -> ALLOW or VETO before the PayPal capture. On VETO the approved order is never captured, so the
   buyer is not charged.
 
-Every review is hashed (sha256 of its canonical JSON) and the hash goes into the contract's `rationale_hash`
-field, so the AI's reasoning is committed on-chain next to the decision. The full text is kept locally in
-`var/ai_rationales.jsonl`, and anyone can re-hash it and compare.
-
-Model: Anthropic Messages API (`ANTHROPIC_API_KEY`, model from `AI_MODEL`), or any OpenAI-compatible chat API
-(`AI_BASE_URL` + `AI_API_KEY`, e.g. Google Gemini or Groq free tiers). Without a key, or when the call or
-the JSON fails, a deterministic rules reviewer answers instead, labelled `provider="rules"`. It is never shown as
-AI output.
+Model: NEAR AI Cloud only (`NEAR_AI_API_KEY`, model `NEAR_AI_MODEL`), a private model running in an Intel TDX +
+NVIDIA TEE. Every review comes back with a TEE signature over the exact request and response bytes, which
+`anchorium.ai.near_ai` verifies against the attested signing key; the whole signed receipt is hashed and that hash
+goes into the contract's `rationale_hash` field (`python -m anchorium verify-ai` re-checks it). Without a key, when
+the spend guardrails refuse a call, or when the call or its signature fails, a deterministic rules reviewer answers
+instead, labelled `rules (<reason>)`. It is never shown as AI output.
 """
 from __future__ import annotations
 
 import hashlib
 import json
-import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-import httpx
+from anchorium.ai.near_ai import NearAIClient, NearAIUnavailable, SignedReview
 
-ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
-DEFAULT_MODEL = 'claude-haiku-5-5'
 VERDICTS = ('ALLOW', 'VETO')
 
 #: Top-up rules (deterministic, always applied; the model may veto more, never less).
@@ -71,40 +66,28 @@ class Review:
     risk_score: int
     reason_code: str
     explanation: str
-    provider: str        # "anthropic:<model>" or "rules"
+    provider: str        # "near-ai-cloud:<model> (TEE, signature verified)" or "rules (<reason>)"
+    #: The TEE-signed NEAR AI receipt behind this review, when a model answered (see anchorium.ai.near_ai).
+    receipt: dict[str, Any] | None = field(default=None, compare=False, repr=False)
 
     @property
     def vetoed(self) -> bool:
         return self.verdict == 'VETO'
 
     def canonical(self) -> str:
-        return json.dumps(asdict(self), sort_keys=True, separators=(',', ':'))
+        """The rules review itself, or the signed receipt when a model answered: what `rationale_hash` commits to."""
+        if self.receipt is not None:
+            return json.dumps(self.receipt, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+        return json.dumps({k: v for k, v in asdict(self).items() if k != 'receipt'}, sort_keys=True,
+                          separators=(',', ':'))
 
     @property
     def rationale_hash(self) -> str:
         return hashlib.sha256(self.canonical().encode()).hexdigest()
 
     def to_dict(self) -> dict[str, Any]:
-        return {**asdict(self), 'rationale_hash': self.rationale_hash}
-
-
-def _clean(review: dict[str, Any], kind: str, provider: str) -> Review:
-    verdict = str(review.get('verdict', '')).upper()
-    if verdict not in VERDICTS:
-        raise ValueError(f'bad verdict {verdict!r}')
-    score = max(0, min(100, int(review.get('risk_score', 50))))
-    code = re.sub(r'[^A-Z0-9_]', '', str(review.get('reason_code') or verdict).upper())[:24] or verdict
-    text = ' '.join(str(review.get('explanation', '')).split())[:600]
-    if not text:
-        raise ValueError('empty explanation')
-    return Review(kind, verdict, score, code, text, provider)
-
-
-def _json_object(text: str) -> dict[str, Any]:
-    match = re.search(r'\{.*\}', text, re.S)
-    if not match:
-        raise ValueError('no JSON object in the model reply')
-    return json.loads(match.group(0))
+        out = {k: v for k, v in asdict(self).items() if k != 'receipt'}
+        return {**out, 'rationale_hash': self.rationale_hash, 'tee_signed': self.receipt is not None}
 
 
 # ----------------------------------------------------------------------------------------------- rules fallback
@@ -167,80 +150,49 @@ def rules_explain(decision: dict[str, Any]) -> str:
 # ----------------------------------------------------------------------------------------------- the co-pilot
 
 class Copilot:
-    def __init__(self, api_key: str | None = None, model: str = DEFAULT_MODEL,
-                 transport: httpx.BaseTransport | None = None, log_path: str | Path | None = None,
-                 timeout: float = 30.0, base_url: str | None = None, fallback_models: list[str] | None = None):
-        self.api_key, self.model = api_key or None, model
-        #: OpenAI-compatible chat API (e.g. Gemini, Groq) instead of Anthropic when set.
-        self.base_url = base_url.rstrip('/') if base_url else None
-        #: Models tried in order when one is overloaded (HTTP 429/5xx or timeout): `model`, then these.
-        self.fallback_models = [m.strip() for m in (fallback_models or []) if m.strip() and m.strip() != model]
-        self.used_model = model
-        self._http = httpx.Client(timeout=timeout, transport=transport)
+    def __init__(self, client: NearAIClient | None = None, log_path: str | Path | None = None,
+                 no_client_reason: str = 'no NEAR_AI_API_KEY'):
+        self.client = client
+        self.no_client_reason = no_client_reason
         self.log_path = Path(log_path) if log_path else None
         self.last_error: str | None = None
 
     @classmethod
     def from_env(cls, env: Any, log_path: str | Path | None = None) -> Copilot:
-        if env.get('AI_BASE_URL'):
-            return cls(env.get('AI_API_KEY') or None, env.get('AI_MODEL') or DEFAULT_MODEL, log_path=log_path,
-                       base_url=env.get('AI_BASE_URL'),
-                       fallback_models=(env.get('AI_FALLBACK_MODELS') or '').split(','))
-        return cls(env.get('ANTHROPIC_API_KEY') or None, env.get('AI_MODEL') or DEFAULT_MODEL, log_path=log_path)
+        if env.get('NEAR_AI_API_KEY'):
+            return cls(NearAIClient.from_env(env), log_path=log_path)
+        return cls(None, log_path=log_path)
+
+    @property
+    def api_key(self) -> bool:  # kept for callers that only ask "is a model configured?"
+        return self.client is not None
 
     @property
     def provider(self) -> str:
-        if not self.api_key:
-            return 'rules'
-        if self.base_url:
-            host = self.base_url.split('//', 1)[-1].split('/', 1)[0]
-            return f'{host}:{self.used_model}'
-        return f'anthropic:{self.model}'
-
-    def _ask(self, system: str, payload: dict[str, Any], max_tokens: int = 300) -> str:
-        if self.base_url:
-            errors = []
-            for model in [self.model, *self.fallback_models]:
-                body = {'model': model, 'max_tokens': max(max_tokens, 2048), 'temperature': 0, 'messages': [
-                    {'role': 'system', 'content': system},
-                    {'role': 'user', 'content': json.dumps(payload, default=str)}]}
-                try:
-                    r = self._http.post(f'{self.base_url}/chat/completions', json=body, headers={
-                        'Authorization': f'Bearer {self.api_key}', 'content-type': 'application/json'})
-                except httpx.TimeoutException:
-                    errors.append(f'{model}: timeout')
-                    continue
-                if r.status_code in (429, 500, 502, 503, 504):  # overloaded / rate-limited: try the next model
-                    errors.append(f'{model}: HTTP {r.status_code}')
-                    continue
-                if r.status_code != 200:
-                    raise RuntimeError(f'AI HTTP {r.status_code} ({model}): {r.text[:160]}')
-                self.used_model = model
-                return r.json()['choices'][0]['message']['content'] or ''
-            raise RuntimeError('all models unavailable: ' + '; '.join(errors))
-        r = self._http.post(ANTHROPIC_URL, headers={
-            'x-api-key': self.api_key or '', 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
-            json={'model': self.model, 'max_tokens': max_tokens, 'temperature': 0, 'system': system,
-                  'messages': [{'role': 'user', 'content': json.dumps(payload, default=str)}]})
-        if r.status_code != 200:
-            raise RuntimeError(f'Anthropic HTTP {r.status_code}: {r.text[:160]}')
-        return ''.join(block.get('text', '') for block in r.json().get('content', []) if block.get('type') == 'text')
+        if self.client is None:
+            return f'rules ({self.no_client_reason})'
+        return f'near-ai-cloud:{self.client.model} (TEE, signature verified)'
 
     def _review(self, kind: str, system: str, ctx: dict[str, Any], fallback) -> Review:
         rules = fallback(ctx)
-        review = rules
-        if self.api_key:
+        review = Review(rules.kind, rules.verdict, rules.risk_score, rules.reason_code, rules.explanation,
+                        f'rules ({self.no_client_reason})')
+        if self.client is not None:
             try:
-                review = _clean(_json_object(self._ask(system, ctx)), kind, self.provider)
+                signed = self.client.review(kind, system, ctx)
+                if not signed.verified:
+                    raise NearAIUnavailable('TEE signature not verified')
+                review = _from_signed(signed, self.provider)
                 self.last_error = None
-            except Exception as exc:  # noqa: BLE001 - any model failure falls back to the rules reviewer
+            except (NearAIUnavailable, ValueError, KeyError) as exc:
+                reason = exc.reason if isinstance(exc, NearAIUnavailable) else f'{type(exc).__name__}'
                 self.last_error = f'{type(exc).__name__}: {exc}'[:200]
                 review = Review(rules.kind, rules.verdict, rules.risk_score, rules.reason_code, rules.explanation,
-                                'rules (AI unavailable)')
+                                f'rules ({reason})')
         if rules.vetoed and not review.vetoed:  # the model may be stricter than the rules, never looser
             review = Review(kind, 'VETO', max(rules.risk_score, review.risk_score), rules.reason_code,
                             f'{rules.explanation} (Hard rule; the model had said: {review.explanation})',
-                            review.provider)
+                            review.provider, review.receipt)
         self._persist(review, ctx)
         return review
 
@@ -250,17 +202,22 @@ class Copilot:
     def review_topup(self, ctx: dict[str, Any]) -> Review:
         return self._review('TOPUP', TOPUP_SYSTEM, ctx, rules_topup_review)
 
-    def explain_decision(self, decision: dict[str, Any], verdict_override: bool | None = None) -> dict[str, str]:
+    def explain_decision(self, decision: dict[str, Any], verdict_override: bool | None = None) -> dict[str, Any]:
         facts = {k: decision.get(k) for k in ('id', 'asset', 'side', 'mode', 'notional_usd_cents', 'slippage_bps',
                                               'agent_allowed', 'agent_reason', 'allowed', 'reason', 'rationale_hash')}
         facts['verdict_override'] = bool(decision.get('agent_allowed') and not decision.get('allowed')) \
             if verdict_override is None else verdict_override
-        if self.api_key:
+        if self.client is not None:
             try:
-                return {'provider': self.provider, 'text': ' '.join(self._ask(EXPLAIN_SYSTEM, facts).split())}
-            except Exception as exc:  # noqa: BLE001
+                signed = self.client.review('EXPLAIN', EXPLAIN_SYSTEM, facts)
+                if signed.verified:
+                    return {'provider': self.provider, 'text': signed.explanation, 'tee_signed': True,
+                            'rationale_hash': signed.rationale_hash, 'chat_id': signed.chat_id}
+                self.last_error = 'TEE signature not verified'
+            except (NearAIUnavailable, ValueError, KeyError) as exc:
                 self.last_error = f'{type(exc).__name__}: {exc}'[:200]
-        return {'provider': 'rules', 'text': rules_explain(facts)}
+        reason = (self.last_error or '').split(': ', 1)[-1] if self.client is not None else self.no_client_reason
+        return {'provider': f'rules ({reason})', 'text': rules_explain(facts), 'tee_signed': False}
 
     def _persist(self, review: Review, ctx: dict[str, Any]) -> None:
         if not self.log_path:
@@ -269,6 +226,11 @@ class Copilot:
         with self.log_path.open('a') as f:
             f.write(json.dumps({'review': review.to_dict(), 'canonical': review.canonical(), 'context': ctx},
                                default=str) + '\n')
+
+
+def _from_signed(signed: SignedReview, provider: str) -> Review:
+    return Review(signed.kind, signed.verdict, signed.risk, signed.reason_code, signed.explanation, provider,
+                  signed.to_receipt())
 
 
 def trade_context(*, signal: Any, asset: str, side: str, notional_cents: int, policy: dict[str, Any],

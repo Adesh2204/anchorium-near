@@ -1,5 +1,5 @@
-"""PayPal AI edition routes for the dashboard: PayPal sandbox checkout to fund the agent's paper budget, an AI
-review of every top-up before capture, and plain-English AI explanations of on-chain guard decisions.
+"""Fiat on-ramp routes for the dashboard: PayPal sandbox checkout to fund the agent's paper budget, a NEAR AI
+Cloud (TEE-signed) review of every top-up before capture, and plain-English explanations of guard decisions.
 
     GET  /paypal                           checkout page (PayPal JS SDK buttons, sandbox client id)
     GET  /api/paypal/config                sandbox / offline mode, client id, AI provider, ledger

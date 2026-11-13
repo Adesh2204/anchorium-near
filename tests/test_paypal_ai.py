@@ -1,5 +1,5 @@
-"""PayPal AI edition: PayPal sandbox client, funding ledger, AI co-pilot and the orchestrator's veto hook.
-No network: PayPal and Anthropic are faked with httpx.MockTransport."""
+"""Fiat on-ramp: PayPal sandbox client, funding ledger, the NEAR AI Cloud co-pilot and the orchestrator's veto hook.
+No network: PayPal and NEAR AI Cloud are faked with httpx.MockTransport (see tests/near_ai_fake.py)."""
 import hashlib
 import json
 from decimal import Decimal
@@ -8,9 +8,11 @@ import httpx
 import pytest
 
 from anchorium.ai.copilot import Copilot, Review, rules_topup_review, rules_trade_review
+from anchorium.ai.near_ai import NearAIClient, UsageLedger
 from anchorium.paypal.client import (Capture, PayPalClient, PayPalError, approve_url,
                                      parse_amount)
 from anchorium.paypal.ledger import FundingLedger
+from tests.near_ai_fake import ALLOW, MODEL, VETO, FakeNearAI
 from tests.test_orchestrator import FakeChain, kinds, make, signal
 
 # ------------------------------------------------------------------------------------------------ PayPal fakes
@@ -120,16 +122,9 @@ CTX = {'side': 'BUY', 'notional_usd': '2.00', 'close': '4.0', 'vwap': '3.9', 'at
        'worst_case_slippage_bps': 30, 'policy_max_slippage_bps': 150, 'paypal_budget_usd': '10.00'}
 
 
-def anthropic(reply: str | None, status=200):
-    seen = []
-
-    def handler(request):
-        seen.append(json.loads(request.content))
-        assert request.headers['x-api-key'] == 'k' and request.headers['anthropic-version'] == '2023-06-01'
-        if status != 200:
-            return httpx.Response(status, json={'error': 'overloaded'})
-        return httpx.Response(200, json={'content': [{'type': 'text', 'text': reply}]})
-    return httpx.MockTransport(handler), seen
+def near_ai(fake: FakeNearAI, tmp_path):
+    return NearAIClient('test-key', MODEL, ledger=UsageLedger(tmp_path / 'usage.json'), cache_dir=tmp_path / 'r',
+                        transport=fake.transport(), sleep=lambda s: None)
 
 
 def test_rules_reviewer():
@@ -144,38 +139,36 @@ def test_rules_reviewer():
 
 
 def test_model_review_is_used_and_hashed(tmp_path):
-    reply = 'Sure: {"verdict": "VETO", "risk_score": 72, "reason_code": "thin margin!", "explanation": "Too tight."}'
-    transport, seen = anthropic(reply)
-    c = Copilot('k', 'claude-test', transport=transport, log_path=tmp_path / 'ai.jsonl')
+    c = Copilot(near_ai(FakeNearAI(VETO), tmp_path), log_path=tmp_path / 'ai.jsonl')
     r = c.review_trade(CTX)
-    assert (r.verdict, r.risk_score, r.reason_code, r.provider) == ('VETO', 72, 'THINMARGIN', 'anthropic:claude-test')
-    assert seen[0]['model'] == 'claude-test' and seen[0]['temperature'] == 0
+    assert (r.verdict, r.risk_score, r.reason_code) == ('VETO', 72, 'THINMARGIN')
+    assert r.provider == f'near-ai-cloud:{MODEL} (TEE, signature verified)'
     assert r.rationale_hash == hashlib.sha256(r.canonical().encode()).hexdigest() and len(r.rationale_hash) == 64
     logged = json.loads((tmp_path / 'ai.jsonl').read_text().splitlines()[0])
     assert hashlib.sha256(logged['canonical'].encode()).hexdigest() == r.rationale_hash  # anyone can re-hash it
 
 
-def test_model_cannot_loosen_a_rules_veto():
-    transport, _ = anthropic('{"verdict": "ALLOW", "risk_score": 5, "reason_code": "OK", "explanation": "Fine."}')
-    r = Copilot('k', transport=transport).review_trade({**CTX, 'worst_case_slippage_bps': 140})
+def test_model_cannot_loosen_a_rules_veto(tmp_path):
+    r = Copilot(near_ai(FakeNearAI(ALLOW), tmp_path)).review_trade({**CTX, 'worst_case_slippage_bps': 140})
     assert r.vetoed and r.reason_code == 'SLIPPAGE_NEAR_CAP'
 
 
-@pytest.mark.parametrize('reply,status', [('not json', 200), ('{"verdict": "MAYBE", "explanation": "x"}', 200),
-                                          (None, 529)])
-def test_model_failure_falls_back_to_rules(reply, status):
-    transport, _ = anthropic(reply, status)
-    c = Copilot('k', transport=transport)
+@pytest.mark.parametrize('reply,status,label', [('not json', 200, 'rules (ValueError)'),
+                                                ('{"verdict": "MAYBE", "explanation": "x"}', 200,
+                                                 "rules (bad verdict 'MAYBE')"),
+                                                (ALLOW, 503, 'rules (HTTP 503)')])
+def test_model_failure_falls_back_to_rules(tmp_path, reply, status, label):
+    c = Copilot(near_ai(FakeNearAI(reply, chat_status=status), tmp_path))
     r = c.review_trade(CTX)
-    assert r.provider == 'rules (AI unavailable)' and r.verdict == 'ALLOW' and c.last_error
+    assert r.provider == label and r.verdict == 'ALLOW' and c.last_error
 
 
 def test_no_key_means_rules_and_explanations_work():
     c = Copilot(None)
-    assert c.provider == 'rules'
+    assert c.provider == 'rules (no NEAR_AI_API_KEY)'
     x = c.explain_decision({'id': 2, 'asset': 'wrap.near', 'side': 'BUY', 'mode': 'DRY_RUN', 'notional_usd_cents': 499,
                             'agent_allowed': True, 'allowed': False, 'reason': 'NOTIONAL_ABOVE_MAX'})
-    assert 'overruled' in x['text'] and x['provider'] == 'rules'
+    assert 'overruled' in x['text'] and x['provider'] == 'rules (no NEAR_AI_API_KEY)' and not x['tee_signed']
 
 
 # ------------------------------------------------------------------------------------------------ orchestrator hook
@@ -292,40 +285,6 @@ def test_dashboard_explains_decisions(api):
     x = http.get('/api/ai/explain/2').json()
     assert x['decision_id'] == 2 and 'overruled' in x['text']
     assert http.get('/paypal').status_code == 200
-
-
-def test_openai_compatible_provider(tmp_path):
-    seen = []
-
-    def handler(request):
-        seen.append((str(request.url), request.headers['Authorization'], json.loads(request.content)))
-        return httpx.Response(200, json={'choices': [{'message': {'content':
-            '{"verdict": "VETO", "risk_score": 61, "reason_code": "WIDE_SPREAD", "explanation": "Spread too wide."}'}}]})
-    c = Copilot.from_env({'AI_BASE_URL': 'https://generativelanguage.googleapis.com/v1beta/openai/',
-                          'AI_API_KEY': 'g', 'AI_MODEL': 'gemini-test'})
-    c._http = httpx.Client(transport=httpx.MockTransport(handler))
-    r = c.review_trade(CTX)
-    assert r.vetoed and r.provider == 'generativelanguage.googleapis.com:gemini-test'
-    url, auth, body = seen[0]
-    assert url.endswith('/v1beta/openai/chat/completions') and auth == 'Bearer g'
-    assert body['messages'][0]['role'] == 'system' and body['model'] == 'gemini-test'
-
-
-def test_overloaded_model_falls_back_to_the_next_model():
-    tried = []
-
-    def handler(request):
-        model = json.loads(request.content)['model']
-        tried.append(model)
-        if model == 'gemini-big':
-            return httpx.Response(503, json={'error': {'status': 'UNAVAILABLE'}})
-        return httpx.Response(200, json={'choices': [{'message': {'content':
-            '{"verdict": "ALLOW", "risk_score": 10, "reason_code": "OK", "explanation": "Fine."}'}}]})
-    c = Copilot.from_env({'AI_BASE_URL': 'https://example.test/v1', 'AI_API_KEY': 'g', 'AI_MODEL': 'gemini-big',
-                          'AI_FALLBACK_MODELS': 'gemini-lite, gemini-old'})
-    c._http = httpx.Client(transport=httpx.MockTransport(handler))
-    r = c.review_trade(CTX)
-    assert tried == ['gemini-big', 'gemini-lite'] and r.provider == 'example.test:gemini-lite'
 
 
 def test_derived_facts_are_exact():

@@ -6,7 +6,7 @@ VPY     := $(VENV)/bin/python
 CONTRACT_DIR := contracts/anchorium-guard
 
 
-.PHONY: paypal-demo
+.PHONY: paypal-demo verify-ai near-ai-usage near-ai-attest
 .PHONY: help setup freeze test test-py contract-build contract-test contract-deploy demo demo-onchain status agent dashboard autonomous autonomous-status live-preflight media-setup media-gallery
 
 help:
@@ -70,3 +70,12 @@ media-gallery: ## Render the 11 gallery PNGs + contact sheet from the real captu
 
 paypal-demo: ## Fiat on-ramp: PayPal sandbox funds the paper budget; NEAR AI Cloud reviews; the NEAR guard decides
 	$(VPY) -m anchorium paypal-demo $(ARGS)
+
+verify-ai: ## Offline check of the NEAR AI Cloud evidence (TEE attestation, signatures, on-chain hash); zero keys, zero cost
+	$(VPY) -m anchorium verify-ai $(ARGS)
+
+near-ai-usage: ## NEAR AI Cloud spend ledger (every billable call, estimated USD)
+	$(VPY) -m anchorium near-ai-usage
+
+near-ai-attest: ## Record a fresh NEAR AI Cloud TEE attestation into fixtures/near_ai/ (free endpoint; needs NEAR_AI_API_KEY)
+	$(VPY) -m anchorium near-ai-attest

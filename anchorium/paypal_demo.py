@@ -1,5 +1,6 @@
-"""`python -m anchorium paypal-demo`: fund the agent with PayPal (sandbox), let the AI co-pilot review the top-up
-and every trade, then run the replay signals through the NEAR guard exactly like `make demo` (Path A, keyless).
+"""`python -m anchorium paypal-demo`: the fiat on-ramp. Fund the agent's paper budget with PayPal (sandbox), let the
+NEAR AI Cloud co-pilot review the top-up and every trade inside a TEE, then run the replay signals through the NEAR
+guard exactly like `make demo` (Path A, keyless). Fiat in, NEAR-enforced out.
 
     1. FUND    AI reviews the top-up -> PayPal Orders v2 create -> buyer approves (sandbox) -> server capture
                -> idempotent ledger. No PayPal keys: an OFFLINE SIMULATION with its own ledger, labelled as such.
@@ -54,7 +55,7 @@ def _fund(args, ledger: FundingLedger, copilot: Copilot, policy: dict, paypal: P
               f'{cap.capture_id}. Set PAYPAL_CLIENT_ID/SECRET for a real sandbox order.')
         return
     # A return page lets PayPal finish the approval cleanly (no dead end after "Pay"); the CLI then polls and captures.
-    back = os.environ.get('PAYPAL_RETURN_URL') or 'https://github.com/Adesh2204/anchorium-near-Paypal/blob/main/docs/PAYPAL_AI.md'
+    back = os.environ.get('PAYPAL_RETURN_URL') or 'https://github.com/Adesh2204/anchorium-near-Paypal/blob/main/docs/FIAT_ONRAMP.md'
     order = paypal.create_order(amount, custom_id=custom_id, return_url=back)
     ledger.record_order(order['id'], custom_id, amount, 'paypal-sandbox')
     ledger.set_ai_note(order['id'], review.canonical())
@@ -92,11 +93,11 @@ def cmd_paypal_demo(args) -> int:
     if config.execution.live:
         print('paypal-demo runs in DRY_RUN only; unset LIVE')
         return 2
-    header(reader, config, oneclick, 'PayPal + AI edition (Path A: no NEAR keys)')
+    header(reader, config, oneclick, 'fiat on-ramp + NEAR AI Cloud co-pilot (Path A: no NEAR keys)')
     print(f'PayPal         : {"SANDBOX (api-m.sandbox.paypal.com)" if paypal else "OFFLINE SIMULATION (no keys set)"}'
           f'; ledger {ledger_path(paypal)}')
     print(f'AI co-pilot    : {copilot.provider}'
-          f'{"" if copilot.api_key else " (no ANTHROPIC_API_KEY: deterministic rules reviewer, not a model)"}\n')
+          f'{"" if copilot.api_key else " = deterministic rules, not a model (recorded TEE evidence: make verify-ai)"}\n')
 
     policy = reader.policy()
     print('=== 1. FUND the agent with PayPal ===')

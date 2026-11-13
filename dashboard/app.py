@@ -1,6 +1,6 @@
 """Dashboard. Contract state is read from NEAR testnet on every request; nothing here can sign a NEAR transaction.
-The PayPal AI edition adds /paypal (dashboard/paypal_routes.py): PayPal sandbox top-ups of the paper budget and
-AI explanations of guard decisions.
+The fiat on-ramp adds /paypal (dashboard/paypal_routes.py): PayPal sandbox top-ups of the paper budget and
+NEAR AI Cloud (TEE-signed) explanations of guard decisions.
 
     make dashboard   ->  http://127.0.0.1:8000
 

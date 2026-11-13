@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Anchorium: fund with PayPal</title>
+<title>Anchorium fiat on-ramp</title>
 <style>
   :root {
     --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --muted: #5d6573; --line: #e2e5ea;
@@ -46,7 +46,7 @@
 <body>
 <div class="banner" id="banner">PAYPAL SANDBOX &middot; PAPER TRADING &middot; NO REAL MONEY</div>
 <main>
-  <h1>Fund your Anchorium agent with PayPal</h1>
+  <h1>Fiat on-ramp (PayPal sandbox) · NEAR HACKATHON</h1>
   <div class="sub">PayPal funds the agent's paper budget. An AI co-pilot reviews every top-up before it is captured and
     every trade before it is journaled. It can only say no. The NEAR guard contract still has the final word on every
     trade. <a href="/">&larr; guard dashboard</a></div>
@@ -93,7 +93,7 @@ function showReview(r, prefix) {
   const ok = r.verdict === 'ALLOW';
   $('review').innerHTML = `<div class="ai ${ok ? 'ok' : 'bad'}"><b>${esc(prefix)}</b>
     <span class="pill ${ok ? 'ok' : 'bad'}">${esc(r.verdict)}</span> risk ${esc(r.risk_score)}/100
-    <span class="mono">${esc(r.reason_code)}</span> <span class="muted">(${esc(r.provider)})</span>
+    <span class="mono">${esc(r.reason_code)}</span> <span class="muted">(${esc(r.provider)})</span>${r.tee_signed ? ' <span class="pill ok" title="NEAR AI Cloud TEE signature verified; python -m anchorium verify-ai">TEE-signed ✓</span>' : ''}
     <div>${esc(r.explanation)}</div>
     <div class="mono muted">rationale_hash ${esc(r.rationale_hash)}</div></div>`;
 }
@@ -189,7 +189,7 @@ async function decisions() {
     const cell = $('x' + b.dataset.id);
     cell.textContent = 'Asking the co-pilot...';
     const x = await (await fetch(`/api/ai/explain/${b.dataset.id}`)).json();
-    cell.innerHTML = `${esc(x.text)} <span class="muted">(${esc(x.provider)})</span>`;
+    cell.innerHTML = `${esc(x.text)} <span class="muted">(${esc(x.provider)})</span>${x.tee_signed ? ' <span class="pill ok">TEE-signed ✓</span>' : ''}`;
   });
 }
 
