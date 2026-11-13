@@ -10,6 +10,9 @@ On restart:
   the same decision; an identical outcome is a no-op), so nothing is journaled twice.
 * DEPOSIT_PENDING becomes NEEDS_REVIEW: a deposit that may or may not have been broadcast is never re-sent
   automatically. A human checks the trader account and the 1Click status first.
+* SETTLEMENT=vault only: DEPOSIT_PENDING may go to OUTCOME_PENDING when the vault's own answer (its
+  `vault_release_rejected` / `release_failed` event, or a refused `execute` while the decision is not marked
+  executed) proves nothing moved. The row records that evidence as `vault_refusal`.
 """
 from __future__ import annotations
 
@@ -86,7 +89,8 @@ class CheckpointStore:
             current = self.get(signal_hash)
             if current is None:
                 raise KeyError(signal_hash)
-            if current['state'] == 'DEPOSIT_PENDING' and state not in AFTER_DEPOSIT_PENDING:
+            vault_refused = state == 'OUTCOME_PENDING' and bool(data.get('vault_refusal'))
+            if current['state'] == 'DEPOSIT_PENDING' and state not in AFTER_DEPOSIT_PENDING and not vault_refused:
                 raise ValueError(f'illegal transition DEPOSIT_PENDING -> {state} for {signal_hash[:12]}...')
             if current['state'] in TERMINAL + ('NEEDS_REVIEW',) and state != current['state']:
                 raise ValueError(f'illegal transition {current["state"]} -> {state} for {signal_hash[:12]}...')

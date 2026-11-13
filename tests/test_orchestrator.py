@@ -364,3 +364,131 @@ def test_live_exit_without_a_known_entry_cost_keeps_the_proceeds_cap(tmp_path):
                            trader=FakeTrader())
     agent.process(signal('SHORT'))
     assert agent.trader_near.sent == [] and 'per-trade cap' in chain.decisions[0]['outcome']['tx_ref']
+
+
+# ----- SETTLEMENT=vault: the vault pays the deposit, only for an ALLOWED LIVE decision -----
+
+class FakeVault:
+    """VaultExecutor stand-in. `outcome`: RELEASED | REJECTED:<reason> | FAILED:<reason> | PANIC:<msg> | crash."""
+
+    def __init__(self, outcome='RELEASED', executed_after_panic=False, balance=10**30):
+        from types import SimpleNamespace
+        self.outcome, self.executed_after_panic, self.calls = outcome, executed_after_panic, []
+        self.client = SimpleNamespace(vault_id='vault.anchorium.near', network='mainnet',
+                                      is_executed=lambda d: self.executed_after_panic,
+                                      ft_balance=lambda token: balance)
+
+    def execute(self, decision_id, token, amount_units, deposit_address, quote_id, register=False):
+        from near import ContractPanicError
+        from anchorium.near.vault_client import Release
+        self.calls.append((decision_id, token, amount_units, deposit_address, quote_id, register))
+        status, _, reason = self.outcome.partition(':')
+        if status == 'crash':
+            raise ConnectionError('killed while broadcasting')
+        if status == 'PANIC':
+            raise ContractPanicError(reason)
+        return Release(status, reason or None, 'VaultTx')
+
+
+def vault_agent(tmp_path, tracking, vault=None, chain=None, live=True, confirm=lambda phrase, details=None: None):
+    chain = chain or FakeChain()
+    events = []
+    config = AgentConfig(execution=ExecutionConfig(live=live, max_trade_usd=Decimal('2')), settlement='vault')
+    agent = Agent(config, chain, FakeOneClick(tracking=tracking), CheckpointStore(tmp_path / 'cp.sqlite'),
+                  writer=chain, confirm=confirm, log=events.append, vault=vault or FakeVault())
+    return agent, chain, events
+
+
+def test_vault_settlement_pays_the_deposit_from_the_vault_and_routes_outputs_back_to_it(tmp_path):
+    done = Tracking('dep-1', [update('SUCCESS', {'amountIn': '2000000', 'amountOut': '499000000000000000000000'})])
+    agent, chain, events = vault_agent(tmp_path, [done])
+    row = agent.process(signal())
+    assert row['state'] == 'DONE' and chain.decisions[0]['outcome']['status'] == 'SUCCESS'
+    req = agent.oneclick.quotes[0]
+    assert req.recipient == req.refund_to == 'vault.anchorium.near', 'outputs and refunds go back to the vault'
+    assert agent.vault.calls == [(0, USDC.removeprefix('nep141:'), 2_000_000, 'dep-1', 'c1:dep-1', True)]
+    assert chain.decisions[0]['quote_id'] == 'c1:dep-1' and chain.decisions[0]['mode'] == 'LIVE'
+    assert agent.oneclick.submitted == [('dep-1', 'VaultTx')]
+    assert row['data']['deposit_tx'] == 'VaultTx' and agent.store.live_spent_cents() == 200
+    assert 'vault_execute' in kinds(events)
+
+
+def test_vault_buy_notional_is_the_face_value_the_vault_will_release(tmp_path):
+    cheap = {**TOKENS, USDC: Token(USDC, 'USDC', 'near', 6, Decimal('0.9998'), USDC.removeprefix('nep141:'))}
+    done = Tracking('dep-1', [update('SUCCESS', {'amountIn': '2000000', 'amountOut': '1'})])
+    agent, chain, _ = vault_agent(tmp_path, [done])
+    agent.oneclick.token = cheap.__getitem__
+    agent.process(signal())
+    assert chain.decisions[0]['notional_usd_cents'] == 200, 'face value, not 199 at $0.9998: never above the cap'
+    direct, chain2, _ = make(tmp_path / 'direct', oneclick=FakeOneClick(tracking=[done]))
+    direct.oneclick.token = cheap.__getitem__
+    direct.process(signal())
+    assert chain2.decisions[0]['notional_usd_cents'] == 199, 'direct settlement unchanged'
+
+
+@pytest.mark.parametrize('outcome, tx_ref', [('REJECTED:NOT_ALLOWED', 'vault-rejected:NOT_ALLOWED:VaultTx'),
+                                             ('FAILED:TOKEN_TRANSFER_FAILED', 'vault-failed:TOKEN_TRANSFER_FAILED:VaultTx'),
+                                             ('PANIC:VAULT_PAUSED', 'vault-refused:VAULT_PAUSED')])
+def test_vault_refusal_moves_nothing_and_journals_failed(tmp_path, outcome, tx_ref):
+    agent, chain, _ = vault_agent(tmp_path, [], vault=FakeVault(outcome))
+    row = agent.process(signal())
+    assert row['state'] == 'DONE' and row['data']['result'] == 'FAILED'
+    assert chain.decisions[0]['outcome']['tx_ref'] == tx_ref and chain.decisions[0]['outcome']['amount_out'] == '0'
+    assert agent.oneclick.submitted == [], 'no deposit to report'
+
+
+@pytest.mark.parametrize('vault', [FakeVault('FAILED:NO_VAULT_EVENT'), FakeVault('PANIC:X', executed_after_panic=True)])
+def test_uncertain_vault_answers_are_parked_for_a_human(tmp_path, vault):
+    agent, chain, _ = vault_agent(tmp_path, [], vault=vault)
+    row = agent.process(signal())
+    assert row['state'] == 'NEEDS_REVIEW' and chain.calls == ['record_decision']
+
+
+def test_crash_during_vault_execute_is_parked_never_resent(tmp_path):
+    agent, chain, _ = vault_agent(tmp_path, [], vault=FakeVault('crash'))
+    with pytest.raises(ConnectionError):
+        agent.process(signal())
+    assert agent.process(signal())['state'] == 'NEEDS_REVIEW' and len(agent.vault.calls) == 1
+
+
+def test_vault_never_asked_for_a_rejected_or_unconfirmed_decision(tmp_path):
+    agent, chain, _ = vault_agent(tmp_path, [], chain=FakeChain(verdict='DAILY_LOSS_CAP'))
+    agent.process(signal())
+    def refuse(phrase, details=None):
+        assert 'vault vault.anchorium.near' in details['settlement']
+        raise LiveGateError('confirmation did not match')
+    other, _, _ = vault_agent(tmp_path / 'b', [], confirm=refuse)
+    other.process(signal())
+    assert agent.vault.calls == [] and other.vault.calls == []
+
+
+def test_vault_exit_sells_at_most_what_the_vault_holds(tmp_path):
+    chain = FakeChain(positions=[{'asset': WNEAR, 'state': 'OPEN', 'amount': str(5 * 10**23)}])
+    done = Tracking('dep-1', [update('SUCCESS', {'amountIn': '1', 'amountOut': '1990000'})])
+    agent, chain, _ = vault_agent(tmp_path, [done], chain=chain, vault=FakeVault(balance=4 * 10**23))
+    agent.process(signal('SHORT'))
+    assert agent.vault.calls[0][1:3] == ('wrap.near', 4 * 10**23)
+
+
+def test_vault_settlement_needs_the_vault_and_a_known_mode(tmp_path):
+    with pytest.raises(LiveGateError, match='vault executor'):
+        Agent(AgentConfig(settlement='vault'), FakeChain(), FakeOneClick(), CheckpointStore(tmp_path / 'x.sqlite'))
+    with pytest.raises(LiveGateError, match='SETTLEMENT'):
+        Agent(AgentConfig(settlement='wallet'), FakeChain(), FakeOneClick(), CheckpointStore(tmp_path / 'y.sqlite'))
+
+
+def test_vault_mode_dry_run_never_calls_the_vault(tmp_path):
+    agent, chain, _ = vault_agent(tmp_path, [], live=False)
+    row = agent.process(signal())
+    assert row['data']['result'] == 'DRY_RUN' and agent.vault.calls == []
+
+
+def test_deposit_pending_leaves_only_with_vault_evidence(tmp_path):
+    store = CheckpointStore(tmp_path / 'e.sqlite')
+    store.create('h' * 64, 'LIVE', 'NEAR', {'signal': {}})
+    store.advance('h' * 64, 'DEPOSIT_PENDING', side='BUY', live_notional_cents=200)
+    with pytest.raises(ValueError, match='illegal transition'):
+        store.advance('h' * 64, 'OUTCOME_PENDING', outcome_args={})
+    with pytest.raises(ValueError, match='illegal transition'):
+        store.advance('h' * 64, 'OUTCOME_PENDING', outcome_args={}, vault_refusal=None)
+    assert store.advance('h' * 64, 'OUTCOME_PENDING', vault_refusal={'reason': 'NOT_ALLOWED'})['state'] == 'OUTCOME_PENDING'

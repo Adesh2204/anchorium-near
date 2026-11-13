@@ -88,3 +88,8 @@ vault-build: ## Build the vault wasm (cargo-near) and refresh res/ + its SHA256S
 	cd $(VAULT_DIR) && cargo near build non-reproducible-wasm
 	cp $(VAULT_DIR)/target/near/anchorium_vault.wasm $(VAULT_DIR)/res/
 	cd $(VAULT_DIR)/res && shasum -a 256 anchorium_vault.wasm
+
+vault-demo: ## Vault on NEAR testnet (free): OWNER=<new>.testnet -> deploy guard + vault + mock USDC, then the flow
+	@test -n "$(OWNER)" || { echo "usage: OWNER=<new-name>.testnet make vault-demo"; exit 1; }
+	scripts/near/deploy_vault_testnet.sh
+	$(VPY) -m anchorium vault-demo --owner $(OWNER)

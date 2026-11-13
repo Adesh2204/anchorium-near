@@ -117,12 +117,24 @@ def build(args, *, onchain: bool, store_path: str, guard_id: str | None = None):
         agent_id = os.environ.get('AGENT_ACCOUNT_ID') or reader.roles()['agent']
         writer = GuardWriter(reader, load_function_call_signer(agent_id, guard_id, network))
     trader_account = os.environ.get('TRADER_ACCOUNT_ID') or None
-    if execution.live:
+    settlement = os.environ.get('SETTLEMENT', 'direct').strip().lower() or 'direct'
+    vault = None
+    if settlement == 'vault':  # LIVE deposits are paid by the Anchorium Vault, never by a trader key
+        vault_id = os.environ.get('VAULT_ACCOUNT_ID') or ''
+        if not vault_id:
+            raise SystemExit('SETTLEMENT=vault needs VAULT_ACCOUNT_ID (the deployed contracts/anchorium-vault)')
+        from anchorium.near.vault_client import VaultClient, VaultExecutor, load_vault_signer  # noqa: PLC0415
+        vault_network = os.environ.get('VAULT_NETWORK') or ('mainnet' if execution.live else network)
+        agent_id = os.environ.get('AGENT_ACCOUNT_ID') or reader.roles()['agent']
+        client = VaultClient(vault_id, vault_network)
+        vault = VaultExecutor(client, load_vault_signer(agent_id, vault_id, vault_network))
+        trader_account = None
+    elif execution.live:
         if not trader_account:
             raise SystemExit('LIVE=1 needs TRADER_ACCOUNT_ID (the mainnet account whose key is in ~/.near-credentials)')
         from near import Near  # noqa: PLC0415
         trader = Near.from_file(trader_account, 'mainnet', rpc_url=DEFAULT_RPC['mainnet'])
-    config = AgentConfig(network=network, execution=execution, trader_account=trader_account,
+    config = AgentConfig(network=network, execution=execution, trader_account=trader_account, settlement=settlement,
                          order_usd=Decimal(os.environ.get('ORDER_USD', '2.00')),
                          quote_tolerance_bps=int(os.environ.get('QUOTE_SLIPPAGE_TOLERANCE_BPS', '10')),
                          session_label=getattr(args, 'session', None))
@@ -134,7 +146,7 @@ def build(args, *, onchain: bool, store_path: str, guard_id: str | None = None):
         from anchorium.notify import notifying_confirm  # noqa: PLC0415
         confirm = notifying_confirm(confirm, f'{getattr(args, "leg", None) or "deposit"} leg')
     agent = Agent(config, reader, oneclick, CheckpointStore(store_path), writer=writer, trader_near=trader,
-                  confirm=confirm, log=log)
+                  confirm=confirm, log=log, vault=vault)
     return agent, reader, config, oneclick
 
 
@@ -149,6 +161,8 @@ def header(reader: GuardReader, config: AgentConfig, oneclick: OneClickClient, p
           f'max slippage {policy["max_slippage_bps"]} bps, cooldown {policy["cooldown_secs"]} s, '
           f'paused={policy["paused"]}')
     print(f'1Click         : {"JWT" if oneclick.authenticated else "no JWT (observed fee 20 bps; docs say 0.25%)"}')
+    if config.settlement == 'vault':
+        print(f'settlement     : vault {os.environ.get("VAULT_ACCOUNT_ID")} (releases only for ALLOWED LIVE decisions)')
     print()
 
 
@@ -595,11 +609,16 @@ def main(argv=None) -> int:
     va.add_argument('--full', action='store_true', help='also ask NVIDIA NRAS about the GPU evidence (online)')
     sub.add_parser('near-ai-attest', help='record a fresh NEAR AI Cloud attestation report (free, needs a key)')
     sub.add_parser('near-ai-usage', help='NEAR AI Cloud spend ledger (~/.anchorium/near_ai_usage.json)')
+    vd = sub.add_parser('vault-demo', help='testnet vault demo (after scripts/near/deploy_vault_testnet.sh)')
+    vd.add_argument('--owner', required=True, help='the demo owner account, e.g. vault-demo-123.testnet')
     args = parser.parse_args(argv)
     if args.cmd in ('verify-ai', 'near-ai-attest', 'near-ai-usage'):
         from anchorium.ai import commands  # noqa: PLC0415
         return {'verify-ai': commands.cmd_verify_ai, 'near-ai-attest': commands.cmd_near_ai_attest,
                 'near-ai-usage': commands.cmd_near_ai_usage}[args.cmd](args)
+    if args.cmd == 'vault-demo':
+        from anchorium.vault_demo import cmd_vault_demo  # noqa: PLC0415
+        return cmd_vault_demo(args)
     if args.cmd == 'paypal-demo':
         from anchorium.paypal_demo import cmd_paypal_demo  # noqa: PLC0415
         return cmd_paypal_demo(args)

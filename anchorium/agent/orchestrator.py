@@ -30,6 +30,7 @@ USDC = 'nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1'
 DRY_RUN_PLACEHOLDER_RECIPIENT = '0' * 64  # valid implicit account; dry quotes never execute
 #: Local skips: the guard view already says no and journaling would only spend the daily decision cap.
 LOCAL_SKIP_REASONS = ('POSITION_ALREADY_OPEN', 'COOLDOWN', 'MAX_OPEN_POSITIONS')
+SETTLEMENTS = ('direct', 'vault')
 
 
 @dataclass
@@ -45,6 +46,11 @@ class AgentConfig:
     paper_fill_worst_case: bool = False
     #: Autonomous mode: the session total counts BUY deposits only (exits are bounded by the entry they close).
     live_total_entries_only: bool = False
+    #: Where LIVE deposits come from. 'direct' (default): the trader account sends `ft_transfer` itself.
+    #: 'vault': the agent asks the Anchorium Vault (contracts/anchorium-vault) to pay the 1Click deposit address; the
+    #: vault re-reads the guard and releases only for that ALLOWED, unsettled LIVE decision. Outputs and refunds go
+    #: back to the vault.
+    settlement: str = 'direct'
 
     @property
     def mode(self) -> str:
@@ -61,9 +67,19 @@ class Agent:
                  writer: GuardWriter | None = None, trader_near=None,
                  confirm: Callable[..., None] = live_gates.require_typed_confirmation,
                  log: Callable[[dict[str, Any]], None] = emit, copilot: Any = None,
-                 copilot_context: Callable[[], dict[str, Any]] | None = None):
-        if config.execution.live and (writer is None or trader_near is None or not config.trader_account):
+                 copilot_context: Callable[[], dict[str, Any]] | None = None, vault: Any = None):
+        if config.settlement not in SETTLEMENTS:
+            raise live_gates.LiveGateError(f'SETTLEMENT must be one of {SETTLEMENTS}, not {config.settlement!r}')
+        if config.settlement == 'vault':
+            if vault is None:
+                raise live_gates.LiveGateError('SETTLEMENT=vault needs the vault executor (VAULT_ACCOUNT_ID and the '
+                                               "agent's execute-only key)")
+            if config.execution.live and writer is None:
+                raise live_gates.LiveGateError('LIVE needs the agent key')
+        elif config.execution.live and (writer is None or trader_near is None or not config.trader_account):
             raise live_gates.LiveGateError('LIVE needs the agent key, TRADER_ACCOUNT_ID and its mainnet key')
+        #: anchorium.near.vault_client.VaultExecutor when settlement == 'vault'
+        self.vault = vault
         self.config, self.reader, self.oneclick, self.store = config, reader, oneclick, store
         self.writer, self.trader_near, self.confirm, self.log = writer, trader_near, confirm, log
         #: Optional AI risk co-pilot (anchorium.ai.copilot.Copilot). Veto-only: it can turn the agent's vote into
@@ -82,13 +98,23 @@ class Agent:
     def _near_yocto(self) -> str | None:
         """The trader's NEAR balance (yocto), read around each LIVE deposit to measure its real NEAR cost (gas plus
         any storage registration batched into the transfer). A failed read never blocks the trade."""
+        if self.trader_near is None or not self.config.trader_account:
+            return None  # vault settlement: the agent pays the execute gas, the trader account is not involved
         try:
             return str(int(self.trader_near.account(self.config.trader_account).amount))
         except Exception:  # noqa: BLE001
             return None
 
+    @property
+    def _vault_mode(self) -> bool:
+        return self.config.settlement == 'vault'
+
+    def _funds_account(self) -> str | None:
+        """The account that holds the money: the vault, or the trader account."""
+        return self.vault.client.vault_id if self._vault_mode else self.config.trader_account
+
     def _recipient(self) -> str:
-        return self.config.trader_account or DRY_RUN_PLACEHOLDER_RECIPIENT
+        return self._funds_account() or DRY_RUN_PLACEHOLDER_RECIPIENT
 
     # ----- main entry -----
 
@@ -115,12 +141,13 @@ class Agent:
         asset = signal.spot_asset
         self.oneclick.tokens(refresh=True)  # the slippage gate needs current reference prices, not a startup cache
         policy = self.reader.policy()
-        entry_cost_cents = None
+        entry_cost_cents, face_value_cents = None, 0
         if signal.direction == 'LONG':
             side, origin, destination = 'BUY', USDC, asset
             usdc = self.oneclick.token(USDC)
             order_usd = self.config.order_usd * (Decimal('2.5') if compromised else 1)
             amount = usdc.to_units(order_usd)
+            face_value_cents = -(-amount * 100 // 10 ** usdc.decimals)  # ceil: units -> cents at $1 per USDC
         else:
             position = self._open_position(asset)
             if position is None:
@@ -129,11 +156,17 @@ class Agent:
             entry_cost_cents = position.get('cost_usd_cents')
             if self.config.execution.live:  # never try to sell more than the account actually holds
                 token_contract = self.oneclick.token(asset).contract_address
-                amount = min(amount, int(self.trader_near.ft_balance(token_contract, self.config.trader_account)))
+                held = (self.vault.client.ft_balance(token_contract) if self._vault_mode
+                        else self.trader_near.ft_balance(token_contract, self.config.trader_account))
+                amount = min(amount, int(held))
                 if amount <= 0:
                     return self._skip(h, 'NO_TOKEN_BALANCE_TO_SELL')
         origin_t, dest_t = self.oneclick.token(origin), self.oneclick.token(destination)
         notional_cents = int(origin_t.from_units(amount) * origin_t.price_usd * 100)
+        if self._vault_mode and side == 'BUY':
+            # The vault bounds a BUY release by the journaled notional at $1 per quote-token unit. Journal the face
+            # value (rounded up), so the guard caps exactly what the vault may release, never less.
+            notional_cents = face_value_cents
 
         verdict = self.reader.check_trade(asset, side, notional_cents, None)
         self.log({'event': 'guard_check', 'signal_hash': h, 'asset': asset, 'side': side,
@@ -237,13 +270,14 @@ class Agent:
             return self._record_outcome(h, o['status'], o['amount_in'], o['amount_out'], o['tx_ref'])
         return row
 
-    def _record_outcome(self, h: str, status: str, amount_in: str, amount_out: str, tx_ref: str) -> dict[str, Any]:
+    def _record_outcome(self, h: str, status: str, amount_in: str, amount_out: str, tx_ref: str,
+                        **evidence: Any) -> dict[str, Any]:
         if self.writer is None:
             raise RuntimeError('recording an outcome needs the agent key')
         row = self.store.require(h)
         outcome_args = {'decision_id': row['data']['decision_id'], 'status': status, 'amount_in': str(amount_in),
                         'amount_out': str(amount_out), 'tx_ref': tx_ref[:128]}
-        self.store.advance(h, 'OUTCOME_PENDING', outcome_args=outcome_args)
+        self.store.advance(h, 'OUTCOME_PENDING', outcome_args=outcome_args, **evidence)
         written = self.writer.record_outcome(**outcome_args)
         outcome = written.result['outcome']
         self.log({'event': 'outcome_journaled', 'signal_hash': h, 'decision_id': outcome_args['decision_id'],
@@ -273,7 +307,9 @@ class Agent:
             'worst-case slippage': f'{args["slippage_bps"]} bps (policy max checked on-chain)',
             'deposit address': q['depositAddress'],
             'quote deadline': q.get('deadline') or quote['quoteRequest'].get('deadline'),
-            'recipient / refund': self.config.trader_account,
+            'recipient / refund': self._funds_account(),
+            'settlement': (f'vault {self._funds_account()} releases it after re-reading the guard'
+                           if self._vault_mode else f'direct ft_transfer from {self.config.trader_account}'),
         }
         try:
             cost = data.get('entry_cost_cents')
@@ -294,17 +330,58 @@ class Agent:
         self.store.advance(h, 'DEPOSIT_PENDING', live_notional_cents=args['notional_usd_cents'],
                            near_yocto_before=self._near_yocto())
         assert origin_t.contract_address  # checked before DEPOSIT_PENDING
-        tx_hash = live_gates.deposit_nep141(self.trader_near, origin_t.contract_address, q['depositAddress'],
-                                            amount_human)
+        network = 'mainnet'
+        if self._vault_mode:
+            network = self.vault.client.network
+            released = self._vault_release(h, data, origin_t.contract_address, int(q['amountIn']), q['depositAddress'])
+            if isinstance(released, dict):
+                return released  # refused or uncertain: already journaled or parked
+            tx_hash = released
+        else:
+            tx_hash = live_gates.deposit_nep141(self.trader_near, origin_t.contract_address, q['depositAddress'],
+                                                amount_human)
         row = self.store.advance(h, 'DEPOSITED', deposit_tx=tx_hash, deposit_address=q['depositAddress'],
-                                 deposit_tx_url=tx_url('mainnet', tx_hash))
+                                 deposit_tx_url=tx_url(network, tx_hash))
         self.log({'event': 'deposit_sent', 'signal_hash': h, 'deposit_address': q['depositAddress'],
-                  'amount': str(amount_human), 'symbol': origin_t.symbol, 'explorer': tx_url('mainnet', tx_hash)})
+                  'amount': str(amount_human), 'symbol': origin_t.symbol, 'settlement': self.config.settlement,
+                  'explorer': tx_url(network, tx_hash)})
         try:
-            self.oneclick.submit_deposit(q['depositAddress'], tx_hash, near_sender=self.config.trader_account)
+            self.oneclick.submit_deposit(q['depositAddress'], tx_hash, near_sender=self._funds_account())
         except OneClickError as exc:  # optional speed-up only
             self.log({'event': 'deposit_submit_failed', 'signal_hash': h, 'error': str(exc)})
         return self._track(h, row)
+
+    def _vault_release(self, h: str, data: dict[str, Any], token: str, units: int,
+                       deposit_address: str) -> str | dict[str, Any]:
+        """Asks the vault to pay this decision's deposit. Returns the transaction hash when the vault released the
+        funds; otherwise the journaled (FAILED, nothing moved) or parked (NEEDS_REVIEW, uncertain) row."""
+        from near import ContractPanicError  # noqa: PLC0415
+        decision_id = data['decision_id']
+        quote_id = data['decision_args']['quote_id']
+        try:
+            release = self.vault.execute(decision_id, token, units, deposit_address, quote_id, register=True)
+        except ContractPanicError as exc:
+            # The vault marks a decision executed before its transfer and un-marks it if the transfer fails, so a
+            # decision that is not executed after the refusal moved nothing.
+            if self.vault.client.is_executed(decision_id):
+                return self.store.advance(h, 'NEEDS_REVIEW', review_reason=f'vault execute raised {exc.panic!r} '
+                                          f'but decision #{decision_id} is marked executed: check the vault events')
+            self.log({'event': 'vault_refused', 'signal_hash': h, 'decision_id': decision_id, 'reason': exc.panic})
+            return self._record_outcome(h, 'FAILED', str(units), '0', f'vault-refused:{str(exc.panic)[:80]}',
+                                        vault_refusal={'panic': str(exc.panic), 'receipt_id': exc.receipt_id,
+                                                       'is_executed': False})
+        self.log({'event': 'vault_execute', 'signal_hash': h, 'decision_id': decision_id, 'status': release.status,
+                  'reason': release.reason, 'explorer': tx_url(self.vault.client.network, release.tx_hash)})
+        if release.status == 'RELEASED' and release.tx_hash:
+            return release.tx_hash
+        if release.status == 'REJECTED' or release.reason == 'TOKEN_TRANSFER_FAILED':
+            return self._record_outcome(h, 'FAILED', str(units), '0',
+                                        f'vault-{release.status.lower()}:{release.reason}:{release.tx_hash}',
+                                        vault_refusal={'status': release.status, 'reason': release.reason,
+                                                       'tx_hash': release.tx_hash, 'events': release.events})
+        return self.store.advance(h, 'NEEDS_REVIEW', review_reason=f'vault execute for decision #{decision_id} '
+                                  f'returned {release.status} {release.reason} (tx {release.tx_hash}): check the '
+                                  'vault events and vault.is_executed before anything else')
 
     def _track(self, h: str, row: dict[str, Any]) -> dict[str, Any]:
         data = row['data']
