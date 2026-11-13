@@ -1,5 +1,11 @@
-"""The vendored strategy, through the adapter, reproduces the ORIGINAL source commit's outputs exactly."""
+"""The vendored strategy, through the adapter, reproduces the ORIGINAL source commit's outputs.
+
+The golden indicator values were recorded on macOS arm64, where they match bit for bit. Other platforms' numpy/libm
+can round the last bit differently (seen on Linux x86_64 CI), so there the check is a relative 1e-12 tolerance; the
+signal type itself must always match exactly."""
 import json
+import math
+import platform
 from pathlib import Path
 
 import httpx
@@ -28,8 +34,13 @@ def test_vendored_strategy_matches_source_commit(case):
     golden = GOLDEN['cases'][case.name]
     assert len(candles) == golden['bars']
     assert last['Signal_Type'] == golden['signal_type'] == case.expected_signal_type
+    recording_platform = platform.system() == 'Darwin' and platform.machine() == 'arm64'
     for column in ('VWAP', 'ATR_14', 'EMA_9', 'EMA_21', 'VWAP_Slope'):
-        assert repr(float(last[column])) == golden[column], column  # bit-for-bit float equality
+        value, expected = float(last[column]), float(golden[column])
+        if recording_platform:
+            assert repr(value) == golden[column], column  # bit-for-bit float equality
+        else:
+            assert math.isclose(value, expected, rel_tol=1e-12, abs_tol=1e-15), (column, value, expected)
 
 
 @pytest.mark.parametrize('case', CASES, ids=lambda c: c.name)
